@@ -5,4 +5,14 @@
 #root {
   width: 100vw;
   height: 100vh;
+  overflow: hidden;
+}
+
+@layer components {
+  .app-drag {
+    -webkit-app-region: drag;
+  }
+  .app-prevent-drag {
+    -webkit-app-region: no-drag;
+  }
 }

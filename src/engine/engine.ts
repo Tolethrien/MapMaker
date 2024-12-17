@@ -1,5 +1,4 @@
 import Entity from "./core/entity";
-import Transform from "./sandbox/components/transform";
 
 export default class Engine {
   private static canvas: HTMLCanvasElement;
@@ -32,6 +31,7 @@ export default class Engine {
     this.entities.forEach((entity) => {
       entity.update();
     });
+
     this.entities.forEach((entity) => {
       const transform = entity.getComponent("Transform");
       this.draw(transform.position.x, transform.position.y);
