@@ -15,7 +15,8 @@
     "types": ["@webgpu/types"],
     "baseUrl": "./",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@editor/*": ["src/editor/*"]
     }
   },
   "include": ["src"]

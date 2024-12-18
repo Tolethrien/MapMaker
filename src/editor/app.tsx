@@ -1,7 +1,7 @@
-import Canvas from "./components/canvas";
-import Frame from "./components/frame";
-import LeftBar from "./components/leftBar";
-import RightBar from "./components/rightBar";
+import Canvas from "./components/canvas/canvas";
+import Frame from "./components/frame/frame";
+import LeftBar from "./components/leftBar/leftBar";
+import RightBar from "./components/rightBar/rightBar";
 
 export default function App() {
   return (

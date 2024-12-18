@@ -11,7 +11,7 @@ export default class Tile extends Entity {
     });
   }
   update() {
-    this.transform.position = this.transform.position.add([1, 0]);
+    this.transform.position = this.transform.position.add([3, 0]);
     if (this.transform.position.x > 800) {
       console.log("removed ID: ", this.getID);
       Engine.removeEntity(this.getID);

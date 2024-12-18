@@ -6,6 +6,9 @@ module.exports = {
       colors: {
         wheat: "rgb(245, 222, 179)",
       },
+      inset: {
+        35: "35px",
+      },
     },
   },
   plugins: [],
