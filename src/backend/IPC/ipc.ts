@@ -1,7 +1,7 @@
-import { getSelectFolderDialog } from "./dialog";
-import { createFolder } from "./fileSystem";
+import { dialogIPC } from "./dialog";
+import { fileSystemIPC } from "./fileSystem";
 
 export function setIPCHandlers() {
-  getSelectFolderDialog();
-  createFolder();
+  dialogIPC();
+  fileSystemIPC();
 }

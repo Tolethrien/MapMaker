@@ -1,4 +1,4 @@
-import { Accessor, createEffect, JSX, onCleanup, Setter } from "solid-js";
+import { Accessor, createEffect, JSX, onCleanup } from "solid-js";
 
 interface Props {
   open: Accessor<boolean>;

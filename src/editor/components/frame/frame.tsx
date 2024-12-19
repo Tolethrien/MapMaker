@@ -1,32 +1,33 @@
-import { createEffect, createSignal, Show } from "solid-js";
 import ContextMenu from "@/editor/components/reusable/contextMenu/contextMenu";
 import FrameButton from "@/editor/components/frame/components/frameButton";
 import ContextButton from "@/editor/components/reusable/contextMenu/contextButton";
 import SecondLogo from "./components/secondLogo";
 import ContextSubMenu from "../reusable/contextMenu/contextSubMenu";
-import NewProjectWindow from "./newProject";
 import Modal from "../reusable/modal";
-export type ButtonTypes = "File" | "Edit" | "Help" | "none";
+import { FrameContext, FrameModalType } from "./context/provider";
+import { batch, useContext } from "solid-js";
+import FrameModalList from "./modals";
 
 export default function Frame() {
-  const [activeButton, setActiveButton] = createSignal<ButtonTypes>("none");
-  const [activeModal, setActiveModal] = createSignal<boolean>(false);
+  const context = useContext(FrameContext);
 
-  const newProject = () => {
-    setActiveModal(true);
-    setActiveButton("none");
+  const openModal = (modalName: FrameModalType) => {
+    batch(() => {
+      context.setActiveButton("none");
+      context.setModalOpen(true);
+      context.setActiveModal(modalName);
+    });
   };
   return (
     <>
       <div class="w-full h-[28px] app-drag text-wheat bg-slate-600 flex items-center justify-between pr-36 gap-4">
         <div class="flex h-full gap-1">
-          <FrameButton
-            getter={activeButton}
-            setter={setActiveButton}
-            name="File"
-          >
+          <FrameButton name="File">
             <ContextMenu>
-              <ContextButton name="New Project" onClick={newProject} />
+              <ContextButton
+                name="New Project"
+                onClick={() => openModal("NewProject")}
+              />
               <ContextButton name="Open Project" onClick={() => {}} />
               <ContextSubMenu name="Save as">
                 <ContextMenu>
@@ -36,21 +37,13 @@ export default function Frame() {
               </ContextSubMenu>
             </ContextMenu>
           </FrameButton>
-          <FrameButton
-            getter={activeButton}
-            setter={setActiveButton}
-            name="Edit"
-          ></FrameButton>
-          <FrameButton
-            getter={activeButton}
-            setter={setActiveButton}
-            name="Help"
-          ></FrameButton>
+          <FrameButton name="Edit"></FrameButton>
+          <FrameButton name="Help"></FrameButton>
         </div>
         <SecondLogo />
       </div>
-      <Modal open={activeModal}>
-        <NewProjectWindow closeModal={setActiveModal} />
+      <Modal open={context.isModalOpen}>
+        <FrameModalList />
       </Modal>
     </>
   );
