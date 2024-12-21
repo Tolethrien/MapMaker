@@ -1,4 +1,4 @@
-import Entity from "@/engine/core/entity";
+import Entity from "@/engine/core/entitySys/entity";
 import Engine from "@/engine/engine";
 import Transform from "@/engine/sandbox/components/transform";
 

@@ -1,4 +1,4 @@
-import Component from "@/engine/core/component";
+import Component from "@/engine/core/entitySys/component";
 import Vec2D from "@/math/vec2D";
 
 export interface TransformProps {

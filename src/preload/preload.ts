@@ -1,7 +1,6 @@
 import { DialogPickerPromise } from "@/backend/IPC/dialog";
-import { CreateFile, FSStatus } from "@/backend/IPC/fileSystem";
+import { CreateFile } from "@/backend/IPC/fileSystem";
 import { contextBridge, ipcRenderer } from "electron";
-export type AvailableAPIs = "API_DIALOG" | "API_FILE_SYSTEM";
 
 export const API_DIALOG = {
   openFolderPicker: async (desc?: string): Promise<DialogPickerPromise> => {
@@ -12,11 +11,14 @@ export const API_DIALOG = {
   },
 };
 export const API_FILE_SYSTEM = {
-  createFolder: async (path: string): Promise<FSStatus> => {
+  createFolder: async (path: string): Promise<AsyncStatus> => {
     return await ipcRenderer.invoke("createFolder", path);
   },
-  createFile: async (props: CreateFile) => {
+  createFile: async (props: CreateFile): Promise<AsyncStatus> => {
     return await ipcRenderer.invoke("createFile", props);
+  },
+  getAppPath: async (): Promise<AsyncStatus & { path: string }> => {
+    return await ipcRenderer.invoke("getAppPath");
   },
 };
 if (process.contextIsolated) {
@@ -27,4 +29,3 @@ if (process.contextIsolated) {
     console.error(error);
   }
 }
-export const getAPI = <T extends AvailableAPIs>(apiName: T) => window[apiName];

@@ -1,4 +1,4 @@
-import Engine from "../engine";
+import Engine from "@/engine/engine";
 import Component from "./component";
 import { COMPONENTS } from "./consts";
 export type ReturnComponent<T extends keyof typeof COMPONENTS> =

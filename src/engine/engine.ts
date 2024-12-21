@@ -1,12 +1,15 @@
-import Entity from "./core/entity";
+import Aurora from "./core/aurora/auroraCore";
+import Draw from "./core/aurora/urp/draw";
+import Entity from "./core/entitySys/entity";
 
 export default class Engine {
   private static canvas: HTMLCanvasElement;
-  private static ctx: CanvasRenderingContext2D;
   private static entities: Map<string, Entity> = new Map();
-  public static initialize(canvas: HTMLCanvasElement) {
+  public static async initialize(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext("2d")!;
+    await Aurora.initialize(canvas); // needs to be before preload
+    Aurora.setFirstAuroraFrame();
+
     this.loop();
   }
   public static getEntities() {
@@ -19,23 +22,7 @@ export default class Engine {
     this.entities.delete(entityID);
   }
 
-  private static draw = (x: number, y: number) => {
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, 50, 0, 2 * Math.PI);
-    this.ctx.fillStyle = "green";
-    this.ctx.fill();
-  };
-
   private static loop() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.entities.forEach((entity) => {
-      entity.update();
-    });
-
-    this.entities.forEach((entity) => {
-      const transform = entity.getComponent("Transform");
-      this.draw(transform.position.x, transform.position.y);
-    });
     requestAnimationFrame(() => this.loop());
   }
 }

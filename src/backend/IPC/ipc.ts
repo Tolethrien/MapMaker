@@ -1,7 +1,7 @@
 import { dialogIPC } from "./dialog";
 import { fileSystemIPC } from "./fileSystem";
 
-export function setIPCHandlers() {
+export default function setIPCHandlers() {
   dialogIPC();
   fileSystemIPC();
 }

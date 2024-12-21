@@ -8,13 +8,12 @@ export interface CreateFile {
   data: string | NodeJS.ArrayBufferView<ArrayBufferLike>;
   allowOverride?: boolean;
 }
-export type FSStatus = { success: boolean; error: "" };
 export const fileSystemIPC = () => {
   //all exposes of a FS module
 
   ipcMain.handle(
     "createFolder",
-    async (_, folderPath: string): Promise<FSStatus> => {
+    async (_, folderPath: string): Promise<AsyncStatus> => {
       try {
         await mkdir(folderPath, { recursive: false });
         return { success: true, error: "" };
@@ -32,7 +31,7 @@ export const fileSystemIPC = () => {
     async (
       _,
       { data, fileName, dirPath, type, allowOverride = false }: CreateFile
-    ): Promise<FSStatus> => {
+    ): Promise<AsyncStatus> => {
       try {
         const filePath = `${dirPath}\\${fileName}.${type}`;
         if (allowOverride) await writeFile(filePath, data);
@@ -43,6 +42,20 @@ export const fileSystemIPC = () => {
         return {
           success: false,
           error: error.message || `Write File error while creating ${fileName}`,
+        };
+      }
+    }
+  );
+  ipcMain.handle(
+    "getAppPath",
+    async (): Promise<AsyncStatus & { path: string }> => {
+      try {
+        return { success: true, error: "", path: __dirname };
+      } catch (error) {
+        return {
+          success: false,
+          error: error.message || `getAppPath error`,
+          path: "",
         };
       }
     }

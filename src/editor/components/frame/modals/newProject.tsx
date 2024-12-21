@@ -1,20 +1,35 @@
-import { useContext } from "solid-js";
+import { batch, createEffect, useContext } from "solid-js";
 import { createStore } from "solid-js/store";
 import Button from "@editor/components/reusable/button";
 import { FrameContext } from "../context/provider";
 import { getAPI } from "@/preload/getAPI";
-
-interface ProjectStore {
-  path: string;
-  name: string;
-}
+import { createNewProject, NewProjectProps } from "@/API/project";
+import { joinPaths } from "@/utils/utils";
 
 export default function NewProject() {
   const context = useContext(FrameContext);
 
-  const [state, setState] = createStore<ProjectStore>({
-    path: "C:\\",
+  const [state, setState] = createStore<NewProjectProps>({
+    dirPath: "C:\\",
     name: "",
+    defaultPath: "",
+    tileSize: { x: 0, y: 0 },
+    chunkSize: { x: 0, y: 0 },
+    infinite: false,
+  });
+
+  createEffect(async () => {
+    const { getAppPath } = getAPI("API_FILE_SYSTEM");
+    const { success, path, error } = await getAppPath();
+    if (!success) {
+      console.error(error);
+      return;
+    }
+    batch(() => {
+      const shortened = validatePathSize(path);
+      setState("dirPath", shortened);
+      setState("defaultPath", shortened);
+    });
   });
 
   const setProjectPath = async () => {
@@ -22,15 +37,18 @@ export default function NewProject() {
     const { canceled, filePaths } = await openFolderPicker();
     if (canceled) return;
     const path = validatePathSize(filePaths[0]);
-    setState("path", `${path}\\${state.name}`);
+    setState("dirPath", path);
   };
 
   const createProject = async () => {
-    if (state.path === "C:\\" || state.name.length === 0) return;
-    const { createFolder } = getAPI("API_FILE_SYSTEM");
-    await createFolder(state.path);
+    if (state.name.length === 0) return;
+    const status = await createNewProject(state);
+    if (!status.success) {
+      console.error(status.error);
+      return;
+    }
     setState("name", "");
-    setState("path", "C:\\");
+    setState("dirPath", state.defaultPath);
     context.setModalOpen(false);
   };
 
@@ -57,15 +75,71 @@ export default function NewProject() {
         ></input>
       </div>
       <div class="flex my-2 gap-4">
-        <p class="min-w-40">Path: {state.path}</p>
-        <button
-          disabled={state.name.length === 0}
-          class="border-2 border-black px-2"
-          onClick={setProjectPath}
-        >
+        <p class="min-w-40">Path: {`${state.dirPath}\\${state.name}`}</p>
+        <button class="border-2 border-black px-2" onClick={setProjectPath}>
           ...
         </button>
       </div>
+      <div class="flex gap-4">
+        <p>infinite Map?</p>
+        <input
+          type="checkbox"
+          checked={state.infinite}
+          class="w-4"
+          onChange={(e) => setState("infinite", e.target.checked)}
+        />
+      </div>
+      <div class="flex gap-4">
+        <p>Tile Size</p>
+        <input
+          type="number"
+          class="w-8 bg-white bg-opacity-10 border-2 border-black focus:outline-none"
+          onInput={(e) =>
+            setState("tileSize", {
+              x: Number(e.target.value),
+              y: state.tileSize.y,
+            })
+          }
+        />
+        /
+        <input
+          type="number"
+          class="w-8 bg-white bg-opacity-10 border-2 border-black focus:outline-none"
+          onInput={(e) =>
+            setState("tileSize", {
+              x: state.tileSize.x,
+              y: Number(e.target.value),
+            })
+          }
+        />
+        px
+      </div>
+      <div class="flex gap-4">
+        <p>ChunkSize</p>
+        <input
+          type="number"
+          class="w-8 bg-white bg-opacity-10 border-2 border-black focus:outline-none"
+          onInput={(e) =>
+            setState("chunkSize", {
+              x: Number(e.target.value),
+              y: state.chunkSize.y,
+            })
+          }
+        />
+        /
+        <input
+          type="number"
+          class="w-8 bg-white bg-opacity-10 border-2 border-black focus:outline-none"
+          onInput={(e) =>
+            setState("chunkSize", {
+              x: state.chunkSize.x,
+              y: Number(e.target.value),
+            })
+          }
+        />
+        tiles
+      </div>
+
       <button
         class=" bg-slate-600 text-white px-3 rounded-sm absolute top-0 right-0"
         onclick={() => context.setModalOpen(false)}

@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog } from "electron";
 import path from "path";
 import installExtention from "electron-devtools-installer";
-import { setIPCHandlers } from "./IPC/ipc";
+import setIPCHandlers from "./IPC/ipc";
 if (require("electron-squirrel-startup")) {
   app.quit();
 }

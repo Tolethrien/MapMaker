@@ -1,8 +1,8 @@
 {
-  "name": "auroraapi",
-  "productName": "auroraapi",
+  "name": "mapmaker",
+  "productName": "mapmaker",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "map maker for 2d tiles based system games",
   "main": ".vite/build/main.js",
   "scripts": {
     "dev": "electron-forge start",
