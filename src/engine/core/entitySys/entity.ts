@@ -12,6 +12,7 @@ export default abstract class Entity {
   private components: Map<keyof typeof COMPONENTS, Component> = new Map();
 
   abstract update(): void;
+  abstract render(): void;
   constructor() {
     this.id = crypto.randomUUID();
     this.identifiers = {
@@ -20,6 +21,7 @@ export default abstract class Entity {
     };
     Engine.addEntity(this);
   }
+
   addComponent<T extends keyof typeof COMPONENTS>(
     componentName: T,
     props?: ConstructorParameters<(typeof COMPONENTS)[T]>[0]

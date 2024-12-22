@@ -13,7 +13,7 @@ import PresentationPipeline, {
   ScreenEffects,
 } from "./pipelines/presentationPipeline";
 import TresholdPipeline from "./pipelines/tresholdPipeline";
-import radialL from "../../../assets/lights/radial.png";
+import radialL from "./assets/lights/radial.png";
 import AuroraBuffer from "../auroraBuffer";
 import AuroraPipeline from "../auroraPipeline";
 import GUIPipeline from "./pipelines/guiPipeline";
@@ -21,11 +21,11 @@ import { parseTTF } from "./parserTTF/parse";
 import { createGlyphLUT } from "./parserTTF/glyphLUT";
 import { createGlyphAtlas } from "./parserTTF/glyphAtlas";
 import Fonter from "./parserTTF/fonter";
-import roboto from "@aurora/urp/assets/roboto.ttf";
+import roboto from "./assets/roboto.ttf";
 import PresentGuiPipeline from "./pipelines/presentGuiPipeline";
 import Vec2D from "@/math/vec2D";
 import dummyTexture from "./assets/dummy.png";
-import MathUtils from "@core/math/math";
+import MathUtils from "@/math/math";
 
 interface RenderData {
   numberOfQuads: {

@@ -1,4 +1,5 @@
 import Aurora from "./core/aurora/auroraCore";
+import Batcher from "./core/aurora/urp/batcher";
 import Draw from "./core/aurora/urp/draw";
 import Entity from "./core/entitySys/entity";
 
@@ -8,7 +9,12 @@ export default class Engine {
   public static async initialize(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     await Aurora.initialize(canvas); // needs to be before preload
-    Aurora.setFirstAuroraFrame();
+    await Batcher.createBatcher({
+      backgroundColor: [0, 255, 0, 255],
+      bloom: { active: false, str: 0 },
+      customCamera: false,
+      lighting: false,
+    });
 
     this.loop();
   }
@@ -23,6 +29,14 @@ export default class Engine {
   }
 
   private static loop() {
+    Batcher.startBatch();
+    this.entities.forEach((entity) => {
+      entity.update();
+    });
+    this.entities.forEach((entity) => {
+      entity.render();
+    });
+    Batcher.endBatch();
     requestAnimationFrame(() => this.loop());
   }
 }

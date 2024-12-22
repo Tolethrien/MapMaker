@@ -8,7 +8,7 @@ import {
   ValueRecord,
 } from "./parserTypes";
 import Vec2D from "@/math/vec2D";
-import Vec4D from "../../../math/vec4D";
+import Vec4D from "@/math/vec4D";
 import EngineDebugger from "@/engine/core/modules/debugger/debbuger";
 
 export function createGlyphLUT(
