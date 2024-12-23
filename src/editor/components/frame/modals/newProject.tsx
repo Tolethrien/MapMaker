@@ -4,7 +4,6 @@ import Button from "@editor/components/reusable/button";
 import { FrameContext } from "../context/provider";
 import { getAPI } from "@/preload/getAPI";
 import { createNewProject, NewProjectProps } from "@/API/project";
-import { joinPaths } from "@/utils/utils";
 
 export default function NewProject() {
   const context = useContext(FrameContext);
@@ -16,6 +15,7 @@ export default function NewProject() {
     tileSize: { w: 32, h: 32 },
     chunkSize: { w: 16, h: 16 },
     infinite: false,
+    autosave: false,
   });
 
   createEffect(async () => {
@@ -87,6 +87,15 @@ export default function NewProject() {
           checked={state.infinite}
           class="w-4"
           onChange={(e) => setState("infinite", e.target.checked)}
+        />
+      </div>
+      <div class="flex gap-4">
+        <p>AutoSave?</p>
+        <input
+          type="checkbox"
+          checked={state.autosave}
+          class="w-4"
+          onChange={(e) => setState("autosave", e.target.checked)}
         />
       </div>
       <div class="flex gap-4">

@@ -6,9 +6,11 @@ import { COMPONENTS } from "@/engine/core/entitySys/consts";
 // whether you're running in development or production).
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string;
 declare const MAIN_WINDOW_VITE_NAME: string;
-declare type TypeOfComponent<C extends keyof typeof COMPONENTS> = InstanceType<
-  (typeof COMPONENTS)[C]
->;
+declare global {
+  type TypeOfComponent<C extends keyof typeof COMPONENTS> = InstanceType<
+    (typeof COMPONENTS)[C]
+  >;
+}
 declare module "*.png" {
   const value: string;
   export default value;

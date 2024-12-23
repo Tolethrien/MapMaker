@@ -1,5 +1,5 @@
 import { DialogPickerPromise } from "@/backend/IPC/dialog";
-import { CreateFile, ReadFile } from "@/backend/IPC/fileSystem";
+import { CreateFile, EditFile, ReadFile } from "@/backend/IPC/fileSystem";
 import { contextBridge, ipcRenderer } from "electron";
 
 export const API_DIALOG = {
@@ -21,6 +21,9 @@ export const API_FILE_SYSTEM = {
     props: ReadFile
   ): Promise<AsyncStatus & { data: Buffer | string | undefined }> => {
     return await ipcRenderer.invoke("readFile", props);
+  },
+  editFile: async (props: EditFile): Promise<AsyncStatus> => {
+    return await ipcRenderer.invoke("editFile", props);
   },
   readDir: async (
     path: string

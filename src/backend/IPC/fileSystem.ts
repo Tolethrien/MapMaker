@@ -1,5 +1,5 @@
 import { ipcMain } from "electron";
-import { mkdir, readdir, readFile, writeFile } from "fs/promises";
+import { mkdir, readdir, readFile, writeFile, open } from "fs/promises";
 const TYPED_ARRAY_MAP = {
   Int8Array,
   Uint8Array,
@@ -34,13 +34,17 @@ export type ReadFile = { filePath: string } & (BinaryFile | NonBinaryFile);
 
 export type CreateFile = CreateFileBase &
   ((BinaryFile & { data: number[] }) | (NonBinaryFile & { data: string }));
-
+export type EditFile = { filePath: string; index: number } & (
+  | (BinaryFile & { value: number[] })
+  | (NonBinaryFile & { value: string })
+);
 export function fileSystemIPC() {
   ipcMain.handle("createFolder", createFolder);
   ipcMain.handle("createFile", createFile);
   ipcMain.handle("getAppPath", getAppPath);
   ipcMain.handle("readFile", readFromFile);
   ipcMain.handle("readDir", readFromDir);
+  ipcMain.handle("editFile", editFile);
 }
 
 async function createFolder(
@@ -78,6 +82,42 @@ async function createFile(
       success: false,
       error: error.message || `Write File error while creating ${fileName}`,
     };
+  }
+}
+async function editFile(
+  _: Electron.IpcMainInvokeEvent,
+  { filePath, index, value, type, typed }: EditFile
+): Promise<AsyncStatus> {
+  const path = `${filePath}.${type}`;
+
+  if (type === "txt" || type === "json") {
+    try {
+      const fileHandle = await open(path, "r+");
+
+      //TODO: zrobic edytorwanie stringu
+      // Nadpisz wartość w odpowiedniej pozycji
+      // await fileHandle.write(buffer, 0, buffer.length, index);
+      //tu coś
+      await fileHandle.close();
+      return { error: "", success: true };
+    } catch (error) {
+      return { error, success: false };
+    }
+  } else {
+    try {
+      const fileHandle = await open(path, "r+");
+
+      const typeArr = TYPED_ARRAY_MAP[typed];
+      const typeData = new typeArr(value as number[]);
+      const buffer = Buffer.from(typeData.buffer);
+      //tu coś
+      await fileHandle.write(buffer, 0, buffer.length, index);
+      await fileHandle.close();
+
+      return { error: "", success: true };
+    } catch (error) {
+      return { error, success: false };
+    }
   }
 }
 

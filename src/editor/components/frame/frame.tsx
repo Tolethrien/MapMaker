@@ -2,11 +2,11 @@ import ContextMenu from "@/editor/components/reusable/contextMenu/contextMenu";
 import FrameButton from "@/editor/components/frame/components/frameButton";
 import ContextButton from "@/editor/components/reusable/contextMenu/contextButton";
 import SecondLogo from "./components/secondLogo";
-import ContextSubMenu from "../reusable/contextMenu/contextSubMenu";
 import Modal from "../reusable/modal";
 import { FrameContext, FrameModalType } from "./context/provider";
 import { batch, useContext } from "solid-js";
 import FrameModalList from "./modals";
+import { saveProject } from "@/API/project";
 
 export default function Frame() {
   const context = useContext(FrameContext);
@@ -14,10 +14,16 @@ export default function Frame() {
   const openModal = (modalName: FrameModalType) => {
     batch(() => {
       context.setActiveButton("none");
-      context.setModalOpen(true);
       context.setActiveModal(modalName);
+      context.setModalOpen(true);
     });
   };
+  const onSaveProject = async () => {
+    const saveStatus = await saveProject();
+    if (!saveStatus.success) console.log(saveStatus);
+    context.setActiveButton("none");
+  };
+
   return (
     <>
       <div class="w-full h-[28px] app-drag text-wheat bg-slate-600 flex items-center justify-between pr-36 gap-4">
@@ -26,15 +32,13 @@ export default function Frame() {
             <ContextMenu>
               <ContextButton
                 name="New Project"
-                onClick={() => openModal("NewProject")}
+                onClick={() => openModal("newProject")}
               />
-              <ContextButton name="Open Project" onClick={() => {}} />
-              <ContextSubMenu name="Save as">
-                <ContextMenu>
-                  <ContextButton name="Hehe" onClick={() => {}} />
-                  <ContextButton name="Nene" onClick={() => {}} />
-                </ContextMenu>
-              </ContextSubMenu>
+              <ContextButton
+                name="Open Project"
+                onClick={() => openModal("openProject")}
+              />
+              <ContextButton name="Save Project" onClick={onSaveProject} />
             </ContextMenu>
           </FrameButton>
           <FrameButton name="Edit"></FrameButton>

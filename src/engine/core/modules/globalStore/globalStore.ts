@@ -3,10 +3,12 @@ import EngineDebugger from "../debugger/debugger";
 export default class GlobalStore {
   private static store: Map<string, unknown> = new Map();
 
+  public static clearStore() {
+    this.store.clear();
+  }
   public static add<T>(key: string, data: T) {
     this.store.set(key, data);
   }
-
   public static remove(key: string) {
     if (!this.store.delete(key))
       EngineDebugger.showWarn(

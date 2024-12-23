@@ -1,14 +1,20 @@
+import { saveProjectOnChange } from "@/API/project";
 import Draw from "@/engine/core/aurora/urp/draw";
 import Entity from "@/engine/core/entitySys/entity";
-import { TypeOfComponent } from "@/types/types";
 interface TileProps {
   pos: { x: number; y: number };
   size: { w: number; h: number };
+  color: number[];
+  tileIndex: number;
+  chunkIndex: number;
 }
 export default class Tile extends Entity {
   transform: TypeOfComponent<"Transform">;
   mouseEvent: TypeOfComponent<"MouseEvents">;
-  constructor({ pos, size }: TileProps) {
+  color: number[];
+  tileIndex: number;
+  chunkIndex: number;
+  constructor({ pos, size, color, chunkIndex, tileIndex }: TileProps) {
     super();
     this.transform = this.addComponent("Transform", {
       position: {
@@ -20,14 +26,23 @@ export default class Tile extends Entity {
         height: size.h * 0.5,
       },
     });
+    this.tileIndex = tileIndex;
+    this.chunkIndex = chunkIndex;
+    this.color = color;
     this.mouseEvent = this.addComponent("MouseEvents", {
       leftClick: (e) => {
-        if (e.shift) this.col = [0, 0, 0];
-        else this.col = [50, 50, 50];
+        if (e.shift) this.color = [0, 0, 0];
+        else this.color = [50, 50, 50];
+        //TODO: to powinno sie tylko wykonywac z flaga z projektu autosave
+        saveProjectOnChange(chunkIndex, tileIndex);
       },
-      rightClick: () => (this.col = [255, 255, 255]),
+
+      rightClick: () => {
+        this.color = [255, 255, 255];
+        saveProjectOnChange(chunkIndex, tileIndex);
+      },
     });
-    this.col = [Math.random() * 255, Math.random() * 255, Math.random() * 255];
+    // this.color = [Math.random() * 255, Math.random() * 255, Math.random() * 255];
   }
   update() {}
   render(): void {
@@ -45,7 +60,7 @@ export default class Tile extends Entity {
         height: this.transform.size.y,
       },
       textureToUse: 0,
-      tint: new Uint8ClampedArray(this.col),
+      tint: new Uint8ClampedArray(this.color),
     });
   }
 }
