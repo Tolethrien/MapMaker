@@ -1,15 +1,16 @@
 import Engine from "@/engine/engine";
 import Tile from "@/engine/sandbox/entities/tile";
 import { getAPI } from "@/preload/getAPI";
+import { getTilePosition } from "@/utils/chunk";
 import { joinPaths } from "@/utils/utils";
 
-const { createFolder, createFile } = getAPI("API_FILE_SYSTEM");
+const { createFolder, createFile, readFile } = getAPI("API_FILE_SYSTEM");
 export interface NewProjectProps {
   dirPath: string;
   name: string;
   defaultPath: string;
-  tileSize: { x: number; y: number };
-  chunkSize: { x: number; y: number };
+  tileSize: { w: number; h: number };
+  chunkSize: { w: number; h: number };
   infinite: boolean;
 }
 export async function createNewProject(
@@ -24,7 +25,7 @@ export async function createNewProject(
   const chunksStatus = await createFolder(joinPaths(folderPath, "chunks"));
   if (!chunksStatus.success) return chunksStatus;
 
-  const data: number[] = Array(256)
+  const data: number[] = Array(props.chunkSize.w * props.chunkSize.h)
     .fill(null)
     .map((_, index) => index);
   const ChunkFileStatus = await createFile({
@@ -52,24 +53,28 @@ export async function createNewProject(
     allowOverride: false,
   });
   if (!configFileStatus.success) return configFileStatus;
-  const { readFile } = getAPI("API_FILE_SYSTEM");
   const chunkDataStatus = await readFile({
     filePath: joinPaths(folderPath, "chunks", "chunk-1"),
     type: "bin",
     typed: "Int16Array",
   });
   const canvas = document.getElementById("editorCanvas") as HTMLCanvasElement;
-  // await Engine.initialize(canvas);
-  // if (typeof chunkDataStatus.data === "object") {
-  //   chunkDataStatus.data.forEach((chunk) => {
-  //     const tile = new Tile(chunk, [
-  //       Math.floor(Math.random() * 256),
-  //       Math.floor(Math.random() * 256),
-  //       Math.floor(Math.random() * 256),
-  //     ]);
-  //     Engine.addEntity(tile);
-  //   });
-  // }
+  await Engine.initialize(canvas);
+  if (typeof chunkDataStatus.data === "object") {
+    chunkDataStatus.data.forEach((chunk) => {
+      const tilePos = getTilePosition({
+        chunkPos: { x: 0, y: 0 },
+        chunkSize: projectConfig.chunkSize,
+        tileIndex: chunk,
+        tileSize: projectConfig.tileSize,
+      });
+      const tile = new Tile({
+        pos: tilePos,
+        size: { h: projectConfig.tileSize.h, w: projectConfig.tileSize.w },
+      });
+      Engine.addEntity(tile);
+    });
+  }
   //TODO: zamienić budowanie pierwszego chunka z pliku na po prostu branie danych z configu, bo po co czytac dane które już masz
 
   return { error: "", success: true };

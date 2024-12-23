@@ -13,8 +13,8 @@ export default function NewProject() {
     dirPath: "C:\\",
     name: "",
     defaultPath: "",
-    tileSize: { x: 0, y: 0 },
-    chunkSize: { x: 0, y: 0 },
+    tileSize: { w: 32, h: 32 },
+    chunkSize: { w: 16, h: 16 },
     infinite: false,
   });
 
@@ -96,8 +96,8 @@ export default function NewProject() {
           class="w-8 bg-white bg-opacity-10 border-2 border-black focus:outline-none"
           onInput={(e) =>
             setState("tileSize", {
-              x: Number(e.target.value),
-              y: state.tileSize.y,
+              w: Number(e.target.value),
+              h: state.tileSize.h,
             })
           }
         />
@@ -107,8 +107,8 @@ export default function NewProject() {
           class="w-8 bg-white bg-opacity-10 border-2 border-black focus:outline-none"
           onInput={(e) =>
             setState("tileSize", {
-              x: state.tileSize.x,
-              y: Number(e.target.value),
+              w: state.tileSize.w,
+              h: Number(e.target.value),
             })
           }
         />
@@ -121,8 +121,8 @@ export default function NewProject() {
           class="w-8 bg-white bg-opacity-10 border-2 border-black focus:outline-none"
           onInput={(e) =>
             setState("chunkSize", {
-              x: Number(e.target.value),
-              y: state.chunkSize.y,
+              w: Number(e.target.value),
+              h: state.chunkSize.h,
             })
           }
         />
@@ -132,8 +132,8 @@ export default function NewProject() {
           class="w-8 bg-white bg-opacity-10 border-2 border-black focus:outline-none"
           onInput={(e) =>
             setState("chunkSize", {
-              x: state.chunkSize.x,
-              y: Number(e.target.value),
+              w: state.chunkSize.w,
+              h: Number(e.target.value),
             })
           }
         />

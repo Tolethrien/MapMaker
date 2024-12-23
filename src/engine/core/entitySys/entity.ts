@@ -26,7 +26,9 @@ export default abstract class Entity {
     componentName: T,
     props?: ConstructorParameters<(typeof COMPONENTS)[T]>[0]
   ) {
-    const component = new COMPONENTS[componentName](props ?? {});
+    const component = new COMPONENTS[componentName](
+      props ?? {}
+    ) as InstanceType<(typeof COMPONENTS)[T]>;
     this.components.set(componentName, component);
     return component;
   }

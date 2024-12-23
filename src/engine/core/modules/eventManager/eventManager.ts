@@ -1,274 +1,105 @@
-import { canvas } from "@/core/engine/engine";
-import EngineDebugger from "../debugger/debbuger";
-
-export type MouseEventType = (typeof MOUSE_EVENTS)[number];
-export type KeyEventType = (typeof KEY_EVENTS)[number];
-export type OtherEventType = (typeof OTHER_EVENTS)[number];
-export type AllEventType = MouseEventType | KeyEventType | OtherEventType;
+import Engine from "@/engine/engine";
+import Transform from "@/engine/sandbox/components/transform";
+import Batcher from "../../aurora/urp/batcher";
+import AuroraCamera from "../../aurora/urp/auroraCamera";
+import Mat4 from "@/math/mat4";
+import Vec2D from "@/math/vec2D";
+import EngineDebugger from "../debugger/debugger";
+type pos2D = { x: number; y: number };
 type eventListener = { name: string; callback: (e: never) => void };
-type EventCallback<T extends AllEventType> = {
-  name: string;
-  callback: (options: EventPayloads[T]) => void;
-};
-type EventModifiers = { shift: boolean; alt: boolean; ctrl: boolean };
-type KeyCallbackOptions = { key: string } & EventModifiers;
-type MouseWheelOptions = { delta: number };
-type MouseEventOptions = {
+type EventBus = Map<eventListener["name"], eventListener["callback"]>;
+export type mouseEvents = (typeof MOUSE_EVENTS)[number];
+
+export const MOUSE_EVENTS = ["leftClick", "rightClick", "scrollClick"] as const;
+export interface MouseEventMod {
   x: number;
   y: number;
-  button: number;
-} & EventModifiers;
-type resizeEventOptions = { currentSize: { x: number; y: number } };
-type EventPayloads = {
-  mouseMove: Omit<MouseEventOptions, "button">;
-  mouseClick: Omit<MouseEventOptions, "button">;
-  mouseClickOutside: Omit<MouseEventOptions, "button">;
-  mouseOver: { x: number; y: number };
-  mouseAuxClick: MouseEventOptions;
-  mouseDown: MouseEventOptions;
-  mouseUp: MouseEventOptions;
-  mouseHold: MouseEventOptions;
-  mouseWheel: MouseWheelOptions;
-  keyDown: KeyCallbackOptions;
-  keyUp: KeyCallbackOptions;
-  keyHold: KeyCallbackOptions;
-  resizeWindow: resizeEventOptions;
-};
-export const MOUSE_EVENTS = [
-  "mouseMove",
-  "mouseClick",
-  "mouseAuxClick",
-  "mouseOver",
-  "mouseClickOutside",
-  "mouseDown",
-  "mouseUp",
-  "mouseHold",
-  "mouseWheel",
-] as const;
-//TODO: mouseDrag
-export const KEY_EVENTS = ["keyDown", "keyUp", "keyHold"] as const;
-export const OTHER_EVENTS = ["resizeWindow"] as const;
-
+  alt: boolean;
+  shift: boolean;
+  ctrl: boolean;
+}
 export default class EventManager {
-  private static events: Map<
-    AllEventType | string,
-    Map<eventListener["name"], eventListener["callback"]>
-  > = new Map();
-  private static pressedKeys: Set<string> = new Set();
-  private static holdKeys: Map<string, NodeJS.Timeout> = new Map();
-  private static mouseHoldRefresh = 16;
-  private static keyHoldRefresh = 16;
-  private static mousePosition = { x: 0, y: 0 };
+  private static canvas: HTMLCanvasElement;
+  private static eventBus: Map<string, EventBus>;
+  public static init(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
+    this.eventBus = new Map();
+    //TODO: nie przeszukuj wszystkich encji, sprawdz wpierw na którym chunku jest myszka, i przeszukaj tylko te tile w nim
 
-  public static get getMousePosition() {
-    return this.mousePosition;
-  }
-
-  public static set setMouseHoldRefresh(ms: number) {
-    this.mouseHoldRefresh = ms;
-  }
-
-  public static set setKeyHoldRefresh(ms: number) {
-    this.keyHoldRefresh = ms;
-  }
-
-  private static eventsUpdate() {
-    this.emit("mouseOver", {
-      x: this.mousePosition.x,
-      y: this.mousePosition.y,
+    canvas.addEventListener("click", (e) =>
+      this.mouseClickEvent(e, "leftClick")
+    );
+    canvas.addEventListener("auxclick", (e) => {
+      if (e.button === 2) this.mouseClickEvent(e, "rightClick");
+      else if (e.button === 1) this.mouseClickEvent(e, "scrollClick");
     });
   }
-
-  public static initialize() {
-    [...KEY_EVENTS, ...MOUSE_EVENTS, ...OTHER_EVENTS].forEach((eventName) =>
-      this.events.set(eventName, new Map())
+  private static mouseClickEvent(e: MouseEvent, type: mouseEvents) {
+    const mouseEventMod: MouseEventMod = {
+      x: e.offsetX,
+      y: e.offsetY,
+      alt: e.altKey,
+      shift: e.shiftKey,
+      ctrl: e.ctrlKey,
+    };
+    Engine.getEntities().forEach((ent) => {
+      const transform = ent.getComponent("Transform");
+      const mouseEvent = ent.getComponent("MouseEvents");
+      if (this.isMouseCollide(transform, { x: e.offsetX, y: e.offsetY })) {
+        mouseEvent.onEvent[type]?.(mouseEventMod);
+      }
+    });
+  }
+  private static isMouseCollide(
+    { position, size }: Transform,
+    mousePos: pos2D
+  ) {
+    const normalizedMouse = this.mouseToWorld(
+      mousePos,
+      AuroraCamera.getProjectionViewMatrix
     );
-    this.createEvents();
+    return (
+      normalizedMouse.x >= position.get.x - size.get.x &&
+      normalizedMouse.x <= position.get.x + size.get.x &&
+      normalizedMouse.y >= position.get.y - size.get.y &&
+      normalizedMouse.y <= position.get.y + size.get.y
+    );
+  }
+  public static mouseToWorld({ x, y }: pos2D, camMatrix: Mat4) {
+    const normalizedX = (x / this.canvas.width) * 2 - 1;
+    const normalizedY = -(y / this.canvas.height) * 2 + 1;
+    const inverseMatrix = camMatrix.invert();
+    return Vec2D.create(
+      inverseMatrix.transform([normalizedX, normalizedY, -1, 1]) as [
+        number,
+        number
+      ]
+    ).get;
+  }
+  public static addEvent(event: string) {
+    this.eventBus.set(event, new Map());
   }
 
-  public static on<T extends AllEventType>(
-    event: T,
-    listener: EventCallback<T>
-  ) {
-    this.events
-      .get(event)!
-      .set(listener.name, (e) => listener.callback(e as EventPayloads[T]));
-  }
-
-  public static off(event: AllEventType, listenerName: eventListener["name"]) {
-    this.events.get(event)!.delete(listenerName);
-  }
-
-  private static emit<T extends AllEventType>(
-    event: AllEventType,
-    options: EventPayloads[T]
-  ) {
-    this.events.get(event)!.forEach((listener) => listener(options as never));
-  }
-
-  public static addCustom(event: string) {
-    this.events.set(event, new Map());
-  }
-
-  public static removeCustom(event: string) {
-    this.events.delete(event) ??
+  public static removeEvent(event: string) {
+    this.eventBus.delete(event) ??
       EngineDebugger.showError(`No event with name ${event} to delete`);
   }
 
-  public static onCustom(event: string, listener: eventListener) {
-    this.events.get(event)?.set(listener.name, (e) => listener.callback(e)) ??
+  public static onEvent(event: string, listener: eventListener) {
+    this.eventBus.get(event)?.set(listener.name, (e) => listener.callback(e)) ??
       EngineDebugger.showError(
-        `No event with name ${event}. This is a custome event, make sure you register it first with 'addCustome'!`
+        `No event with name ${event}. This is a custom event, make sure you register it first with 'addCustom'!`
       );
   }
 
-  public static offCustom(event: string, listenerName: eventListener["name"]) {
-    this.events.get(event)?.delete(listenerName) ??
+  public static offEvent(event: string, listenerName: eventListener["name"]) {
+    this.eventBus.get(event)?.delete(listenerName) ??
       EngineDebugger.showError(
         `No event callback with name ${listenerName} in event: "${event}"`
       );
   }
 
-  public static emitCustom<T extends unknown>(event: string, options?: T) {
-    this.events.get(event)?.forEach((listener) => listener(options as never));
-  }
-
-  private static createEvents() {
-    canvas.addEventListener("click", (e) => {
-      const eventOptions = {
-        x: e.offsetX,
-        y: e.offsetY,
-        alt: e.altKey,
-        shift: e.shiftKey,
-        ctrl: e.ctrlKey,
-      };
-      this.emit("mouseClick", eventOptions);
-      this.emit("mouseClickOutside", eventOptions);
-    });
-    canvas.addEventListener("auxclick", (e) => {
-      const eventOptions = {
-        x: e.offsetX,
-        y: e.offsetY,
-        alt: e.altKey,
-        shift: e.shiftKey,
-        ctrl: e.ctrlKey,
-      };
-      this.emit("mouseAuxClick", eventOptions);
-      this.emit("mouseClickOutside", eventOptions);
-    });
-    canvas.addEventListener("mousemove", (e) => {
-      this.mousePosition = { x: e.offsetX, y: e.offsetY };
-      this.emit("mouseMove", {
-        x: e.offsetX,
-        y: e.offsetY,
-        alt: e.altKey,
-        shift: e.shiftKey,
-        ctrl: e.ctrlKey,
-      });
-    });
-    canvas.addEventListener("mousedown", (e) => {
-      this.emit("mouseDown", {
-        x: e.offsetX,
-        y: e.offsetY,
-        button: e.button,
-        alt: e.altKey,
-        shift: e.shiftKey,
-        ctrl: e.ctrlKey,
-      });
-    });
-    canvas.addEventListener("mouseup", (e) => {
-      this.emit("mouseUp", {
-        x: e.offsetX,
-        y: e.offsetY,
-        button: e.button,
-        alt: e.altKey,
-        shift: e.shiftKey,
-        ctrl: e.ctrlKey,
-      });
-    });
-    canvas.addEventListener("wheel", (e) => {
-      this.emit("mouseWheel", { delta: e.deltaY });
-    });
-    window.addEventListener("keydown", (e) => {
-      if (this.pressedKeys.has(e.key)) return;
-      this.pressedKeys.add(e.key);
-      this.emit("keyDown", {
-        key: e.key,
-        alt: e.altKey,
-        shift: e.shiftKey,
-        ctrl: e.ctrlKey,
-      });
-    });
-    window.addEventListener("keyup", (e) => {
-      this.pressedKeys.delete(e.key);
-      this.emit("keyUp", {
-        key: e.key,
-        alt: e.altKey,
-        shift: e.shiftKey,
-        ctrl: e.ctrlKey,
-      });
-    });
-    window.addEventListener("resize", () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      this.emit("resizeWindow", {
-        currentSize: { x: window.innerWidth, y: window.innerHeight },
-      });
-    });
-    this.mouseHoldEvent();
-    this.keyHoldEvent();
-  }
-
-  private static mouseHoldEvent() {
-    let holdTime: NodeJS.Timeout | undefined;
-    canvas.addEventListener("mousedown", (e) => {
-      if (holdTime !== undefined) return;
-      holdTime = setInterval(() => {
-        this.emit("mouseHold", {
-          x: e.offsetX,
-          y: e.offsetY,
-          button: e.button,
-          alt: e.altKey,
-          shift: e.shiftKey,
-          ctrl: e.ctrlKey,
-        });
-      }, this.mouseHoldRefresh);
-    });
-    canvas.addEventListener("mouseup", () => {
-      clearInterval(holdTime);
-      holdTime = undefined;
-    });
-  }
-
-  private static keyHoldEvent() {
-    window.addEventListener("keydown", (e) => {
-      if (this.holdKeys.has(e.key)) return;
-      this.emit("keyHold", {
-        key: e.key,
-        alt: e.altKey,
-        shift: e.shiftKey,
-        ctrl: e.ctrlKey,
-      });
-      this.holdKeys.set(
-        e.key,
-        setInterval(
-          () =>
-            this.emit("keyHold", {
-              key: e.key,
-              alt: e.altKey,
-              shift: e.shiftKey,
-              ctrl: e.ctrlKey,
-            }),
-          this.keyHoldRefresh
-        )
-      );
-    });
-
-    window.addEventListener("keyup", (e) => {
-      const interval = this.holdKeys.get(e.key);
-      if (!interval) return;
-      clearInterval(interval);
-      this.holdKeys.delete(e.key);
-    });
+  public static emitEvent<T extends unknown>(event: string, options?: T) {
+    this.eventBus.get(event)?.forEach((listener) => listener(options as never));
   }
 }

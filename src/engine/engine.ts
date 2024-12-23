@@ -2,6 +2,7 @@ import Aurora from "./core/aurora/auroraCore";
 import Batcher from "./core/aurora/urp/batcher";
 import Draw from "./core/aurora/urp/draw";
 import Entity from "./core/entitySys/entity";
+import EventManager from "./core/modules/eventManager/eventManager";
 
 export default class Engine {
   private static canvas: HTMLCanvasElement;
@@ -15,7 +16,7 @@ export default class Engine {
       customCamera: false,
       lighting: false,
     });
-
+    EventManager.init(canvas);
     this.loop();
   }
   public static getEntities() {
