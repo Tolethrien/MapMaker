@@ -3,7 +3,7 @@ import Button from "../reusable/button";
 
 export default function LeftBar() {
   return (
-    <div class="flex justify-center items-center flex-col min-w-32">
+    <div class="flex justify-center items-center flex-col min-w-32 bg-main-2">
       left bar
       <Button name="Click" onClick={() => new Tile()} />
     </div>

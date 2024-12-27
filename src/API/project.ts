@@ -13,7 +13,6 @@ export interface NewProjectProps {
   defaultPath: string;
   tileSize: { w: number; h: number };
   chunkSize: { w: number; h: number };
-  infinite: boolean;
   autosave: boolean;
 }
 interface ProjectConfig {
@@ -22,7 +21,6 @@ interface ProjectConfig {
   tileSize: { w: number; h: number };
   chunkSize: { w: number; h: number };
   autosave: boolean;
-  infinite: boolean;
 }
 export async function createNewProject(
   props: NewProjectProps
@@ -35,10 +33,8 @@ export async function createNewProject(
 
   const chunksStatus = await createFolder(joinPaths(folderPath, "chunks"));
   if (!chunksStatus.success) return chunksStatus;
-
-  const data: number[] = Array(props.chunkSize.w * props.chunkSize.h * 3).fill(
-    0
-  );
+  const size = props.chunkSize.w * props.chunkSize.h * 3;
+  const data: number[] = Array(size).fill(0);
   const ChunkFileStatus = await createFile({
     data: data,
     dirPath: joinPaths(folderPath, "chunks"),
@@ -54,7 +50,6 @@ export async function createNewProject(
     tileSize: props.tileSize,
     chunkSize: props.chunkSize,
     projectPath: props.dirPath,
-    infinite: props.infinite,
     autosave: props.autosave,
   };
   const configFileStatus = await createFile({

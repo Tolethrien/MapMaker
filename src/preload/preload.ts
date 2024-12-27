@@ -10,6 +10,9 @@ export const API_DIALOG = {
     return await ipcRenderer.invoke("openFilePicker", desc);
   },
 };
+export const API_APP = {
+  appTerminate: () => ipcRenderer.send("appTerminate"),
+};
 export const API_FILE_SYSTEM = {
   createFolder: async (path: string): Promise<AsyncStatus> => {
     return await ipcRenderer.invoke("createFolder", path);
@@ -38,6 +41,7 @@ if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld("API_DIALOG", API_DIALOG);
     contextBridge.exposeInMainWorld("API_FILE_SYSTEM", API_FILE_SYSTEM);
+    contextBridge.exposeInMainWorld("API_APP", API_APP);
   } catch (error) {
     console.error(error);
   }

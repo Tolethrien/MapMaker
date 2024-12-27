@@ -28,7 +28,7 @@ export default function Canvas() {
   //   });
   // });
   return (
-    <div class="flex flex-grow w-fit justify-center ">
+    <div class="flex flex-grow w-fit justify-center bg-main-1">
       <canvas
         ref={ref}
         id="editorCanvas"

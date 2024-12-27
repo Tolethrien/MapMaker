@@ -21,7 +21,9 @@ export default function ContextSubMenu(props: Props) {
     >
       {props.name}
       <Show when={isHover()}>
-        <div class="absolute left-[99%] top-0">{props.children}</div>
+        <div class="absolute left-full -translate-x-1 top-0">
+          {props.children}
+        </div>
       </Show>
     </div>
   );

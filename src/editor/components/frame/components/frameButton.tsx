@@ -6,8 +6,6 @@ interface Props {
   children?: JSX.Element;
   name: FrameButtonTypes;
 }
-const BUTTON_CLASS =
-  "px-4 text-wheat app-prevent-drag outline-none text-sm  relative hover:bg-gray-500";
 export default function FrameButton(props: Props) {
   const context = useContext(FrameContext);
 
@@ -21,10 +19,8 @@ export default function FrameButton(props: Props) {
 
   return (
     <button
-      class={`${BUTTON_CLASS} ${
-        context.getActiveButton() === props.name
-          ? "bg-gray-500"
-          : "bg-slate-600"
+      class={`px-4 text-wheat app-prevent-drag outline-none text-sm  relative hover:bg-main-4 ${
+        context.getActiveButton() === props.name && "bg-main-4"
       }`}
       onMouseEnter={changeOnActiveAndENter}
       onClick={() => context.setActiveButton(props.name)}

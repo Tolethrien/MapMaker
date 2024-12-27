@@ -1,12 +1,16 @@
 import ContextMenu from "@/editor/components/reusable/contextMenu/contextMenu";
 import FrameButton from "@/editor/components/frame/components/frameButton";
 import ContextButton from "@/editor/components/reusable/contextMenu/contextButton";
-import SecondLogo from "./components/secondLogo";
-import Modal from "../reusable/modal";
-import { FrameContext, FrameModalType } from "./context/provider";
+import SecondLogo from "@editor/components/frame/components/secondLogo";
+import Modal from "@editor/components/reusable/modal";
+import {
+  FrameContext,
+  FrameModalType,
+} from "@editor/components/frame/context/provider";
 import { batch, useContext } from "solid-js";
 import FrameModalList from "./modals";
 import { saveProject } from "@/API/project";
+import { getAPI } from "@/preload/getAPI";
 
 export default function Frame() {
   const context = useContext(FrameContext);
@@ -23,10 +27,14 @@ export default function Frame() {
     if (!saveStatus.success) console.log(saveStatus);
     context.setActiveButton("none");
   };
+  const onAppExit = () => {
+    const { appTerminate } = getAPI("API_APP");
+    appTerminate();
+  };
 
   return (
     <>
-      <div class="w-full h-[28px] app-drag text-wheat bg-slate-600 flex items-center justify-between pr-36 gap-4">
+      <div class="w-full h-[28px] app-drag text-wheat bg-main-3 flex items-center justify-between pr-36 gap-4">
         <div class="flex h-full gap-1">
           <FrameButton name="File">
             <ContextMenu>
@@ -38,7 +46,9 @@ export default function Frame() {
                 name="Open Project"
                 onClick={() => openModal("openProject")}
               />
+
               <ContextButton name="Save Project" onClick={onSaveProject} />
+              <ContextButton name="Exit" onClick={onAppExit} />
             </ContextMenu>
           </FrameButton>
           <FrameButton name="Edit"></FrameButton>

@@ -11,16 +11,10 @@ export function getTilePosition({
   tileIndex,
   tileSize,
 }: GetTilePops) {
-  //get tile position based on placeman in chunk grid
   const tilesPerRow = chunkSize.w;
-
-  const spacing = 2; // odstęp w pikselach
-
-  // Oblicz współrzędne kafelka w siatce chunku
-  const tileXIndex = tileIndex % tilesPerRow; // Współrzędna X w siatce chunku
-  const tileYIndex = Math.floor(tileIndex / tilesPerRow); // Współrzędna Y w siatce chunku
-
-  // Oblicz globalną pozycję kafelka na podstawie pozycji chunku i wymiarów kafelka
+  const spacing = 2;
+  const tileXIndex = tileIndex % tilesPerRow;
+  const tileYIndex = Math.floor(tileIndex / tilesPerRow);
   const tileX = chunkPos.x + tileXIndex * tileSize.w + tileXIndex * spacing;
   const tileY = chunkPos.y + tileYIndex * tileSize.h + tileYIndex * spacing;
 

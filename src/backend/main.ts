@@ -28,7 +28,7 @@ function createWindow() {
     frame: false,
     titleBarStyle: "hidden",
     titleBarOverlay: {
-      color: "#475569",
+      color: "#241D3F",
       height: 28,
       symbolColor: "#f5deb3",
     },
