@@ -36,7 +36,6 @@ export default class Aurora {
     const device = await adapter.requestDevice({
       requiredFeatures: ["bgra8unorm-storage"],
     });
-    console.log(context);
     context.configure({
       device: device,
       format: navigator.gpu.getPreferredCanvasFormat(),
@@ -62,7 +61,7 @@ export default class Aurora {
           view: Aurora.context.getCurrentTexture().createView(),
           loadOp: "clear",
           storeOp: "store",
-          clearValue: [0, 1, 0, 1],
+          clearValue: [0, 0, 0, 1],
         },
       ],
     });

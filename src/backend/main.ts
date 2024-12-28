@@ -21,6 +21,8 @@ app.on("activate", () => {
   }
 });
 
+// Zapewnienie, że aplikacja nie zamknie się na `Cmd+Q` (MacOS)
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 800,
@@ -37,6 +39,10 @@ function createWindow() {
       nodeIntegration: false,
       preload: path.join(__dirname, "preload.js"),
     },
+  });
+  mainWindow.on("close", (event) => {
+    event.preventDefault();
+    mainWindow.webContents.send("appCloseEvent", true);
   });
   setIPCHandlers();
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) onDev();

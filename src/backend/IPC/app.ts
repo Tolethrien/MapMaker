@@ -1,9 +1,12 @@
 import { app, ipcMain } from "electron";
-import { mainWindow } from "../main";
 
 export function appIPC() {
   ipcMain.on("appTerminate", appTerminate);
+  ipcMain.on("appClose", appClose);
+}
+async function appClose() {
+  app.quit();
 }
 async function appTerminate() {
-  app.quit();
+  app.exit();
 }

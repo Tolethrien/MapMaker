@@ -89,20 +89,21 @@ async function editFile(
   { filePath, index, value, type, typed }: EditFile
 ): Promise<AsyncStatus> {
   const path = `${filePath}.${type}`;
-
-  if (type === "txt" || type === "json") {
-    try {
-      const fileHandle = await open(path, "r+");
-
-      //TODO: zrobic edytorwanie stringu
-      // Nadpisz wartość w odpowiedniej pozycji
-      // await fileHandle.write(buffer, 0, buffer.length, index);
-      //tu coś
-      await fileHandle.close();
-      return { error: "", success: true };
-    } catch (error) {
-      return { error, success: false };
-    }
+  if (type == "txt") {
+    const fileContent = await readFile(path, "utf-8");
+    const updated =
+      fileContent.substring(0, index) +
+      value +
+      fileContent.substring(index + value.length);
+    await writeFile(path, updated, "utf-8");
+    return { error: "", success: true };
+  } else if (type === "json") {
+    const fileContent = await readFile(path, "utf-8");
+    const jsonContent = JSON.parse(fileContent);
+    jsonContent[index] = value; // Zakładam, że `index` to klucz w JSON
+    const updated = JSON.stringify(jsonContent, null, 2);
+    await writeFile(path, updated, "utf-8");
+    return { error: "", success: true };
   } else {
     try {
       const fileHandle = await open(path, "r+");

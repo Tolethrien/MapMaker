@@ -1,8 +1,3 @@
-import Engine from "@/engine/engine";
-import Tile from "@/engine/sandbox/entities/tile";
-import { getTilePosition } from "@/utils/chunk";
-import { createEffect } from "solid-js";
-
 export default function Canvas() {
   let ref!: HTMLCanvasElement;
   // createEffect(async () => {
@@ -27,6 +22,7 @@ export default function Canvas() {
   //     Engine.addEntity(tile);
   //   });
   // });
+
   return (
     <div class="flex flex-grow w-fit justify-center bg-main-1">
       <canvas
@@ -34,7 +30,7 @@ export default function Canvas() {
         id="editorCanvas"
         width={600}
         height={600}
-        class="border border-black w-[600px] h-[600px]"
+        class="border border-wheat"
       />
     </div>
   );

@@ -7,6 +7,7 @@ interface FontMeta {
 }
 export default class Fonter {
   private static loadedFonts = new Map<string, FontMeta>();
+
   public static addFont({
     fontName,
     LUT,
@@ -20,7 +21,7 @@ export default class Fonter {
     if (!data) throw new Error(`no meta data of font: ${fontName}`);
     return data;
   }
-  public static get getAlaFontsMeta() {
+  public static get getAllFontsMeta() {
     return this.loadedFonts;
   }
 }

@@ -26,6 +26,8 @@ import PresentGuiPipeline from "./pipelines/presentGuiPipeline";
 import Vec2D from "@/math/vec2D";
 import dummyTexture from "./assets/dummy.png";
 import MathUtils from "@/math/math";
+import AuroraShader from "../auroraShader";
+import Vec4D from "@/math/vec4D";
 
 interface RenderData {
   numberOfQuads: {
@@ -81,20 +83,20 @@ export interface GlyphSchema {
   xoffset: number;
   id: number;
 }
-
+const INIT_DATA: RenderData = {
+  drawCallsInFrame: { compute: 0, render: 0 },
+  limits: { lightsPerFrame: 100, quadsPerFrame: 10000, guiPerFrame: 1000 },
+  numberOfLights: 0,
+  numberOfQuads: { game: 0, gui: 0, total: 0 },
+  backgroundColor: [0, 0, 0, 255],
+  colorCorrection: [255, 255, 255],
+  customCamera: false,
+  bloom: { active: true, str: 16 },
+  lighting: true,
+  screenShader: { type: "none", str: 0 },
+} as const;
 export default class Batcher {
-  private static renderData: RenderData = {
-    drawCallsInFrame: { compute: 0, render: 0 },
-    limits: { lightsPerFrame: 100, quadsPerFrame: 10000, guiPerFrame: 1000 },
-    numberOfLights: 0,
-    numberOfQuads: { game: 0, gui: 0, total: 0 },
-    backgroundColor: [0, 0, 0, 255],
-    colorCorrection: [255, 255, 255],
-    customCamera: false,
-    bloom: { active: true, str: 16 },
-    lighting: true,
-    screenShader: { type: "none", str: 0 },
-  };
+  private static renderData: RenderData = structuredClone(INIT_DATA);
   private static stride: Stride = {
     vertices: 8,
     gameAddData: 8,
@@ -135,6 +137,16 @@ export default class Batcher {
       PresentationPipeline.createPipeline();
       PresentGuiPipeline.createPipeline();
     }
+  }
+  public static closeBatcher() {
+    // dirty fix for now to planned reword of aurora
+    // for now it works!
+    AuroraBuffer.getAllBuffers.clear();
+    AuroraPipeline.clearPipelineData();
+    AuroraShader.getSavedShaders.clear();
+    AuroraTexture.clearAllTextures();
+    Fonter.getAllFontsMeta.clear();
+    this.renderData = structuredClone(INIT_DATA);
   }
 
   public static get getRenderData() {
@@ -429,7 +441,7 @@ export default class Batcher {
   }
 
   private static recalculateUVS({ width }: GPUAuroraTexture["meta"]) {
-    const fonts = Fonter.getAlaFontsMeta;
+    const fonts = Fonter.getAllFontsMeta;
     fonts.forEach(({ LUT, atlasSize }) => {
       if (width === atlasSize.x) return;
       const siezRatio = width / atlasSize.x;

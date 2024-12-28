@@ -7,13 +7,27 @@ import {
   FrameContext,
   FrameModalType,
 } from "@editor/components/frame/context/provider";
-import { batch, useContext } from "solid-js";
+import { batch, createSignal, useContext } from "solid-js";
 import FrameModalList from "./modals";
-import { saveProject } from "@/API/project";
+import { closeProject, saveChunk } from "@/API/project";
 import { getAPI } from "@/preload/getAPI";
+import EventBus from "@/engine/core/modules/eventBus/eventBus";
 
 export default function Frame() {
   const context = useContext(FrameContext);
+  const [initButtonDisable, setInitButtonDisable] = createSignal(true);
+  const { onAppCloseEvent, appClose } = getAPI("API_APP");
+
+  //crating event to block buttons on inactive engine
+  EventBus.add("engineInit");
+  EventBus.on("engineInit", {
+    name: "frameButtons",
+    callback: (e: boolean) => setInitButtonDisable(!e),
+  });
+  //assigning opening modal to closeApp event
+  onAppCloseEvent(() => {
+    openModal("closeApp");
+  });
 
   const openModal = (modalName: FrameModalType) => {
     batch(() => {
@@ -23,13 +37,16 @@ export default function Frame() {
     });
   };
   const onSaveProject = async () => {
-    const saveStatus = await saveProject();
+    const saveStatus = await saveChunk();
     if (!saveStatus.success) console.log(saveStatus);
     context.setActiveButton("none");
   };
+  const onCloseProject = async () => {
+    closeProject();
+    context.setActiveButton("none");
+  };
   const onAppExit = () => {
-    const { appTerminate } = getAPI("API_APP");
-    appTerminate();
+    appClose();
   };
 
   return (
@@ -47,7 +64,16 @@ export default function Frame() {
                 onClick={() => openModal("openProject")}
               />
 
-              <ContextButton name="Save Project" onClick={onSaveProject} />
+              <ContextButton
+                name="Save Project"
+                onClick={onSaveProject}
+                disable={initButtonDisable}
+              />
+              <ContextButton
+                name="Close Project"
+                onClick={onCloseProject}
+                disable={initButtonDisable}
+              />
               <ContextButton name="Exit" onClick={onAppExit} />
             </ContextMenu>
           </FrameButton>

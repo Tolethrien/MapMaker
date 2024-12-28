@@ -31,6 +31,10 @@ export default class AuroraTexture {
     this.samplerStore.set(label, sampler);
     return sampler;
   }
+  public static clearAllTextures() {
+    this.textureStore.clear();
+    this.samplerStore.clear();
+  }
   public static async createTexture({
     format,
     label,

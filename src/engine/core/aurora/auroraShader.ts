@@ -3,6 +3,9 @@ import Aurora from "./auroraCore";
 export default class AuroraShader {
   private static shaders: Map<string, GPUShaderModule> = new Map();
 
+  public static get getSavedShaders() {
+    return this.shaders;
+  }
   public static addShader(shaderName: string, shaderCode: string) {
     this.shaders.set(
       shaderName,

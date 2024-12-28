@@ -11,7 +11,9 @@ export const API_DIALOG = {
   },
 };
 export const API_APP = {
+  appClose: () => ipcRenderer.send("appClose"),
   appTerminate: () => ipcRenderer.send("appTerminate"),
+  onAppCloseEvent: (e: () => void) => ipcRenderer.on("appCloseEvent", e),
 };
 export const API_FILE_SYSTEM = {
   createFolder: async (path: string): Promise<AsyncStatus> => {

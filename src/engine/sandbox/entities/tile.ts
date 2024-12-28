@@ -1,4 +1,4 @@
-import { saveProjectOnChange } from "@/API/project";
+// import { saveProjectOnChange } from "@/API/project";
 import Draw from "@/engine/core/aurora/urp/draw";
 import Entity from "@/engine/core/entitySys/entity";
 interface TileProps {
@@ -34,12 +34,12 @@ export default class Tile extends Entity {
         if (e.shift) this.color = [0, 0, 0];
         else this.color = [50, 50, 50];
         //TODO: to powinno sie tylko wykonywac z flaga z projektu autosave
-        saveProjectOnChange(chunkIndex, tileIndex);
+        // saveProjectOnChange(chunkIndex, tileIndex);
       },
 
       rightClick: () => {
         this.color = [255, 255, 255];
-        saveProjectOnChange(chunkIndex, tileIndex);
+        // saveProjectOnChange(chunkIndex, tileIndex);
       },
     });
     // this.color = [Math.random() * 255, Math.random() * 255, Math.random() * 255];

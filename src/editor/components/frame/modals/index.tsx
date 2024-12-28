@@ -4,6 +4,7 @@ import { FrameContext } from "../context/provider";
 const MODAL_LIST = {
   newProject: lazy(() => import("./newProject")),
   openProject: lazy(() => import("./openProject")),
+  closeApp: lazy(() => import("./closeApp")),
 };
 export default function FrameModalList() {
   const context = useContext(FrameContext);

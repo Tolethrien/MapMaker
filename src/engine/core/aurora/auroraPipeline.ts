@@ -28,6 +28,13 @@ export default class AuroraPipeline {
   private static vertexBuffersLeyouts: vertexBuffLay = new Map();
   private static vertexBuffersLeyoutGroups: VBGL = new Map();
 
+  public static clearPipelineData() {
+    this.pipelineList.clear();
+    this.bindGroups.clear();
+    this.pipelineLeyouts.clear();
+    this.vertexBuffersLeyouts.clear();
+    this.vertexBuffersLeyoutGroups.clear();
+  }
   public static addBindGroup({
     name,
     layout,

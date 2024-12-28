@@ -46,6 +46,9 @@ export default class AuroraBuffer {
     settings.storeInMap && this.createdBuffers.set(settings.label, buffer);
     return buffer;
   }
+  public static get getAllBuffers() {
+    return this.createdBuffers;
+  }
   public static createMapedBuffer(settings: MapedBufferOptions) {
     const buffer = Aurora.device.createBuffer({
       label: settings.label ?? "generic vertex buffer",

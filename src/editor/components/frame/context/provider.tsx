@@ -4,7 +4,7 @@ interface Props {
   children: JSX.Element;
 }
 export type FrameButtonTypes = "File" | "Edit" | "Help" | "none";
-export type FrameModalType = "newProject" | "none" | "openProject";
+export type FrameModalType = "newProject" | "none" | "openProject" | "closeApp";
 interface FrameContextSchema {
   getActiveButton: Accessor<FrameButtonTypes>;
   setActiveButton: Setter<FrameButtonTypes>;

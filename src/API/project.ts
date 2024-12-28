@@ -5,6 +5,15 @@ import { getAPI } from "@/preload/getAPI";
 import { getTilePosition } from "@/utils/chunk";
 import { joinPaths } from "@/utils/utils";
 
+interface TileTemplate {
+  index: number;
+  layers: { color: number[]; zIndex: number }[];
+}
+interface ChunkTemplate {
+  position: { x: number; y: number };
+  index: number;
+  tiles: TileTemplate[];
+}
 const { createFolder, createFile, readFile, editFile } =
   getAPI("API_FILE_SYSTEM");
 export interface NewProjectProps {
@@ -33,15 +42,25 @@ export async function createNewProject(
 
   const chunksStatus = await createFolder(joinPaths(folderPath, "chunks"));
   if (!chunksStatus.success) return chunksStatus;
-  const size = props.chunkSize.w * props.chunkSize.h * 3;
-  const data: number[] = Array(size).fill(0);
+
+  const data: ChunkTemplate = {
+    index: 0,
+    position: { x: 0, y: 0 },
+    tiles: Array(props.chunkSize.w * props.chunkSize.h)
+      .fill(null)
+      .map((_, index) => {
+        return {
+          index: index,
+          layers: [{ color: [0, 0, 0], zIndex: 0 }],
+        };
+      }),
+  };
   const ChunkFileStatus = await createFile({
-    data: data,
+    data: JSON.stringify(data),
     dirPath: joinPaths(folderPath, "chunks"),
     fileName: "chunk-1",
     allowOverride: false,
-    type: "bin",
-    typed: "Uint8Array",
+    type: "json",
   });
   if (!ChunkFileStatus.success) return ChunkFileStatus;
 
@@ -60,39 +79,26 @@ export async function createNewProject(
     allowOverride: false,
   });
   if (!configFileStatus.success) return configFileStatus;
-  const chunkDataStatus = await readFile({
-    filePath: joinPaths(folderPath, "chunks", "chunk-1"),
-    type: "bin",
-    typed: "Uint8Array",
-  });
+
   const canvas = document.getElementById("editorCanvas") as HTMLCanvasElement;
   await Engine.initialize(canvas);
-  if (typeof chunkDataStatus.data === "object") {
-    let index = 0;
-    for (let i = 0; i < chunkDataStatus.data.length; i += 3) {
-      const tilePos = getTilePosition({
-        chunkPos: { x: 0, y: 0 },
-        chunkSize: projectConfig.chunkSize,
-        tileIndex: index,
-        tileSize: projectConfig.tileSize,
-      });
-      const tile = new Tile({
-        pos: tilePos,
-        size: { h: projectConfig.tileSize.h, w: projectConfig.tileSize.w },
-        color: [
-          chunkDataStatus.data[i],
-          chunkDataStatus.data[i + 1],
-          chunkDataStatus.data[i + 2],
-        ],
-        chunkIndex: 0,
-        tileIndex: index,
-      });
-      Engine.addEntity(tile);
-      index++;
-    }
-  }
-  //TODO: po co mi w propsach ten defPath
-  //TODO: zamienić budowanie pierwszego chunka z pliku na po prostu branie danych z configu, bo po co czytac dane które już masz
+  data.tiles.forEach((tileTemplate, index) => {
+    const tilePos = getTilePosition({
+      chunkPos: { x: 0, y: 0 },
+      chunkSize: projectConfig.chunkSize,
+      tileIndex: index,
+      tileSize: projectConfig.tileSize,
+    });
+    const tile = new Tile({
+      pos: tilePos,
+      size: { h: projectConfig.tileSize.h, w: projectConfig.tileSize.w },
+      color: tileTemplate.layers[0].color,
+      chunkIndex: 0,
+      tileIndex: index,
+    });
+    Engine.addEntity(tile);
+  });
+
   GlobalStore.add(
     "currentProjectPath",
     `${projectConfig.projectPath}\\${projectConfig.name}`
@@ -112,63 +118,56 @@ export async function openProject(folderPath: string): Promise<AsyncStatus> {
 
   const chunkDataStatus = await readFile({
     filePath: joinPaths(folderPath, "chunks", "chunk-1"),
-    type: "bin",
-    typed: "Uint8Array",
+    type: "json",
   });
   if (!chunkDataStatus.success) return chunkDataStatus;
-
+  const data = JSON.parse(chunkDataStatus.data as string) as ChunkTemplate;
   const canvas = document.getElementById("editorCanvas") as HTMLCanvasElement;
   await Engine.initialize(canvas);
 
-  if (typeof chunkDataStatus.data === "object") {
-    let index = 0;
-    for (let i = 0; i < chunkDataStatus.data.length; i += 3) {
-      const tilePos = getTilePosition({
-        chunkPos: { x: 0, y: 0 },
-        chunkSize: config.chunkSize,
-        tileIndex: index,
-        tileSize: config.tileSize,
-      });
-      const tile = new Tile({
-        pos: tilePos,
-        size: { h: config.tileSize.h, w: config.tileSize.w },
-        color: [
-          chunkDataStatus.data[i],
-          chunkDataStatus.data[i + 1],
-          chunkDataStatus.data[i + 2],
-        ],
-        chunkIndex: 0,
-        tileIndex: index,
-      });
-      Engine.addEntity(tile);
-      index++;
-    }
-  }
+  data.tiles.forEach((tileData, index) => {
+    const tilePos = getTilePosition({
+      chunkPos: { x: 0, y: 0 },
+      chunkSize: config.chunkSize,
+      tileIndex: index,
+      tileSize: config.tileSize,
+    });
+    const tile = new Tile({
+      pos: tilePos,
+      size: { h: config.tileSize.h, w: config.tileSize.w },
+      color: tileData.layers[0].color,
+      chunkIndex: 0,
+      tileIndex: index,
+    });
+    Engine.addEntity(tile);
+  });
   GlobalStore.add(
     "currentProjectPath",
     `${config.projectPath}\\${config.name}`
   );
-  GlobalStore.add("autoSaveProject", config.autosave);
 
   return { error: "", success: true };
 }
-export async function saveProjectOnChange(
-  chunkIndex: number,
-  tileIndex: number
-) {
+export async function saveChunk() {
   console.log("zapisuje...");
   const [projectPath] = GlobalStore.get<string>("currentProjectPath");
-
-  const data = (Array.from(Engine.getEntities().values())[tileIndex] as Tile)
-    .color;
-  const ChunkFileStatus = await editFile({
-    value: data,
-    filePath: joinPaths(projectPath, "chunks", "chunk-1"),
-    index: tileIndex * 3,
-    type: "bin",
-    typed: "Uint8Array",
+  const entityList = Array.from(Engine.getEntities().values()) as Tile[];
+  const saveData: ChunkTemplate = {
+    index: 0,
+    position: { x: 0, y: 0 },
+    tiles: entityList.map((tile) => {
+      return { index: 0, layers: [{ color: tile.color, zIndex: 0 }] };
+    }),
+  };
+  const ChunkFileStatus = await createFile({
+    data: JSON.stringify(saveData),
+    dirPath: joinPaths(projectPath, "chunks"),
+    fileName: "chunk-1",
+    allowOverride: true,
+    type: "json",
   });
-  return ChunkFileStatus;
+  if (!ChunkFileStatus.success) return ChunkFileStatus;
+  return { error: "", success: true };
 }
 export async function saveProject() {
   console.log("zapisuje...");
@@ -194,4 +193,7 @@ export async function saveProject() {
     typed: "Uint8Array",
   });
   return chunkDataStatus;
+}
+export function closeProject() {
+  Engine.closeEngine();
 }

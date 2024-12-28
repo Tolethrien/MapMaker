@@ -1,13 +1,9 @@
 import Engine from "@/engine/engine";
 import Transform from "@/engine/sandbox/components/transform";
-import Batcher from "../../aurora/urp/batcher";
 import AuroraCamera from "../../aurora/urp/auroraCamera";
 import Mat4 from "@/math/mat4";
 import Vec2D from "@/math/vec2D";
-import EngineDebugger from "../debugger/debugger";
 type pos2D = { x: number; y: number };
-type eventListener = { name: string; callback: (e: never) => void };
-type EventBus = Map<eventListener["name"], eventListener["callback"]>;
 export type mouseEvents = (typeof MOUSE_EVENTS)[number];
 
 export const MOUSE_EVENTS = ["leftClick", "rightClick", "scrollClick"] as const;
@@ -18,13 +14,11 @@ export interface MouseEventMod {
   shift: boolean;
   ctrl: boolean;
 }
-export default class EventManager {
+export default class InputManager {
   private static canvas: HTMLCanvasElement;
-  private static eventBus: Map<string, EventBus>;
+  //TODO: nie przeszukuj wszystkich encji, sprawdz wpierw na którym chunku jest myszka, i przeszukaj tylko te tile w nim
   public static init(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    this.eventBus = new Map();
-    //TODO: nie przeszukuj wszystkich encji, sprawdz wpierw na którym chunku jest myszka, i przeszukaj tylko te tile w nim
 
     canvas.addEventListener("click", (e) =>
       this.mouseClickEvent(e, "leftClick")
@@ -75,31 +69,5 @@ export default class EventManager {
         number
       ]
     ).get;
-  }
-  public static addEvent(event: string) {
-    this.eventBus.set(event, new Map());
-  }
-
-  public static removeEvent(event: string) {
-    this.eventBus.delete(event) ??
-      EngineDebugger.showError(`No event with name ${event} to delete`);
-  }
-
-  public static onEvent(event: string, listener: eventListener) {
-    this.eventBus.get(event)?.set(listener.name, (e) => listener.callback(e)) ??
-      EngineDebugger.showError(
-        `No event with name ${event}. This is a custom event, make sure you register it first with 'addCustom'!`
-      );
-  }
-
-  public static offEvent(event: string, listenerName: eventListener["name"]) {
-    this.eventBus.get(event)?.delete(listenerName) ??
-      EngineDebugger.showError(
-        `No event callback with name ${listenerName} in event: "${event}"`
-      );
-  }
-
-  public static emitEvent<T extends unknown>(event: string, options?: T) {
-    this.eventBus.get(event)?.forEach((listener) => listener(options as never));
   }
 }
