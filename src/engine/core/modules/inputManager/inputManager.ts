@@ -1,8 +1,7 @@
-import Engine from "@/engine/engine";
-import Transform from "@/engine/sandbox/components/transform";
 import AuroraCamera from "../../aurora/urp/auroraCamera";
-import Mat4 from "@/math/mat4";
 import Vec2D from "@/math/vec2D";
+import EntityManager from "../../entitySys/entityManager";
+import Tile from "@/engine/sandbox/entities/tile";
 type pos2D = { x: number; y: number };
 export type mouseEvents = (typeof MOUSE_EVENTS)[number];
 
@@ -36,33 +35,28 @@ export default class InputManager {
       shift: e.shiftKey,
       ctrl: e.ctrlKey,
     };
-    Engine.getEntities().forEach((ent) => {
-      const transform = ent.getComponent("Transform");
-      const mouseEvent = ent.getComponent("MouseEvents");
-      if (this.isMouseCollide(transform, { x: e.offsetX, y: e.offsetY })) {
-        mouseEvent.onEvent[type]?.(mouseEventMod);
+    const mousePos = { x: e.offsetX, y: e.offsetY };
+
+    const entities = EntityManager.getEntityPool();
+    const chunks = EntityManager.getAllLoadedChunksMeta();
+    for (const [_, chunk] of chunks) {
+      if (!chunk.isActive || !chunk.isMouseCollide(mousePos)) continue;
+
+      for (const entityID of chunk.getTiles) {
+        const tile = entities.get(entityID) as Tile;
+        if (!tile.isMouseCollide(mousePos)) continue;
+        tile.mouseEvent.onEvent[type]?.(mouseEventMod);
+        break;
       }
-    });
+
+      break;
+    }
   }
-  private static isMouseCollide(
-    { position, size }: Transform,
-    mousePos: pos2D
-  ) {
-    const normalizedMouse = this.mouseToWorld(
-      mousePos,
-      AuroraCamera.getProjectionViewMatrix
-    );
-    return (
-      normalizedMouse.x >= position.get.x - size.get.x &&
-      normalizedMouse.x <= position.get.x + size.get.x &&
-      normalizedMouse.y >= position.get.y - size.get.y &&
-      normalizedMouse.y <= position.get.y + size.get.y
-    );
-  }
-  public static mouseToWorld({ x, y }: pos2D, camMatrix: Mat4) {
+
+  public static mouseToWorld({ x, y }: Position2D) {
     const normalizedX = (x / this.canvas.width) * 2 - 1;
     const normalizedY = -(y / this.canvas.height) * 2 + 1;
-    const inverseMatrix = camMatrix.invert();
+    const inverseMatrix = AuroraCamera.getProjectionViewMatrix.invert();
     return Vec2D.create(
       inverseMatrix.transform([normalizedX, normalizedY, -1, 1]) as [
         number,

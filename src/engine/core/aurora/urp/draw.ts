@@ -69,8 +69,8 @@ export default class Draw {
     const stride = Batcher.getStride;
     vertices[quadsTotal * stride.vertices] = position.x;
     vertices[quadsTotal * stride.vertices + 1] = position.y;
-    vertices[quadsTotal * stride.vertices + 2] = size.width;
-    vertices[quadsTotal * stride.vertices + 3] = size.height;
+    vertices[quadsTotal * stride.vertices + 2] = size.w;
+    vertices[quadsTotal * stride.vertices + 3] = size.h;
     vertices[quadsTotal * stride.vertices + 4] = crop[0];
     vertices[quadsTotal * stride.vertices + 5] = crop[1];
     vertices[quadsTotal * stride.vertices + 6] = crop[2];
@@ -163,8 +163,8 @@ export default class Draw {
     const stride = Batcher.getStride;
     vertices[quadsTotal * stride.vertices] = position.x;
     vertices[quadsTotal * stride.vertices + 1] = position.y;
-    vertices[quadsTotal * stride.vertices + 2] = size.width;
-    vertices[quadsTotal * stride.vertices + 3] = size.height;
+    vertices[quadsTotal * stride.vertices + 2] = size.w;
+    vertices[quadsTotal * stride.vertices + 3] = size.h;
     vertices[quadsTotal * stride.vertices + 4] = crop[0];
     vertices[quadsTotal * stride.vertices + 5] = crop[1];
     vertices[quadsTotal * stride.vertices + 6] = crop[2];

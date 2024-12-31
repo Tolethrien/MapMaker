@@ -1,4 +1,3 @@
-import Engine from "@/engine/engine";
 import Component from "./component";
 import { COMPONENTS } from "./consts";
 export type ReturnComponent<T extends keyof typeof COMPONENTS> =
@@ -19,7 +18,6 @@ export default abstract class Entity {
       tags: new Set(),
       marker: "",
     };
-    Engine.addEntity(this);
   }
 
   addComponent<T extends keyof typeof COMPONENTS>(

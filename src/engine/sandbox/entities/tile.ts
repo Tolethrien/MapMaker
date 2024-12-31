@@ -1,29 +1,32 @@
-// import { saveProjectOnChange } from "@/API/project";
 import Draw from "@/engine/core/aurora/urp/draw";
 import Entity from "@/engine/core/entitySys/entity";
+import { ProjectConfig } from "@/engine/core/entitySys/entityManager";
+import GlobalStore from "@/engine/core/modules/globalStore/globalStore";
+import InputManager from "@/engine/core/modules/inputManager/inputManager";
 interface TileProps {
   pos: { x: number; y: number };
-  size: { w: number; h: number };
-  color: number[];
+  color: HSLA;
   tileIndex: number;
   chunkIndex: number;
 }
 export default class Tile extends Entity {
   transform: TypeOfComponent<"Transform">;
   mouseEvent: TypeOfComponent<"MouseEvents">;
-  color: number[];
+  color: HSLA;
   tileIndex: number;
   chunkIndex: number;
-  constructor({ pos, size, color, chunkIndex, tileIndex }: TileProps) {
+  constructor({ pos, color, chunkIndex, tileIndex }: TileProps) {
+    const [config] = GlobalStore.get<ProjectConfig>("projectConfig");
+
     super();
     this.transform = this.addComponent("Transform", {
       position: {
-        x: pos.x + size.w * 0.5,
-        y: pos.y + size.h * 0.5,
+        x: pos.x + config.tileSize.w * 0.5,
+        y: pos.y + config.tileSize.h * 0.5,
       },
       size: {
-        width: size.w * 0.5,
-        height: size.h * 0.5,
+        width: config.tileSize.w * 0.5,
+        height: config.tileSize.h * 0.5,
       },
     });
     this.tileIndex = tileIndex;
@@ -31,14 +34,14 @@ export default class Tile extends Entity {
     this.color = color;
     this.mouseEvent = this.addComponent("MouseEvents", {
       leftClick: (e) => {
-        if (e.shift) this.color = [0, 0, 0];
-        else this.color = [50, 50, 50];
+        if (e.shift) this.color = [0, 0, 0, 255];
+        else this.color = [50, 50, 50, 255];
         //TODO: to powinno sie tylko wykonywac z flaga z projektu autosave
         // saveProjectOnChange(chunkIndex, tileIndex);
       },
 
       rightClick: () => {
-        this.color = [255, 255, 255];
+        this.color = [255, 255, 255, 255];
         // saveProjectOnChange(chunkIndex, tileIndex);
       },
     });
@@ -56,11 +59,24 @@ export default class Tile extends Entity {
         y: this.transform.position.y,
       },
       size: {
-        width: this.transform.size.x,
-        height: this.transform.size.y,
+        w: this.transform.size.x,
+        h: this.transform.size.y,
       },
       textureToUse: 0,
       tint: new Uint8ClampedArray(this.color),
     });
+  }
+  public isMouseCollide(mousePos: Position2D) {
+    const normalizedMouse = InputManager.mouseToWorld(mousePos);
+    return (
+      normalizedMouse.x >=
+        this.transform.position.get.x - this.transform.size.get.x &&
+      normalizedMouse.x <=
+        this.transform.position.get.x + this.transform.size.get.x &&
+      normalizedMouse.y >=
+        this.transform.position.get.y - this.transform.size.get.y &&
+      normalizedMouse.y <=
+        this.transform.position.get.y + this.transform.size.get.y
+    );
   }
 }
