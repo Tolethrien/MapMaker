@@ -1,10 +1,12 @@
-import EntityManager from "@/engine/core/entitySys/entityManager";
+import EntityManager, {
+  ProjectConfig,
+} from "@/engine/core/entitySystem/core/entityManager";
 import Button from "../reusable/button";
 import { createNewEmptyChunk } from "@/API/project";
 import GlobalStore from "@/engine/core/modules/globalStore/globalStore";
-import { ProjectConfig } from "@/engine/core/entitySys/entityMan";
 
 export default function LeftBar() {
+  GlobalStore.add("activeChunk", { x: 0, y: 0 });
   return (
     <div class="flex justify-center items-center flex-col min-w-32 bg-main-2">
       <p>add chunk</p>
@@ -13,7 +15,9 @@ export default function LeftBar() {
           name="N"
           onClick={async () => {
             console.log("dodaje chunk");
-            const a = await createNewEmptyChunk("N");
+            const pos = EntityManager.getFocusedChunk.position;
+
+            const a = await createNewEmptyChunk("N", pos);
             console.log(a);
           }}
         />
@@ -22,7 +26,9 @@ export default function LeftBar() {
             name="W"
             onClick={async () => {
               console.log("dodaje chunk");
-              const a = await createNewEmptyChunk("W");
+              const pos = EntityManager.getFocusedChunk.position;
+
+              const a = await createNewEmptyChunk("W", pos);
               console.log(a);
             }}
           />
@@ -30,7 +36,9 @@ export default function LeftBar() {
             name="E"
             onClick={async () => {
               console.log("dodaje chunk");
-              const a = await createNewEmptyChunk("E");
+              const pos = EntityManager.getFocusedChunk.position;
+
+              const a = await createNewEmptyChunk("E", pos);
               console.log(a);
             }}
           />
@@ -39,7 +47,8 @@ export default function LeftBar() {
           name="S"
           onClick={async () => {
             console.log("dodaje chunk");
-            const a = await createNewEmptyChunk("S");
+            const pos = EntityManager.getFocusedChunk.position;
+            const a = await createNewEmptyChunk("S", pos);
             console.log(a);
           }}
         />
@@ -51,13 +60,7 @@ export default function LeftBar() {
         <Button
           name="show ent"
           onClick={async () => {
-            console.log(EntityManager.getEntityPool());
-          }}
-        />
-        <Button
-          name="show meta"
-          onClick={async () => {
-            console.log(EntityManager.getAllLoadedChunksMeta());
+            console.log(EntityManager.getAllChunks());
           }}
         />
         <Button

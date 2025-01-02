@@ -1,8 +1,8 @@
 import Draw from "@/engine/core/aurora/urp/draw";
-import Entity from "@/engine/core/entitySys/entity";
-import { ProjectConfig } from "@/engine/core/entitySys/entityManager";
 import GlobalStore from "@/engine/core/modules/globalStore/globalStore";
 import InputManager from "@/engine/core/modules/inputManager/inputManager";
+import Entity from "../core/entity";
+import { ProjectConfig } from "../core/entityManager";
 interface TileProps {
   pos: { x: number; y: number };
   color: HSLA;

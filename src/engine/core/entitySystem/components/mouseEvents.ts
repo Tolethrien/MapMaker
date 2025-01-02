@@ -1,8 +1,8 @@
-import Component from "@/engine/core/entitySys/component";
 import {
   MOUSE_EVENTS,
   MouseEventMod,
 } from "@/engine/core/modules/inputManager/inputManager";
+import Component from "../core/component";
 
 type ActionObject = Record<
   (typeof MOUSE_EVENTS)[number],

@@ -51,7 +51,15 @@ export default function NewProject() {
         <div class="h-full bg-main-3">
           <p class="text-center">Recent</p>
           <div class="w-48 h-64 p-1 overflow-y-auto flex gap-2 flex-col">
-            <div class="w-full">Lazarus</div>
+            <div
+              class="w-full cursor-pointer"
+              onClick={() => {
+                setPath("C:\\Users\\Tolet\\Desktop\\3");
+                onOpenProject();
+              }}
+            >
+              Lazarus
+            </div>
             <div class="w-full">Shock</div>
           </div>
         </div>

@@ -1,5 +1,5 @@
-import Component from "@/engine/core/entitySys/component";
 import Vec2D from "@/math/vec2D";
+import Component from "../core/component";
 
 export interface TransformProps {
   position: {

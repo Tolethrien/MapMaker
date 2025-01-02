@@ -2,7 +2,7 @@ import EntityManager, {
   ChunkPosition,
   ChunkTemplate,
   ProjectConfig,
-} from "@/engine/core/entitySys/entityManager";
+} from "@/engine/core/entitySystem/core/entityManager";
 import GlobalStore from "@/engine/core/modules/globalStore/globalStore";
 import Engine from "@/engine/engine";
 import { getAPI } from "@/preload/getAPI";
@@ -94,23 +94,40 @@ export async function openProject(folderPath: string): Promise<AsyncStatus> {
   const canvas = document.getElementById("editorCanvas") as HTMLCanvasElement;
   await Engine.initialize(canvas, config);
 
-  const chunks: { side: ChunkPosition; data: ChunkTemplate }[] = [];
+  const chunks: ChunkTemplate[] = [];
   const chunkIndexes = EntityManager.findChunksInRange({ x: 0, y: 0 });
-  for (const { index, side } of chunkIndexes) {
+  for (const index of chunkIndexes) {
     const chunkDataStatus = await readFile({
       filePath: joinPaths(folderPath, "chunks", `chunk-${index}`),
       type: "json",
     });
     if (!chunkDataStatus.success) continue;
     const data = JSON.parse(chunkDataStatus.data as string) as ChunkTemplate;
-    chunks.push({ data, side });
+    chunks.push(data);
   }
 
-  chunks.forEach((chunk) =>
-    EntityManager.populateChunk(chunk.side, chunk.data)
-  );
+  chunks.forEach((chunk) => EntityManager.populateChunk(chunk));
 
   return { error: "", success: true };
+}
+export async function loadChunks(chunks: Set<number>) {
+  const [config] = GlobalStore.get<ProjectConfig>("projectConfig");
+  for (const index of chunks) {
+    console.log("loading chunk...: ", index);
+    const chunkDataStatus = await readFile({
+      filePath: joinPaths(
+        config.projectPath,
+        config.name,
+        "chunks",
+        `chunk-${index}`
+      ),
+      type: "json",
+    });
+    if (!chunkDataStatus.success) continue;
+
+    const data = JSON.parse(chunkDataStatus.data as string) as ChunkTemplate;
+    EntityManager.populateChunk(data);
+  }
 }
 export async function saveChunk() {
   console.log("zapisuje...");
@@ -139,12 +156,15 @@ export async function saveChunk() {
 export function closeProject() {
   Engine.closeEngine();
 }
-export async function createNewEmptyChunk(side: ChunkPosition) {
+export async function createNewEmptyChunk(
+  side: ChunkPosition,
+  pos: Position2D
+) {
   const [projectPath] = GlobalStore.get<string>("currentProjectPath");
-  const { data, position, chunkIndex } = EntityManager.createEmptyChunk(side, {
-    x: 0,
-    y: 0,
-  });
+  const { data, position, chunkIndex } = EntityManager.createEmptyChunk(
+    side,
+    pos
+  );
   const saveData: ChunkTemplate = {
     index: chunkIndex,
     position: { x: position.x, y: position.y },

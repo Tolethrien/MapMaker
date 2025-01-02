@@ -1,8 +1,6 @@
-import AuroraCamera from "../../aurora/urp/auroraCamera";
 import Vec2D from "@/math/vec2D";
-import EntityManager from "../../entitySys/entityManager";
-import Tile from "@/engine/sandbox/entities/tile";
-type pos2D = { x: number; y: number };
+import Camera from "../../entitySystem/entities/camera";
+import EntityManager from "../../entitySystem/core/entityManager";
 export type mouseEvents = (typeof MOUSE_EVENTS)[number];
 
 export const MOUSE_EVENTS = ["leftClick", "rightClick", "scrollClick"] as const;
@@ -15,7 +13,6 @@ export interface MouseEventMod {
 }
 export default class InputManager {
   private static canvas: HTMLCanvasElement;
-  //TODO: nie przeszukuj wszystkich encji, sprawdz wpierw na którym chunku jest myszka, i przeszukaj tylko te tile w nim
   public static init(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
 
@@ -37,13 +34,15 @@ export default class InputManager {
     };
     const mousePos = { x: e.offsetX, y: e.offsetY };
 
-    const entities = EntityManager.getEntityPool();
-    const chunks = EntityManager.getAllLoadedChunksMeta();
-    for (const [_, chunk] of chunks) {
-      if (!chunk.isActive || !chunk.isMouseCollide(mousePos)) continue;
+    const chunks = EntityManager.getAllChunks();
+    for (const chunk of chunks) {
+      if (!chunk.isMouseCollide(mousePos)) continue;
 
-      for (const entityID of chunk.getTiles) {
-        const tile = entities.get(entityID) as Tile;
+      if (mouseEventMod.shift) {
+        EntityManager.setFocusedChunk(chunk);
+        break;
+      }
+      for (const tile of chunk.getTiles) {
         if (!tile.isMouseCollide(mousePos)) continue;
         tile.mouseEvent.onEvent[type]?.(mouseEventMod);
         break;
@@ -56,7 +55,7 @@ export default class InputManager {
   public static mouseToWorld({ x, y }: Position2D) {
     const normalizedX = (x / this.canvas.width) * 2 - 1;
     const normalizedY = -(y / this.canvas.height) * 2 + 1;
-    const inverseMatrix = AuroraCamera.getProjectionViewMatrix.invert();
+    const inverseMatrix = Camera.getProjectionViewMatrix.invert();
     return Vec2D.create(
       inverseMatrix.transform([normalizedX, normalizedY, -1, 1]) as [
         number,

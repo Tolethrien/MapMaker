@@ -19,7 +19,6 @@ export default function Frame() {
   const { onAppCloseEvent, appClose } = getAPI("API_APP");
 
   //crating event to block buttons on inactive engine
-  EventBus.add("engineInit");
   EventBus.on("engineInit", {
     name: "frameButtons",
     callback: (e: boolean) => setInitButtonDisable(!e),
