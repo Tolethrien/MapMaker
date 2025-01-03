@@ -1,8 +1,8 @@
 import GlobalStore from "../../modules/globalStore/globalStore";
-import Til from "../entities/tile";
+import Tile from "../entities/tile";
 import { randomColor } from "@/utils/utils";
 import EngineDebugger from "../../modules/debugger/debugger";
-import Chunk from "../entities/chunk";
+import Chunk, { ChunkTemplate } from "../entities/chunk";
 import { loadChunks } from "@/API/project";
 export interface ProjectConfig {
   projectPath: string;
@@ -11,22 +11,7 @@ export interface ProjectConfig {
   chunkSizeInTiles: Size2D;
   chunkSizeInPixels: Size2D;
 }
-export interface TileLayer {
-  color: HSLA;
-  zIndex: number;
-  graphicID: number;
-}
-export interface TileTemplate {
-  index: number;
-  collider: 0 | 1;
-  layers: TileLayer[];
-}
 
-export interface ChunkTemplate {
-  position: Position2D;
-  index: number;
-  tiles: TileTemplate[];
-}
 const SPIRAL_POSITION = {
   central: 0,
   E: 1,
@@ -40,39 +25,53 @@ const SPIRAL_POSITION = {
 } as const;
 export type ChunkPosition = keyof typeof SPIRAL_POSITION;
 
+//TODO: przenies API wczytywania mapy tutaj bo w sumie tym jest
 export default class EntityManager {
-  // change to linkedList to avoid "reIndexing"?
-  // or map? think later
-  private static spiralChunkArray: Chunk[] = [];
+  private static loadedChunks: Map<number, Chunk> = new Map();
   private static chunksToRemove: Set<number> = new Set();
   private static chunksToAdd: Set<number> = new Set();
-
   private static cameraOnChunk: number = 0;
-  private static focusedChunk: Chunk | undefined = undefined;
+  private static focusedChunk: number | undefined = undefined;
 
   public static getAllChunks() {
-    return this.spiralChunkArray;
+    return this.loadedChunks;
   }
-
+  public static getChunk(index: number) {
+    return this.loadedChunks.get(index);
+  }
   public static get getCameraOnChunk() {
     return this.cameraOnChunk;
   }
 
   public static get getFocusedChunk() {
-    return this.focusedChunk;
+    return this.loadedChunks.get(this.focusedChunk);
   }
-  public static setFocusedChunk(chunk: Chunk) {
-    this.focusedChunk = chunk;
+  public static setFocusedChunk(index: number) {
+    this.focusedChunk = index;
   }
   public static updateAll() {
-    this.spiralChunkArray.forEach((chunk) => chunk.update());
+    Array.from(this.loadedChunks.values()).sort(
+      ({ transform: chunkA }, { transform: chunkB }) => {
+        if (chunkA.position.y === chunkB.position.y) {
+          return chunkA.position.x - chunkB.position.x;
+        }
+        return chunkA.position.y - chunkB.position.y;
+      }
+    );
+    this.loadedChunks.forEach((chunk) => chunk.update());
   }
   public static renderAll() {
-    //TODO: render spiral sorted not like that
-    this.spiralChunkArray.forEach((chunk) => chunk.render());
+    this.loadedChunks.forEach((chunk) => chunk.render());
   }
   public static clearAll() {
-    this.spiralChunkArray = [];
+    this.loadedChunks.clear();
+  }
+  public static async frameCleanUp() {
+    if (this.chunksToRemove.size === 0 && this.chunksToAdd.size === 0) return;
+    this.chunksToRemove.forEach((index) => this.loadedChunks.delete(index));
+    await loadChunks(this.chunksToAdd);
+    this.chunksToRemove.clear();
+    this.chunksToAdd.clear();
   }
 
   public static populateChunk(chunkData: ChunkTemplate) {
@@ -82,7 +81,7 @@ export default class EntityManager {
     });
     chunkData.tiles.forEach((tileData, index) => {
       const tilePos = this.getTilePosition(chunkData.position, index);
-      const tile = new Til({
+      const tile = new Tile({
         pos: tilePos,
         color: tileData.layers[0].color,
         chunkIndex: chunkData.index,
@@ -90,7 +89,7 @@ export default class EntityManager {
       });
       chunk.addTile(tile);
     });
-    this.spiralChunkArray.push(chunk);
+    this.loadedChunks.set(chunkData.index, chunk);
   }
   public static createEmptyChunk(side: ChunkPosition, position: Position2D) {
     // jesli cos nie pojdzie w tworzeniu chunka to i tak go dodajesz do gry ale nie tworzysz pliku, jakas 2 stronna komunikacja?
@@ -101,12 +100,12 @@ export default class EntityManager {
     const chunkIndex = this.getChunkSpiralIndex({ x, y });
     // mozesz np spawdzic czy taki jest juz wgrany
     const chunk = new Chunk({ index: chunkIndex, position: { x, y } });
-    const data: Til[] = [];
+    const data: Tile[] = [];
     Array(numberOfTiles)
       .fill(null)
       .forEach((_, index) => {
         const tilePos = this.getTilePosition({ x, y }, index);
-        const tile = new Til({
+        const tile = new Tile({
           pos: tilePos,
           color: randomColor(),
           chunkIndex: chunkIndex,
@@ -115,49 +114,27 @@ export default class EntityManager {
         data.push(tile);
         chunk.addTile(tile);
       });
-    this.spiralChunkArray.push(chunk);
+    this.loadedChunks.set(chunkIndex, chunk);
     return { chunkIndex, position: { x, y }, data };
   }
+
   public static findChunksInRange(position: { x: number; y: number }) {
-    //TODO: moge zmienic kolejnosc tutaj by nie musieć potem sortowac bo juz tutaj dostane posortowana?
-
     const [config] = GlobalStore.get<ProjectConfig>("projectConfig");
+    const chunks: Set<number> = new Set();
+    const sides = this.getRingsFromChunk(position, config.chunkSizeInPixels, 1);
+    sides.forEach((position) => chunks.add(this.getChunkSpiralIndex(position)));
+    return chunks;
+  }
 
-    const sides = this.getSides(position, config.chunkSizeInPixels);
-    return Object.entries(sides).map(([side, position]) =>
-      this.getChunkSpiralIndex(position)
-    );
-  }
-  public static async validateChunks() {
-    //TODO: zrobic to lepiej by nie szukac tyle
-    if (this.chunksToRemove.size === 0 && this.chunksToAdd.size === 0) return;
-    this.chunksToRemove.forEach((index) => {
-      const chunkIndex = this.spiralChunkArray.findIndex(
-        (chunk) => chunk.index === index
-      );
-      this.spiralChunkArray.splice(chunkIndex, 1);
-    });
-    await loadChunks(this.chunksToAdd);
-    this.chunksToRemove.clear();
-    this.chunksToAdd.clear();
-    console.log(this.spiralChunkArray.length);
-  }
   public static remap(chunkIndex: number, chunkPosition: Position2D) {
-    console.log("remaping...");
     this.cameraOnChunk = chunkIndex;
-    console.log(this.findChunksInRange(chunkPosition));
-    const chunk = new Set(this.findChunksInRange(chunkPosition));
-    const loadedChunks = new Set(
-      this.spiralChunkArray.map((chunk) => chunk.index)
-    );
+    const chunk = this.findChunksInRange(chunkPosition);
     chunk.forEach(
-      (index) => !loadedChunks.has(index) && this.chunksToAdd.add(index)
+      (index) => !this.loadedChunks.has(index) && this.chunksToAdd.add(index)
     );
-    loadedChunks.forEach(
-      (index) => !chunk.has(index) && this.chunksToRemove.add(index)
+    this.loadedChunks.forEach(
+      (_, index) => !chunk.has(index) && this.chunksToRemove.add(index)
     );
-    console.log("adding...", this.chunksToAdd);
-    console.log("removing...", this.chunksToRemove);
   }
 
   private static getChunkNextToCenter(
@@ -165,11 +142,11 @@ export default class EntityManager {
     position: Position2D
   ) {
     const [config] = GlobalStore.get<ProjectConfig>("projectConfig");
-
-    const sides = this.getSides(position, config.chunkSizeInPixels);
+    const sides = this.getChunkSizePosition(position, config.chunkSizeInPixels);
     return sides[side];
   }
-  private static getSides({ x, y }: Position2D, { h, w }: Size2D) {
+
+  private static getChunkSizePosition({ x, y }: Position2D, { h, w }: Size2D) {
     return {
       central: { x, y },
       E: { x: x + w, y },
@@ -181,6 +158,28 @@ export default class EntityManager {
       N: { x, y: y - h },
       NE: { x: x + w, y: y - h },
     };
+  }
+  private static getRingsFromChunk(
+    { x, y }: Position2D,
+    { h, w }: Size2D,
+    range: number
+  ) {
+    //TODO: do something better
+
+    const result: Position2D[] = [];
+    //loop through all spiral rings in range
+    for (let ring = 0; ring <= range; ring++) {
+      //standard grid looping
+      for (let i = -ring; i <= ring; i++) {
+        for (let j = -ring; j <= ring; j++) {
+          const curr = { x: x + i * w, y: y + j * h };
+          //add only when not on a list
+          if (!result.some((chunk) => chunk.x === curr.x && chunk.y === curr.y))
+            result.push(curr);
+        }
+      }
+    }
+    return result;
   }
   private static getChunkSpiralIndex(position: Position2D) {
     const [config] = GlobalStore.get<ProjectConfig>("projectConfig");

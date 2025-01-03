@@ -9,7 +9,7 @@ import {
 } from "@editor/components/frame/context/provider";
 import { batch, createSignal, useContext } from "solid-js";
 import FrameModalList from "./modals";
-import { closeProject, saveChunk } from "@/API/project";
+import { closeProject } from "@/API/project";
 import { getAPI } from "@/preload/getAPI";
 import EventBus from "@/engine/core/modules/eventBus/eventBus";
 
@@ -36,8 +36,8 @@ export default function Frame() {
     });
   };
   const onSaveProject = async () => {
-    const saveStatus = await saveChunk();
-    if (!saveStatus.success) console.log(saveStatus);
+    // const saveStatus = await saveChunk();
+    // if (!saveStatus.success) console.log(saveStatus);
     context.setActiveButton("none");
   };
   const onCloseProject = async () => {

@@ -60,7 +60,8 @@ export default class Engine {
 
   private static async loop() {
     Batcher.startBatch();
-    await EntityManager.validateChunks();
+    //TODO: zmienic na nie blokowo
+    await EntityManager.frameCleanUp();
     Camera.update();
     Batcher.setCameraBuffer(Camera.getProjectionViewMatrix.getMatrix);
     EntityManager.updateAll();

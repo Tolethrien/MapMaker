@@ -1,5 +1,4 @@
-import { COMPONENTS } from "@/engine/core/entitySys/consts";
-
+import { COMPONENTS } from "@/engine/core/entitySystem/core/consts";
 declare global {
   type TypeOfComponent<C extends keyof typeof COMPONENTS> = InstanceType<
     (typeof COMPONENTS)[C]

@@ -6,7 +6,6 @@ import { createNewEmptyChunk } from "@/API/project";
 import GlobalStore from "@/engine/core/modules/globalStore/globalStore";
 
 export default function LeftBar() {
-  GlobalStore.add("activeChunk", { x: 0, y: 0 });
   return (
     <div class="flex justify-center items-center flex-col min-w-32 bg-main-2">
       <p>add chunk</p>
@@ -15,7 +14,7 @@ export default function LeftBar() {
           name="N"
           onClick={async () => {
             console.log("dodaje chunk");
-            const pos = EntityManager.getFocusedChunk.position;
+            const pos = EntityManager.getFocusedChunk.transform.position.get;
 
             const a = await createNewEmptyChunk("N", pos);
             console.log(a);
@@ -26,7 +25,7 @@ export default function LeftBar() {
             name="W"
             onClick={async () => {
               console.log("dodaje chunk");
-              const pos = EntityManager.getFocusedChunk.position;
+              const pos = EntityManager.getFocusedChunk.transform.position.get;
 
               const a = await createNewEmptyChunk("W", pos);
               console.log(a);
@@ -36,7 +35,7 @@ export default function LeftBar() {
             name="E"
             onClick={async () => {
               console.log("dodaje chunk");
-              const pos = EntityManager.getFocusedChunk.position;
+              const pos = EntityManager.getFocusedChunk.transform.position.get;
 
               const a = await createNewEmptyChunk("E", pos);
               console.log(a);
@@ -47,7 +46,7 @@ export default function LeftBar() {
           name="S"
           onClick={async () => {
             console.log("dodaje chunk");
-            const pos = EntityManager.getFocusedChunk.position;
+            const pos = EntityManager.getFocusedChunk.transform.position.get;
             const a = await createNewEmptyChunk("S", pos);
             console.log(a);
           }}

@@ -1,15 +1,15 @@
 import EntityManager, {
   ChunkPosition,
-  ChunkTemplate,
   ProjectConfig,
 } from "@/engine/core/entitySystem/core/entityManager";
+import { ChunkTemplate } from "@/engine/core/entitySystem/entities/chunk";
+import { TileTemplate } from "@/engine/core/entitySystem/entities/tile";
 import GlobalStore from "@/engine/core/modules/globalStore/globalStore";
 import Engine from "@/engine/engine";
 import { getAPI } from "@/preload/getAPI";
 import { joinPaths } from "@/utils/utils";
 
-const { createFolder, createFile, readFile, editFile, readDir } =
-  getAPI("API_FILE_SYSTEM");
+const { createFolder, createFile, readFile } = getAPI("API_FILE_SYSTEM");
 export interface NewProjectProps {
   dirPath: string;
   name: string;
@@ -113,7 +113,6 @@ export async function openProject(folderPath: string): Promise<AsyncStatus> {
 export async function loadChunks(chunks: Set<number>) {
   const [config] = GlobalStore.get<ProjectConfig>("projectConfig");
   for (const index of chunks) {
-    console.log("loading chunk...: ", index);
     const chunkDataStatus = await readFile({
       filePath: joinPaths(
         config.projectPath,
@@ -129,28 +128,31 @@ export async function loadChunks(chunks: Set<number>) {
     EntityManager.populateChunk(data);
   }
 }
-export async function saveChunk() {
+export async function saveOnChange(chunkIndex: number) {
   console.log("zapisuje...");
-  // const [projectPath] = GlobalStore.get<string>("currentProjectPath");
-  // const entityList = EntityManager.getEntitiesFromChunk("central") as Tile[];
-  // const saveData: ChunkTemplate = {
-  //   chunkIndex: 0,
-  //   position: { x: 0, y: 0 },
-  //   tiles: entityList.map((tile) => {
-  //     return {
-  //       index: tile.tileIndex,
-  //       layers: [{ color: tile.color, zIndex: 0 }],
-  //     };
-  //   }),
-  // };
-  // const ChunkFileStatus = await createFile({
-  //   data: JSON.stringify(saveData),
-  //   dirPath: joinPaths(projectPath, "chunks"),
-  //   fileName: "chunk-1",
-  //   allowOverride: true,
-  //   type: "json",
-  // });
-  // if (!ChunkFileStatus.success) return ChunkFileStatus;
+  const [projectPath] = GlobalStore.get<string>("currentProjectPath");
+  const chunk = EntityManager.getChunk(chunkIndex);
+  const tiles: TileTemplate[] = [];
+  chunk.getTiles.forEach((tile) =>
+    tiles.push({
+      collider: 0,
+      index: tile.tileIndex,
+      layers: [{ zIndex: 0, color: tile.color, graphicID: 0 }],
+    })
+  );
+  const saveData: ChunkTemplate = {
+    index: chunk.index,
+    position: chunk.transform.position.get,
+    tiles: tiles,
+  };
+  const ChunkFileStatus = await createFile({
+    data: JSON.stringify(saveData),
+    dirPath: joinPaths(projectPath, "chunks"),
+    fileName: `chunk-${chunkIndex}`,
+    allowOverride: true,
+    type: "json",
+  });
+  if (!ChunkFileStatus.success) return ChunkFileStatus;
   return { error: "", success: true };
 }
 export function closeProject() {

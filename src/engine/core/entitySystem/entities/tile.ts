@@ -3,13 +3,26 @@ import GlobalStore from "@/engine/core/modules/globalStore/globalStore";
 import InputManager from "@/engine/core/modules/inputManager/inputManager";
 import Entity from "../core/entity";
 import { ProjectConfig } from "../core/entityManager";
+import { saveOnChange } from "@/API/project";
 interface TileProps {
   pos: { x: number; y: number };
   color: HSLA;
   tileIndex: number;
   chunkIndex: number;
 }
+export interface TileLayer {
+  color: HSLA;
+  zIndex: number;
+  graphicID: number;
+}
+export interface TileTemplate {
+  index: number;
+  collider: 0 | 1;
+  layers: TileLayer[];
+}
+
 export default class Tile extends Entity {
+  private static EMPTY_TILE_COLOR = new Uint8ClampedArray([255, 255, 255]);
   transform: TypeOfComponent<"Transform">;
   mouseEvent: TypeOfComponent<"MouseEvents">;
   color: HSLA;
@@ -37,15 +50,14 @@ export default class Tile extends Entity {
         if (e.shift) this.color = [0, 0, 0, 255];
         else this.color = [50, 50, 50, 255];
         //TODO: to powinno sie tylko wykonywac z flaga z projektu autosave
-        // saveProjectOnChange(chunkIndex, tileIndex);
+        saveOnChange(chunkIndex);
       },
 
       rightClick: () => {
         this.color = [255, 255, 255, 255];
-        // saveProjectOnChange(chunkIndex, tileIndex);
+        saveOnChange(chunkIndex);
       },
     });
-    // this.color = [Math.random() * 255, Math.random() * 255, Math.random() * 255];
   }
   update() {}
   render(): void {
@@ -69,14 +81,10 @@ export default class Tile extends Entity {
   public isMouseCollide(mousePos: Position2D) {
     const normalizedMouse = InputManager.mouseToWorld(mousePos);
     return (
-      normalizedMouse.x >=
-        this.transform.position.get.x - this.transform.size.get.x &&
-      normalizedMouse.x <=
-        this.transform.position.get.x + this.transform.size.get.x &&
-      normalizedMouse.y >=
-        this.transform.position.get.y - this.transform.size.get.y &&
-      normalizedMouse.y <=
-        this.transform.position.get.y + this.transform.size.get.y
+      normalizedMouse.x >= this.transform.position.x - this.transform.size.x &&
+      normalizedMouse.x <= this.transform.position.x + this.transform.size.x &&
+      normalizedMouse.y >= this.transform.position.y - this.transform.size.y &&
+      normalizedMouse.y <= this.transform.position.y + this.transform.size.y
     );
   }
 }

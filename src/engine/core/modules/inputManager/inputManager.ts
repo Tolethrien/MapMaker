@@ -35,11 +35,11 @@ export default class InputManager {
     const mousePos = { x: e.offsetX, y: e.offsetY };
 
     const chunks = EntityManager.getAllChunks();
-    for (const chunk of chunks) {
+    for (const [index, chunk] of chunks) {
       if (!chunk.isMouseCollide(mousePos)) continue;
 
       if (mouseEventMod.shift) {
-        EntityManager.setFocusedChunk(chunk);
+        EntityManager.setFocusedChunk(index);
         break;
       }
       for (const tile of chunk.getTiles) {
