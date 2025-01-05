@@ -15,7 +15,11 @@ export interface ChunkTemplate {
   tiles: TileTemplate[];
 }
 export default class Chunk extends Entity {
+  private static SELECTION_COLOR = new Uint8ClampedArray([0, 0, 0]);
+  private static SELECTION_TEXT_COLOR = new Uint8ClampedArray([255, 255, 255]);
   public transform: TypeOfComponent<"Transform">;
+  public mouseEvent: TypeOfComponent<"MouseEvents">;
+
   private tiles: Set<Tile>;
   public index: number;
   constructor({ index, position }: Props) {
@@ -28,13 +32,17 @@ export default class Chunk extends Entity {
       position,
       size: { width: size.w, height: size.h },
     });
+
+    this.mouseEvent = this.addComponent("MouseEvents", {
+      leftClick: () => {
+        if (!this.isChunkSelected()) EntityManager.setFocusedChunk(this.index);
+        else EntityManager.setFocusedChunk(undefined);
+      },
+    });
     EventBus.on("cameraMove", {
       name: `chunk-${this.index} move check`,
       callback: (event: Position2D) => {
-        if (
-          this.isCenterChunk(event) &&
-          EntityManager.getCameraOnChunk !== this.index
-        )
+        if (this.isCenterChunk(event) && !this.isCameraOnChunk())
           EntityManager.remap(this.index, this.transform.position.get);
       },
     });
@@ -46,20 +54,13 @@ export default class Chunk extends Entity {
     this.tiles.add(tile);
   }
   update(): void {
-    if (EntityManager.getFocusedChunk === this) console.log(this.index);
     this.tiles.forEach((tile) => tile.update());
   }
   render(): void {
     this.tiles.forEach((tile) => tile.render());
-    Draw.Text({
-      alpha: 255,
-      bloom: 0,
-      position: this.transform.position.get,
-      color: new Uint8ClampedArray([0, 0, 0]),
-      fontFace: "roboto",
-      fontSize: 32,
-      text: `chunk: ${this.index}`,
-    });
+    if (EntityManager.getFocusedChunkIndex === undefined) return;
+    if (this.isChunkSelected()) this.drawSelectedChunk();
+    else this.drawUnselectedChunk();
   }
   public isMouseCollide(mousePos: Position2D) {
     const normalizedMouse = InputManager.mouseToWorld(mousePos);
@@ -77,5 +78,65 @@ export default class Chunk extends Entity {
       cameraPos.y > this.transform.position.y &&
       cameraPos.y < this.transform.position.y + this.transform.size.y
     );
+  }
+  private isChunkSelected() {
+    return EntityManager.getFocusedChunkIndex === this.index;
+  }
+  private isCameraOnChunk() {
+    return EntityManager.getCameraOnChunk === this.index;
+  }
+  private drawSelectedChunk() {
+    Draw.Quad({
+      alpha: 200,
+      bloom: 0,
+      crop: new Float32Array([0, 0, 1, 1]),
+      isTexture: 0,
+      position: {
+        x: this.transform.position.x + 100,
+        y: this.transform.position.y + 30,
+      },
+      size: {
+        w: 100,
+        h: 30,
+      },
+      textureToUse: 0,
+      tint: Chunk.SELECTION_COLOR,
+    });
+    Draw.Text({
+      alpha: 255,
+      bloom: 0,
+      position: this.transform.position.add([10, 10]).get,
+      color: Chunk.SELECTION_TEXT_COLOR,
+      fontFace: "roboto",
+      fontSize: 40,
+      text: `chunk: ${this.index}`,
+    });
+  }
+  private drawUnselectedChunk() {
+    Draw.Quad({
+      alpha: 100,
+      bloom: 0,
+      crop: new Float32Array([0, 0, 1, 1]),
+      isTexture: 0,
+      position: {
+        x: this.transform.position.x + this.transform.size.x * 0.5,
+        y: this.transform.position.y + this.transform.size.y * 0.5,
+      },
+      size: {
+        w: this.transform.size.x * 0.5,
+        h: this.transform.size.y * 0.5,
+      },
+      textureToUse: 0,
+      tint: Chunk.SELECTION_COLOR,
+    });
+    Draw.Text({
+      alpha: 255,
+      bloom: 0,
+      position: this.transform.position.add([10, 10]).get,
+      color: Chunk.SELECTION_TEXT_COLOR,
+      fontFace: "roboto",
+      fontSize: 40,
+      text: `chunk: ${this.index}`,
+    });
   }
 }

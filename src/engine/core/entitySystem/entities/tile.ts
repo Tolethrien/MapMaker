@@ -52,7 +52,6 @@ export default class Tile extends Entity {
         //TODO: to powinno sie tylko wykonywac z flaga z projektu autosave
         saveOnChange(chunkIndex);
       },
-
       rightClick: () => {
         this.color = [255, 255, 255, 255];
         saveOnChange(chunkIndex);

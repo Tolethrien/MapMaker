@@ -3,7 +3,7 @@ import { Accessor, createContext, createSignal, Setter } from "solid-js";
 interface Props {
   children: JSX.Element;
 }
-export type FrameButtonTypes = "File" | "Edit" | "Help" | "none";
+export type FrameButtonTypes = "File" | "Editor" | "Help" | "Project" | "none";
 export type FrameModalType = "newProject" | "none" | "openProject" | "closeApp";
 interface FrameContextSchema {
   getActiveButton: Accessor<FrameButtonTypes>;
@@ -19,7 +19,7 @@ export function FrameProvider(props: Props) {
   const [getActiveButton, setActiveButton] =
     createSignal<FrameButtonTypes>("none");
   const [getActiveModal, setActiveModal] = createSignal<FrameModalType>("none");
-  const [isModalOpen, setModalOpen] = createSignal<boolean>();
+  const [isModalOpen, setModalOpen] = createSignal<boolean>(false);
 
   return (
     <FrameContext.Provider

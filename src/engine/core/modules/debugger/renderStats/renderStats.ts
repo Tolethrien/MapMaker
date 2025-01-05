@@ -1,6 +1,5 @@
-import html from "./renderFrame.html?raw";
-import "./renderFrame.css";
-import MathUtils from "@core/math/math";
+import { clamp, mapRange } from "@/utils/utils";
+import EventBus from "../../eventBus/eventBus";
 
 const REFRESH_RATE = 1;
 const SAVED_FRAMES = 60;
@@ -51,9 +50,7 @@ const HTML = {
   refreshTime: 18,
 };
 
-export default class RenderFrame {
-  private static body: HTMLBodyElement =
-    document.getElementsByTagName("body")[0];
+export default class EngineRenderStats {
   private static frameTimes: number[][] = [[0, 0]];
   private static currFrame = 0;
   private static cpuTime = 0;
@@ -84,63 +81,6 @@ export default class RenderFrame {
   private static canvas: HTMLCanvasElement;
   private static ctx: CanvasRenderingContext2D;
 
-  public static Initialize() {
-    RenderFrame.createFrame();
-    RenderFrame.dragFrame();
-    RenderFrame.closeFrame();
-  }
-
-  private static createFrame() {
-    const element = document.createElement("template");
-    element.innerHTML = html;
-    const frame = element.content.cloneNode(true);
-    this.body.append(frame);
-    this.frame = document.getElementsByClassName("framer")[0] as HTMLDivElement;
-    this.statsList = document.getElementsByClassName("framer_stats")[0]
-      .children as HTMLCollectionOf<HTMLParagraphElement>;
-    this.frameCounter = document.getElementsByClassName(
-      "framer_fps_counter"
-    )[0] as HTMLParagraphElement;
-    this.canvas = document.getElementsByClassName(
-      "framer_fps_visual"
-    )[0] as HTMLCanvasElement;
-    this.ctx = this.canvas.getContext("2d")!;
-  }
-
-  private static dragFrame() {
-    const dragElement = document.getElementsByClassName(
-      "framer_title_drag"
-    )[0] as HTMLElement;
-
-    let mouseDown = false;
-    let offset = { x: 0, y: 0 };
-    dragElement.addEventListener("mousedown", (e) => {
-      mouseDown = true;
-      offset = {
-        x: this.frame.offsetLeft - e.clientX,
-        y: this.frame.offsetTop - e.clientY,
-      };
-    });
-    dragElement.addEventListener("mouseup", () => {
-      mouseDown = false;
-    });
-    this.frame.addEventListener("mousemove", (e) => {
-      if (mouseDown) {
-        this.frame.style.left = e.clientX + offset.x + "px";
-        this.frame.style.top = e.clientY + offset.y + "px";
-      }
-    });
-  }
-
-  private static closeFrame() {
-    const closeElement = document.getElementsByClassName(
-      "framer_title_close"
-    )[0] as HTMLElement;
-    closeElement.addEventListener("click", () =>
-      this.body.removeChild(this.frame)
-    );
-  }
-
   public static start() {
     this.startTime = performance.now();
     this.lastFrameTime = (this.startTime - this.lastStartTime) / 1000;
@@ -155,10 +95,11 @@ export default class RenderFrame {
     const stopTime = performance.now();
     this.calculateFrames();
     this.calculateTimes(stopTime);
-    this.updateGameData();
-    this.updateCanvas();
+    // this.updateGameData();
+    // this.updateCanvas();
     if (this.currFrame % this.statsRefresh === 0 && this.currFrame !== 0) {
-      this.updateFrame();
+      // this.updateFrame();
+      EventBus.emit("updateStats", this.frameTimes);
       this.currFrame = 0;
     } else this.currFrame++;
   }
@@ -242,8 +183,8 @@ export default class RenderFrame {
   private static updateCanvas() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.frameTimes.forEach((frame, index) => {
-      const value = MathUtils.mapRange(
-        MathUtils.clamp(frame[0], 0, 600),
+      const value = mapRange(
+        clamp(frame[0], 0, 600),
         0,
         600,
         0,

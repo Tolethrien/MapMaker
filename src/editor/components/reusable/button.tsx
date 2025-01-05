@@ -14,7 +14,7 @@ export default function Button(props: Props) {
     <button
       onClick={() => props.onClick()}
       disabled={isDisable()}
-      class={`px-4 py-1  bg-main-3 text-wheat border-2 border-main-4 rounded-md shadow-md hover:border-wheat outline-none ${props.style}`}
+      class={`px-4 py-1  bg-app-bg-3 text-app-acc-wheat border-2 border-app-bg-4 rounded-md shadow-md hover:border-app-acc-wheat outline-none ${props.style}`}
     >
       <Show when={!isLoading()} fallback={"Loading..."}>
         {props.name}

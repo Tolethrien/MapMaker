@@ -26,7 +26,7 @@ export default class EngineDebugger {
   }
 
   public static programBreak(msg?: string) {
-    throw new Error(msg ?? "Engine breaks on break command");
+    return new Error(msg ?? "Engine breaks on break command");
   }
 
   public static pauseCode(msg?: string) {
@@ -74,10 +74,7 @@ export default class EngineDebugger {
 
   public static endTimer(label: string) {
     const start = EngineDebugger.timers.get(label);
-    if (!start) {
-      console.warn(`Timer [${label}] not found.`);
-      return;
-    }
+    if (!start) return console.warn(`Timer [${label}] not found.`);
     const duration = performance.now() - start;
     console.info(`Timer [${label}]: ${duration.toFixed(2)} ms`);
     EngineDebugger.timers.delete(label);

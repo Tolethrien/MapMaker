@@ -8,14 +8,13 @@ import EntityManager, {
   ProjectConfig,
 } from "./core/entitySystem/core/entityManager";
 import Camera from "./core/entitySystem/entities/camera";
-
+import { useContext } from "solid-js";
+import { globalContext } from "@/editor/providers/global";
+import EngineRenderStats from "./core/modules/debugger/renderStats/renderStats";
 export default class Engine {
   private static isInit = false;
   private static loopID: number = 0;
-  public static async initialize(
-    canvas: HTMLCanvasElement,
-    config: ProjectConfig
-  ) {
+  public static async initialize(config: ProjectConfig) {
     if (this.isInit) {
       EngineDebugger.showInfo(
         "Engine already initialize, closing current instance...",
@@ -23,11 +22,14 @@ export default class Engine {
       );
       this.closeEngine();
     }
+    //TODO: jeden centralny punkt canvasu
+    const canvas = document.getElementById("editorCanvas") as HTMLCanvasElement;
     GlobalStore.add("projectConfig", config);
     GlobalStore.add(
       "currentProjectPath",
       `${config.projectPath}\\${config.name}`
     );
+
     await Aurora.initialize(canvas); // needs to be before preload
     Camera.initialize();
     await Batcher.createBatcher({
@@ -35,6 +37,7 @@ export default class Engine {
       bloom: { active: false, str: 0 },
       customCamera: true,
       lighting: false,
+      maxQuadPerSceen: 100000,
     });
 
     EventBus.emit("engineInit", true);
@@ -58,15 +61,17 @@ export default class Engine {
     this.isInit = false;
   }
 
-  private static async loop() {
+  private static loop() {
+    EngineRenderStats.start();
     Batcher.startBatch();
-    //TODO: zmienic na nie blokowo
-    await EntityManager.frameCleanUp();
+    EntityManager.frameCleanUp();
     Camera.update();
     Batcher.setCameraBuffer(Camera.getProjectionViewMatrix.getMatrix);
     EntityManager.updateAll();
     EntityManager.renderAll();
+    EngineRenderStats.swapToGPU();
     Batcher.endBatch();
+    EngineRenderStats.stop();
     this.loopID = requestAnimationFrame(() => this.loop());
   }
 }

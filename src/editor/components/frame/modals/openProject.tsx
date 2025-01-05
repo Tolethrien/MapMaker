@@ -1,6 +1,6 @@
 import { batch, createEffect, createSignal, useContext } from "solid-js";
 import Button from "@editor/components/reusable/button";
-import { FrameContext } from "@editor/components/frame/context/provider";
+import { FrameContext } from "@/editor/providers/frame";
 import { getAPI } from "@/preload/getAPI";
 import { openProject } from "@/API/project";
 
@@ -45,15 +45,15 @@ export default function NewProject() {
   };
 
   return (
-    <div class="px-4 py-4 bg-main-1 text-wheat flex flex-col gap-4">
+    <div class="px-4 py-4 bg-app-bg-1 text-app-acc-wheat flex flex-col gap-4">
       <p class="text-3xl font-bold text-center">Open Project!</p>
       <div class="flex gap-4">
-        <div class="h-full bg-main-3">
+        <div class="h-full bg-app-bg-3">
           <p class="text-center">Recent</p>
           <div class="w-48 h-64 p-1 overflow-y-auto flex gap-2 flex-col">
             <div
               class="w-full cursor-pointer"
-              onClick={() => {
+              onDblClick={() => {
                 setPath("C:\\Users\\Tolet\\Desktop\\3");
                 onOpenProject();
               }}
@@ -67,7 +67,7 @@ export default function NewProject() {
           <label class="text-xl flex gap-4">
             Path:
             <input
-              class="border-b-main-4 bg-main-3 border-b-1 rounded-sm"
+              class="border-b-main-4 bg-app-bg-3 border-b-1 rounded-sm"
               placeholder="C\\..."
               value={path()}
             ></input>
@@ -77,11 +77,12 @@ export default function NewProject() {
             name="Confirm"
             onClick={onOpenProject}
             loading={isLoading}
+            disabled={isLoading}
           ></Button>
         </div>
       </div>
       <button
-        class=" bg-main-acc-1 text-wheat px-3 rounded-sm absolute top-0 right-0"
+        class=" bg-app-acc-red text-app-acc-wheat px-3 rounded-sm absolute top-0 right-0"
         onclick={() => context.setModalOpen(false)}
       >
         X

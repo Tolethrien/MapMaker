@@ -24,7 +24,7 @@ const SPIRAL_POSITION = {
   NE: 8,
 } as const;
 export type ChunkPosition = keyof typeof SPIRAL_POSITION;
-
+//TODO: czegos nie czyscisz jak wczytujesz projekt z juz wczytanego
 //TODO: przenies API wczytywania mapy tutaj bo w sumie tym jest
 export default class EntityManager {
   private static loadedChunks: Map<number, Chunk> = new Map();
@@ -32,6 +32,7 @@ export default class EntityManager {
   private static chunksToAdd: Set<number> = new Set();
   private static cameraOnChunk: number = 0;
   private static focusedChunk: number | undefined = undefined;
+  private static RINGS = 1;
 
   public static getAllChunks() {
     return this.loadedChunks;
@@ -44,9 +45,12 @@ export default class EntityManager {
   }
 
   public static get getFocusedChunk() {
-    return this.loadedChunks.get(this.focusedChunk);
+    return this.loadedChunks.get(this.focusedChunk!);
   }
-  public static setFocusedChunk(index: number) {
+  public static get getFocusedChunkIndex() {
+    return this.focusedChunk;
+  }
+  public static setFocusedChunk(index: number | undefined) {
     this.focusedChunk = index;
   }
   public static updateAll() {
@@ -71,7 +75,6 @@ export default class EntityManager {
     this.chunksToRemove.forEach((index) => this.loadedChunks.delete(index));
     await loadChunks(this.chunksToAdd);
     this.chunksToRemove.clear();
-    this.chunksToAdd.clear();
   }
 
   public static populateChunk(chunkData: ChunkTemplate) {
@@ -121,7 +124,11 @@ export default class EntityManager {
   public static findChunksInRange(position: { x: number; y: number }) {
     const [config] = GlobalStore.get<ProjectConfig>("projectConfig");
     const chunks: Set<number> = new Set();
-    const sides = this.getRingsFromChunk(position, config.chunkSizeInPixels, 1);
+    const sides = this.getRingsFromChunk(
+      position,
+      config.chunkSizeInPixels,
+      this.RINGS
+    );
     sides.forEach((position) => chunks.add(this.getChunkSpiralIndex(position)));
     return chunks;
   }
@@ -181,7 +188,7 @@ export default class EntityManager {
     }
     return result;
   }
-  private static getChunkSpiralIndex(position: Position2D) {
+  private static getChunkSpiralIndex(position: Position2D): number {
     const [config] = GlobalStore.get<ProjectConfig>("projectConfig");
 
     const x = Math.floor(position.x / config.chunkSizeInPixels.w);
@@ -196,8 +203,8 @@ export default class EntityManager {
     if (x === ring) return ringStart - 1 + Math.abs(y + ring);
     if (x === -ring) return ringStart + (4 * ring - 1) + Math.abs(y - ring);
     if (y === ring) return ringStart + (2 * ring - 1) + Math.abs(x - ring);
-    EngineDebugger.showWarn(
-      `Spiral Index not found, this should be impossible`
+    throw EngineDebugger.programBreak(
+      `Spiral Index in entity manager not found, this should be impossible`
     );
   }
   private static getTilePosition(chunkPos: Position2D, tileIndex: number) {

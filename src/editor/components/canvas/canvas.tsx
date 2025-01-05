@@ -24,13 +24,13 @@ export default function Canvas() {
   // });
 
   return (
-    <div class="flex flex-grow w-fit justify-center bg-main-1">
+    <div class="flex flex-grow w-fit justify-center bg-app-bg-1">
       <canvas
         ref={ref}
         id="editorCanvas"
         width={600}
         height={600}
-        class="border border-wheat"
+        class="border border-app-acc-wheat"
       />
     </div>
   );

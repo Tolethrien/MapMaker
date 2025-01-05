@@ -7,7 +7,7 @@ import GlobalStore from "@/engine/core/modules/globalStore/globalStore";
 
 export default function LeftBar() {
   return (
-    <div class="flex justify-center items-center flex-col min-w-32 bg-main-2">
+    <div class="flex justify-center items-center flex-col min-w-32 bg-app-bg-2">
       <p>add chunk</p>
       <div class="flex flex-col justify-center items-center">
         <Button

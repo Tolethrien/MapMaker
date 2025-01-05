@@ -4,6 +4,7 @@ import EntityManager, {
 } from "@/engine/core/entitySystem/core/entityManager";
 import { ChunkTemplate } from "@/engine/core/entitySystem/entities/chunk";
 import { TileTemplate } from "@/engine/core/entitySystem/entities/tile";
+import EngineDebugger from "@/engine/core/modules/debugger/debugger";
 import GlobalStore from "@/engine/core/modules/globalStore/globalStore";
 import Engine from "@/engine/engine";
 import { getAPI } from "@/preload/getAPI";
@@ -50,8 +51,7 @@ export async function createNewProject(
   });
   if (!configFileStatus.success) return configFileStatus;
 
-  const canvas = document.getElementById("editorCanvas") as HTMLCanvasElement;
-  await Engine.initialize(canvas, projectConfig);
+  await Engine.initialize(projectConfig);
 
   const { chunkIndex, data, position } = EntityManager.createEmptyChunk(
     "central",
@@ -91,8 +91,7 @@ export async function openProject(folderPath: string): Promise<AsyncStatus> {
     projectConfigStatus.data as string
   ) as ProjectConfig;
 
-  const canvas = document.getElementById("editorCanvas") as HTMLCanvasElement;
-  await Engine.initialize(canvas, config);
+  await Engine.initialize(config);
 
   const chunks: ChunkTemplate[] = [];
   const chunkIndexes = EntityManager.findChunksInRange({ x: 0, y: 0 });
@@ -111,8 +110,12 @@ export async function openProject(folderPath: string): Promise<AsyncStatus> {
   return { error: "", success: true };
 }
 export async function loadChunks(chunks: Set<number>) {
+  const rand = Math.random().toFixed(3);
+  EngineDebugger.startTimer(`${rand}:chunk loading...`);
+
   const [config] = GlobalStore.get<ProjectConfig>("projectConfig");
-  for (const index of chunks) {
+  //TODO: change this to own threat and delegating jobs
+  const chunkPromises = Array.from(chunks).map(async (index) => {
     const chunkDataStatus = await readFile({
       filePath: joinPaths(
         config.projectPath,
@@ -122,16 +125,32 @@ export async function loadChunks(chunks: Set<number>) {
       ),
       type: "json",
     });
-    if (!chunkDataStatus.success) continue;
+
+    if (!chunkDataStatus.success) {
+      chunks.delete(index);
+      return null;
+    }
 
     const data = JSON.parse(chunkDataStatus.data as string) as ChunkTemplate;
-    EntityManager.populateChunk(data);
-  }
+    return data;
+  });
+  const results = await Promise.all(chunkPromises);
+
+  results
+    .filter((data): data is ChunkTemplate => data !== null)
+    .forEach((chunkData) => {
+      EntityManager.populateChunk(chunkData);
+      chunks.delete(chunkData.index);
+    });
+  EngineDebugger.endTimer(`${rand}:chunk loading...`);
 }
 export async function saveOnChange(chunkIndex: number) {
   console.log("zapisuje...");
   const [projectPath] = GlobalStore.get<string>("currentProjectPath");
   const chunk = EntityManager.getChunk(chunkIndex);
+  EngineDebugger.assertValue(chunk, {
+    msg: "Save on change got non existent index",
+  });
   const tiles: TileTemplate[] = [];
   chunk.getTiles.forEach((tile) =>
     tiles.push({

@@ -4,9 +4,10 @@ import ContextButton from "@/editor/components/reusable/contextMenu/contextButto
 import SecondLogo from "@editor/components/frame/components/secondLogo";
 import Modal from "@editor/components/reusable/modal";
 import {
-  FrameContext,
+  FrameContext as frameCtx,
   FrameModalType,
-} from "@editor/components/frame/context/provider";
+} from "@/editor/providers/frame";
+import { globalContext as globalCtx } from "@/editor/providers/global";
 import { batch, createSignal, useContext } from "solid-js";
 import FrameModalList from "./modals";
 import { closeProject } from "@/API/project";
@@ -14,7 +15,9 @@ import { getAPI } from "@/preload/getAPI";
 import EventBus from "@/engine/core/modules/eventBus/eventBus";
 
 export default function Frame() {
-  const context = useContext(FrameContext);
+  const frameContext = useContext(frameCtx)!;
+  const globalContext = useContext(globalCtx)!;
+
   const [initButtonDisable, setInitButtonDisable] = createSignal(true);
   const { onAppCloseEvent, appClose } = getAPI("API_APP");
 
@@ -30,19 +33,19 @@ export default function Frame() {
 
   const openModal = (modalName: FrameModalType) => {
     batch(() => {
-      context.setActiveButton("none");
-      context.setActiveModal(modalName);
-      context.setModalOpen(true);
+      frameContext.setActiveButton("none");
+      frameContext.setActiveModal(modalName);
+      frameContext.setModalOpen(true);
     });
   };
   const onSaveProject = async () => {
     // const saveStatus = await saveChunk();
     // if (!saveStatus.success) console.log(saveStatus);
-    context.setActiveButton("none");
+    frameContext.setActiveButton("none");
   };
   const onCloseProject = async () => {
     closeProject();
-    context.setActiveButton("none");
+    frameContext.setActiveButton("none");
   };
   const onAppExit = () => {
     appClose();
@@ -50,7 +53,7 @@ export default function Frame() {
 
   return (
     <>
-      <div class="w-full h-[28px] app-drag text-wheat bg-main-3 flex items-center justify-between pr-36 gap-4">
+      <div class="w-full h-[28px] app-drag text-app-acc-wheat bg-app-bg-3 flex items-center justify-between pr-36 gap-4">
         <div class="flex h-full gap-1">
           <FrameButton name="File">
             <ContextMenu>
@@ -76,12 +79,31 @@ export default function Frame() {
               <ContextButton name="Exit" onClick={onAppExit} />
             </ContextMenu>
           </FrameButton>
-          <FrameButton name="Edit"></FrameButton>
-          <FrameButton name="Help"></FrameButton>
+          <FrameButton name="Project"></FrameButton>
+          <FrameButton name="Editor">
+            <ContextMenu>
+              <ContextButton
+                name={`Left Bar: ${
+                  globalContext.isLeftBarVisible() ? "On" : "Off"
+                }`}
+                onClick={() =>
+                  globalContext.setIsLeftBarVisible((prev) => !prev)
+                }
+              />
+              <ContextButton
+                name={`Right Bar: ${
+                  globalContext.isRightBarVisible() ? "On" : "Off"
+                }`}
+                onClick={() =>
+                  globalContext.setIsRightBarVisible((prev) => !prev)
+                }
+              />
+            </ContextMenu>
+          </FrameButton>
         </div>
         <SecondLogo />
       </div>
-      <Modal open={context.isModalOpen}>
+      <Modal open={frameContext.isModalOpen}>
         <FrameModalList />
       </Modal>
     </>

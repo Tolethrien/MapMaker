@@ -1,6 +1,6 @@
 import { Show, useContext } from "solid-js";
 import { JSX } from "solid-js/jsx-runtime";
-import { FrameButtonTypes, FrameContext } from "../context/provider";
+import { FrameButtonTypes, FrameContext } from "../../../providers/frame";
 
 interface Props {
   children?: JSX.Element;
@@ -19,8 +19,8 @@ export default function FrameButton(props: Props) {
 
   return (
     <button
-      class={`px-4 text-wheat app-prevent-drag outline-none text-sm  relative hover:bg-main-4 ${
-        context.getActiveButton() === props.name && "bg-main-4"
+      class={`px-4 text-app-acc-wheat app-prevent-drag outline-none text-sm  relative hover:bg-app-bg-4 ${
+        context.getActiveButton() === props.name && "bg-app-bg-4"
       }`}
       onMouseEnter={changeOnActiveAndENter}
       onClick={() => context.setActiveButton(props.name)}

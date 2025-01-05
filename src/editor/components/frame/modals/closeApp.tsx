@@ -1,6 +1,6 @@
 import { useContext } from "solid-js";
 import Button from "../../reusable/button";
-import { FrameContext } from "../context/provider";
+import { FrameContext } from "../../../providers/frame";
 import { getAPI } from "@/preload/getAPI";
 
 export default function CloseApp() {
@@ -8,8 +8,8 @@ export default function CloseApp() {
   const { appTerminate } = getAPI("API_APP");
 
   return (
-    <div class="bg-main-2 p-12 flex flex-col gap-8">
-      <p class="text-center text-wheat text-3xl">Are you sure?</p>
+    <div class="bg-app-bg-2 p-12 flex flex-col gap-8">
+      <p class="text-center text-app-acc-wheat text-3xl">Are you sure?</p>
       <div class="flex gap-8">
         <Button
           name="Yes!"

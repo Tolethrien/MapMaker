@@ -6,6 +6,7 @@
     "module": "ESNext",
     "jsxImportSource": "solid-js",
     "skipLibCheck": true,
+    "strictNullChecks": true,
     "esModuleInterop": true,
     "noImplicitAny": true,
     "sourceMap": true,
