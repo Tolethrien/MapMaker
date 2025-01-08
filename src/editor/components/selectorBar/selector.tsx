@@ -11,7 +11,7 @@ export default function Selector() {
   const SVG_INACTIVE_STYLE = "w-8 h-8 stroke-app-acc-ice";
   const { activeSelector, setActiveSelector } = useContext(globalContext)!;
   return (
-    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 text-app-acc-wheat bg-app-bg-2 flex gap-4 px-8 py-1 rounded-lg items-center shadow-lg border-1 border-app-bg-4">
+    <div class="absolute bottom-12 left-1/2 -translate-x-1/2 text-app-acc-wheat bg-app-bg-2 flex gap-4 px-8 py-1 rounded-lg items-center shadow-lg border-1 border-app-bg-4">
       <div class="flex flex-col items-center">
         <div class="relative w-10 h-10">
           <ZIndexSVG style="w-full h-full stroke-app-acc-ice opacity-50" />

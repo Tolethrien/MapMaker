@@ -2,7 +2,6 @@ import { Show, useContext } from "solid-js";
 import Canvas from "./components/canvas/canvas";
 import LeftBar from "./components/leftBar/leftBar";
 import RightBar from "./components/rightBar/rightBar";
-import Selector from "./components/selectorBar/selector";
 import { globalContext } from "./providers/global";
 
 export default function MainWindow() {
@@ -18,7 +17,6 @@ export default function MainWindow() {
           <RightBar />
         </Show>
       </div>
-      <Selector />
     </>
   );
 }

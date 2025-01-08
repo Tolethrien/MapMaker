@@ -1,6 +1,7 @@
 import Vec2D from "@/math/vec2D";
 import Camera from "../../entitySystem/entities/camera";
 import EntityManager from "../../entitySystem/core/entityManager";
+import Aurora from "../../aurora/auroraCore";
 export type mouseEvents = (typeof MOUSE_EVENTS)[number];
 
 export const MOUSE_EVENTS = ["leftClick", "rightClick", "scrollClick"] as const;
@@ -22,6 +23,13 @@ export default class InputManager {
     canvas.addEventListener("auxclick", (e) => {
       if (e.button === 2) this.mouseClickEvent(e, "rightClick");
       else if (e.button === 1) this.mouseClickEvent(e, "scrollClick");
+    });
+    canvas.addEventListener("mousemove", (e) => {
+      console.log("acc_mouse", { x: e.offsetX, y: e.offsetY });
+      console.log(
+        "world_mouse",
+        this.mouseToWorld({ x: e.offsetX, y: e.offsetY })
+      );
     });
   }
   private static mouseClickEvent(e: MouseEvent, type: mouseEvents) {
