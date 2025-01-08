@@ -8,9 +8,7 @@ import EntityManager, {
   ProjectConfig,
 } from "./core/entitySystem/core/entityManager";
 import Camera from "./core/entitySystem/entities/camera";
-import { useContext } from "solid-js";
-import { globalContext } from "@/editor/providers/global";
-import EngineRenderStats from "./core/modules/debugger/renderStats/renderStats";
+import RenderStatsConnector from "@/editor/components/renderStats/connector";
 export default class Engine {
   private static isInit = false;
   private static loopID: number = 0;
@@ -62,16 +60,16 @@ export default class Engine {
   }
 
   private static loop() {
-    EngineRenderStats.start();
+    RenderStatsConnector.start();
     Batcher.startBatch();
     EntityManager.frameCleanUp();
     Camera.update();
     Batcher.setCameraBuffer(Camera.getProjectionViewMatrix.getMatrix);
     EntityManager.updateAll();
     EntityManager.renderAll();
-    EngineRenderStats.swapToGPU();
+    RenderStatsConnector.swapToGPU();
     Batcher.endBatch();
-    EngineRenderStats.stop();
+    RenderStatsConnector.stop();
     this.loopID = requestAnimationFrame(() => this.loop());
   }
 }

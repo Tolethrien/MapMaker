@@ -45,7 +45,7 @@ interface RenderData {
     render: number;
     compute: number;
   };
-  colorCorrection: number[];
+  colorCorrection: [number, number, number];
   backgroundColor: number[];
   customCamera: boolean;
   bloom: { active: boolean; str: number };
