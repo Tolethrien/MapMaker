@@ -1,7 +1,7 @@
 import Vec2D from "@/math/vec2D";
 import { ATLAS_FONT_SIZE, ATLAS_GAP } from "./glyphAtlas";
 import { Lookups, Shape } from "./parserTypes";
-import EngineDebugger from "@/engine/core/modules/debugger/debugger";
+import EngineDebugger from "@/engine/core/modules/debugger";
 
 export const ENABLE_KERNING = true;
 

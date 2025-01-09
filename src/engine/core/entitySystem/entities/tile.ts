@@ -1,9 +1,10 @@
 import Draw from "@/engine/core/aurora/urp/draw";
-import GlobalStore from "@/engine/core/modules/globalStore/globalStore";
-import InputManager from "@/engine/core/modules/inputManager/inputManager";
+import InputManager from "@/engine/core/modules/inputManager";
 import Entity from "../core/entity";
 import { ProjectConfig } from "../core/entityManager";
 import { saveOnChange } from "@/API/project";
+import GlobalStore from "../../modules/globalStore";
+import Link from "@/vault/link";
 interface TileProps {
   pos: { x: number; y: number };
   color: HSLA;
@@ -29,7 +30,7 @@ export default class Tile extends Entity {
   tileIndex: number;
   chunkIndex: number;
   constructor({ pos, color, chunkIndex, tileIndex }: TileProps) {
-    const [config] = GlobalStore.get<ProjectConfig>("projectConfig");
+    const config = Link.get<ProjectConfig>("projectConfig")();
 
     super();
     this.transform = this.addComponent("Transform", {

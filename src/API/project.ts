@@ -4,11 +4,12 @@ import EntityManager, {
 } from "@/engine/core/entitySystem/core/entityManager";
 import { ChunkTemplate } from "@/engine/core/entitySystem/entities/chunk";
 import { TileTemplate } from "@/engine/core/entitySystem/entities/tile";
-import EngineDebugger from "@/engine/core/modules/debugger/debugger";
-import GlobalStore from "@/engine/core/modules/globalStore/globalStore";
+import EngineDebugger from "@/engine/core/modules/debugger";
+import GlobalStore from "@/engine/core/modules/globalStore";
 import Engine from "@/engine/engine";
 import { getAPI } from "@/preload/getAPI";
 import { joinPaths } from "@/utils/utils";
+import Link from "@/vault/link";
 
 const { createFolder, createFile, readFile } = getAPI("API_FILE_SYSTEM");
 export interface NewProjectProps {
@@ -113,7 +114,8 @@ export async function loadChunks(chunks: Set<number>) {
   const rand = Math.random().toFixed(3);
   EngineDebugger.startTimer(`${rand}:chunk loading...`);
 
-  const [config] = GlobalStore.get<ProjectConfig>("projectConfig");
+  const config = Link.get<ProjectConfig>("projectConfig")();
+
   //TODO: change this to own threat and delegating jobs
   const chunkPromises = Array.from(chunks).map(async (index) => {
     const chunkDataStatus = await readFile({

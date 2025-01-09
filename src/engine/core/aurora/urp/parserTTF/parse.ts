@@ -1,4 +1,4 @@
-import EngineDebugger from "@/engine/core/modules/debugger/debugger";
+import EngineDebugger from "@/engine/core/modules/debugger";
 import BinaryReader from "./binaryRead";
 import {
   ClassDefFormat1,

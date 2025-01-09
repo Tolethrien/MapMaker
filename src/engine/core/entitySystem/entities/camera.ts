@@ -1,6 +1,8 @@
 import Aurora from "@/engine/core/aurora/auroraCore";
-import EventBus from "@/engine/core/modules/eventBus/eventBus";
 import Mat4 from "@/math/mat4";
+import EventBus from "@/vault/eventBus";
+import Link from "@/vault/link";
+import { Setter } from "solid-js";
 type CameraZoom = { current: number; max: number; min: number };
 const cameraData = {
   keyPressed: new Set(),
@@ -12,13 +14,15 @@ export default class Camera {
   private static position: Position2D;
   private static speed: number;
   private static zoom: CameraZoom;
-
+  private static setUI: Setter<Position2D>;
   public static initialize() {
     this.projectionViewMatrix = Mat4.create();
     this.view = Mat4.create().lookAt([0, 0, 1], [0, 0, 0], [0, 1, 0]);
     this.position = { x: Aurora.canvas.width / 2, y: Aurora.canvas.height / 2 };
     this.speed = 15;
     this.zoom = { current: 1, max: 10, min: 0.1 };
+    this.setUI = Link.set<Position2D>("cameraPos");
+    this.setUI(this.position);
 
     window.onkeydown = (event: KeyboardEvent) => {
       const pressedKey = event.key === " " ? "space" : event.key;
@@ -64,5 +68,6 @@ export default class Camera {
       this.zoom.current < this.zoom.max &&
         (this.zoom.current += 0.01 * Math.log(this.zoom.current + 1));
     EventBus.emit<Position2D>("cameraMove", this.position);
+    this.setUI(this.position);
   }
 }

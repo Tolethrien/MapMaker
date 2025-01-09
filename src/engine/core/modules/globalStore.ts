@@ -1,4 +1,4 @@
-import EngineDebugger from "../debugger/debugger";
+import EngineDebugger from "./debugger";
 
 export default class GlobalStore {
   private static store: Map<string, unknown> = new Map();

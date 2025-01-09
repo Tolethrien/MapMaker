@@ -1,10 +1,11 @@
+import EventBus from "@/vault/eventBus";
 import Draw from "../../aurora/urp/draw";
-import EventBus from "../../modules/eventBus/eventBus";
-import GlobalStore from "../../modules/globalStore/globalStore";
-import InputManager from "../../modules/inputManager/inputManager";
+import InputManager from "../../modules/inputManager";
 import Entity from "../core/entity";
 import EntityManager, { ProjectConfig } from "../core/entityManager";
 import Tile, { TileTemplate } from "./tile";
+import GlobalStore from "../../modules/globalStore";
+import Link from "@/vault/link";
 interface Props {
   index: number;
   position: Position2D;
@@ -26,8 +27,8 @@ export default class Chunk extends Entity {
     super();
     this.tiles = new Set();
     this.index = index;
-    const size =
-      GlobalStore.get<ProjectConfig>("projectConfig")[0].chunkSizeInPixels;
+    const size = Link.get<ProjectConfig>("projectConfig")().chunkSizeInPixels;
+
     this.transform = this.addComponent("Transform", {
       position,
       size: { width: size.w, height: size.h },

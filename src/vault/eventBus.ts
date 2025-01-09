@@ -1,13 +1,28 @@
-import EngineDebugger from "../debugger/debugger";
-type eventListener = { name: string; callback: (e: never) => void };
+import EngineDebugger from "@/engine/core/modules/debugger";
+
+type eventListener = {
+  name: string;
+  callback: (e: never) => void;
+};
 type EventDriver = Map<eventListener["name"], eventListener["callback"]>;
 
 export default class EventBus {
   private static eventBus: Map<string, EventDriver> = new Map();
 
-  public static remove(event: string) {
+  public static removeEvent(event: string) {
     this.eventBus.delete(event) ??
       EngineDebugger.showError(`No event with name ${event} to delete`);
+  }
+  public static removeFromEvent(event: string, name: string) {
+    const bus = this.eventBus.get(event);
+    if (!bus) {
+      EngineDebugger.showError(`No event with name ${event} to delete from`);
+      return;
+    }
+    bus.delete(name) ??
+      EngineDebugger.showError(
+        `No callback with name ${name} to delete in event: ${event}`
+      );
   }
 
   public static on(event: string, listener: eventListener) {

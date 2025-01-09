@@ -22,6 +22,9 @@ textarea {
     -webkit-app-region: no-drag;
   }
 }
+button {
+  outline: none;
+}
 dialog::backdrop {
   inset: 28px 0 0 0;
 }

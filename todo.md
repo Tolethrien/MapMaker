@@ -5,6 +5,6 @@
    ctrl - layer selector
    x/z - z-index up/down
 
-3. czy dałoby sie tworzyc sygnały w globalStore, i uzywac ich do obustronnej komunikacji? sygnal updatuje UI, a silnik co frame pobiera i tak nowa wartosc
+3. resize canvasu
 
-4. resize canvasu
+4. przypisz jedne canvas wszedzie a nie inicjuj we wszystkim swojego

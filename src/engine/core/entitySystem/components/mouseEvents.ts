@@ -1,7 +1,7 @@
 import {
   MOUSE_EVENTS,
   MouseEventMod,
-} from "@/engine/core/modules/inputManager/inputManager";
+} from "@/engine/core/modules/inputManager";
 import Component from "../core/component";
 
 type ActionObject = Record<

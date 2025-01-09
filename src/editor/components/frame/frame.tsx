@@ -8,24 +8,19 @@ import {
   FrameModalType,
 } from "@/editor/providers/frame";
 import { globalContext as globalCtx } from "@/editor/providers/global";
-import { batch, createSignal, useContext } from "solid-js";
+import { batch, useContext } from "solid-js";
 import FrameModalList from "./modals";
 import { closeProject } from "@/API/project";
 import { getAPI } from "@/preload/getAPI";
-import EventBus from "@/engine/core/modules/eventBus/eventBus";
+import Link from "@/vault/link";
 
 export default function Frame() {
   const frameContext = useContext(frameCtx)!;
   const globalContext = useContext(globalCtx)!;
-
-  const [initButtonDisable, setInitButtonDisable] = createSignal(true);
   const { onAppCloseEvent, appClose } = getAPI("API_APP");
+  const engineInit = Link.get<boolean>("engineInit");
+  const isEngineInit = () => !engineInit();
 
-  //crating event to block buttons on inactive engine
-  EventBus.on("engineInit", {
-    name: "frameButtons",
-    callback: (e: boolean) => setInitButtonDisable(!e),
-  });
   //assigning opening modal to closeApp event
   onAppCloseEvent(() => {
     openModal("closeApp");
@@ -69,12 +64,12 @@ export default function Frame() {
               <ContextButton
                 name="Save Project"
                 onClick={onSaveProject}
-                disable={initButtonDisable}
+                disable={isEngineInit}
               />
               <ContextButton
                 name="Close Project"
                 onClick={onCloseProject}
-                disable={initButtonDisable}
+                disable={isEngineInit}
               />
               <ContextButton name="Exit" onClick={onAppExit} />
             </ContextMenu>

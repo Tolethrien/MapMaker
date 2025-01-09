@@ -1,14 +1,14 @@
 import Aurora from "./core/aurora/auroraCore";
 import Batcher from "./core/aurora/urp/batcher";
-import InputManager from "./core/modules/inputManager/inputManager";
-import GlobalStore from "./core/modules/globalStore/globalStore";
-import EventBus from "./core/modules/eventBus/eventBus";
-import EngineDebugger from "./core/modules/debugger/debugger";
+import InputManager from "./core/modules/inputManager";
+import EngineDebugger from "./core/modules/debugger";
 import EntityManager, {
   ProjectConfig,
 } from "./core/entitySystem/core/entityManager";
 import Camera from "./core/entitySystem/entities/camera";
 import RenderStatsConnector from "@/editor/components/renderStats/connector";
+import GlobalStore from "./core/modules/globalStore";
+import Link from "@/vault/link";
 export default class Engine {
   private static isInit = false;
   private static loopID: number = 0;
@@ -22,7 +22,9 @@ export default class Engine {
     }
     //TODO: jeden centralny punkt canvasu
     const canvas = document.getElementById("editorCanvas") as HTMLCanvasElement;
-    GlobalStore.add("projectConfig", config);
+    // GlobalStore.add("projectConfig", config);
+    Link.set<ProjectConfig>("projectConfig")(config);
+
     GlobalStore.add(
       "currentProjectPath",
       `${config.projectPath}\\${config.name}`
@@ -37,8 +39,8 @@ export default class Engine {
       lighting: false,
       maxQuadPerSceen: 100000,
     });
-
-    EventBus.emit("engineInit", true);
+    //TODO: te wszystkie inity zrobic w eventBusie
+    Link.set("engineInit")(true);
     InputManager.init(canvas);
     this.isInit = true;
     this.loop();
@@ -54,7 +56,8 @@ export default class Engine {
     EntityManager.clearAll();
     GlobalStore.remove("currentProjectPath");
     GlobalStore.remove("projectConfig");
-    EventBus.emit("engineInit", false);
+    Link.set("engineInit")(false);
+
     Aurora.setFirstAuroraFrame();
     this.isInit = false;
   }

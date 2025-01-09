@@ -3,7 +3,7 @@ import EntityManager, {
 } from "@/engine/core/entitySystem/core/entityManager";
 import Button from "../reusable/button";
 import { createNewEmptyChunk } from "@/API/project";
-import GlobalStore from "@/engine/core/modules/globalStore/globalStore";
+import Link from "@/vault/link";
 
 export default function LeftBar() {
   return (
@@ -65,7 +65,7 @@ export default function LeftBar() {
         <Button
           name="show config"
           onClick={async () => {
-            console.log(GlobalStore.get<ProjectConfig>("projectConfig")[0]);
+            console.log(Link.get<ProjectConfig>("projectConfig")());
           }}
         />
       </div>

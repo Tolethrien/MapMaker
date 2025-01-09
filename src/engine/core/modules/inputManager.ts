@@ -1,7 +1,8 @@
 import Vec2D from "@/math/vec2D";
-import Camera from "../../entitySystem/entities/camera";
-import EntityManager from "../../entitySystem/core/entityManager";
-import Aurora from "../../aurora/auroraCore";
+import Camera from "../entitySystem/entities/camera";
+import EntityManager from "../entitySystem/core/entityManager";
+import Link from "@/vault/link";
+import { Selectors } from "@/API/links";
 export type mouseEvents = (typeof MOUSE_EVENTS)[number];
 
 export const MOUSE_EVENTS = ["leftClick", "rightClick", "scrollClick"] as const;
@@ -24,14 +25,17 @@ export default class InputManager {
       if (e.button === 2) this.mouseClickEvent(e, "rightClick");
       else if (e.button === 1) this.mouseClickEvent(e, "scrollClick");
     });
-    canvas.addEventListener("mousemove", (e) => {
-      console.log("acc_mouse", { x: e.offsetX, y: e.offsetY });
-      console.log(
-        "world_mouse",
-        this.mouseToWorld({ x: e.offsetX, y: e.offsetY })
-      );
+    window.addEventListener("keypress", () => {
+      console.log("s");
+    });
+    window.addEventListener("keydown", (e) => {
+      this.selectorEvents("down", e);
+    });
+    window.addEventListener("keyup", (e) => {
+      this.selectorEvents("up", e);
     });
   }
+
   private static mouseClickEvent(e: MouseEvent, type: mouseEvents) {
     const mouseEventMod: MouseEventMod = {
       x: e.offsetX,
@@ -45,8 +49,8 @@ export default class InputManager {
     const chunks = EntityManager.getAllChunks();
     for (const [_, chunk] of chunks) {
       if (!chunk.isMouseCollide(mousePos)) continue;
-
-      if (mouseEventMod.shift) {
+      const selector = Link.get<Selectors>("activeSelector");
+      if (selector() === "grid") {
         chunk.mouseEvent.onEvent[type]?.(mouseEventMod);
         break;
       }
@@ -55,7 +59,6 @@ export default class InputManager {
         tile.mouseEvent.onEvent[type]?.(mouseEventMod);
         break;
       }
-
       break;
     }
   }
@@ -70,5 +73,11 @@ export default class InputManager {
         number
       ]
     ).get;
+  }
+  private static selectorEvents(key: "up" | "down", e: KeyboardEvent) {
+    const setSelector = Link.set<Selectors>("activeSelector");
+
+    if (key === "down") e.key === "Shift" && !e.repeat && setSelector("grid");
+    else e.key === "Shift" && setSelector("tile");
   }
 }

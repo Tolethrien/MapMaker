@@ -1,9 +1,10 @@
-import GlobalStore from "../../modules/globalStore/globalStore";
 import Tile from "../entities/tile";
 import { randomColor } from "@/utils/utils";
-import EngineDebugger from "../../modules/debugger/debugger";
+import EngineDebugger from "../../modules/debugger";
 import Chunk, { ChunkTemplate } from "../entities/chunk";
 import { loadChunks } from "@/API/project";
+import GlobalStore from "../../modules/globalStore";
+import Link from "@/vault/link";
 export interface ProjectConfig {
   projectPath: string;
   name: string;
@@ -96,7 +97,7 @@ export default class EntityManager {
   }
   public static createEmptyChunk(side: ChunkPosition, position: Position2D) {
     // jesli cos nie pojdzie w tworzeniu chunka to i tak go dodajesz do gry ale nie tworzysz pliku, jakas 2 stronna komunikacja?
-    const [config] = GlobalStore.get<ProjectConfig>("projectConfig");
+    const config = Link.get<ProjectConfig>("projectConfig")();
     const numberOfTiles = config.chunkSizeInTiles.w * config.chunkSizeInTiles.h;
     const { x, y } = this.getChunkNextToCenter(side, position);
 
@@ -122,7 +123,8 @@ export default class EntityManager {
   }
 
   public static findChunksInRange(position: { x: number; y: number }) {
-    const [config] = GlobalStore.get<ProjectConfig>("projectConfig");
+    const config = Link.get<ProjectConfig>("projectConfig")();
+
     const chunks: Set<number> = new Set();
     const sides = this.getRingsFromChunk(
       position,
@@ -148,7 +150,8 @@ export default class EntityManager {
     side: ChunkPosition,
     position: Position2D
   ) {
-    const [config] = GlobalStore.get<ProjectConfig>("projectConfig");
+    const config = Link.get<ProjectConfig>("projectConfig")();
+
     const sides = this.getChunkSizePosition(position, config.chunkSizeInPixels);
     return sides[side];
   }
@@ -189,7 +192,7 @@ export default class EntityManager {
     return result;
   }
   private static getChunkSpiralIndex(position: Position2D): number {
-    const [config] = GlobalStore.get<ProjectConfig>("projectConfig");
+    const config = Link.get<ProjectConfig>("projectConfig")();
 
     const x = Math.floor(position.x / config.chunkSizeInPixels.w);
     const y = Math.floor(position.y / config.chunkSizeInPixels.h);
@@ -208,7 +211,7 @@ export default class EntityManager {
     );
   }
   private static getTilePosition(chunkPos: Position2D, tileIndex: number) {
-    const [config] = GlobalStore.get<ProjectConfig>("projectConfig");
+    const config = Link.get<ProjectConfig>("projectConfig")();
 
     const tilesPerRow = config.chunkSizeInTiles.w;
     const tileXIndex = tileIndex % tilesPerRow;
