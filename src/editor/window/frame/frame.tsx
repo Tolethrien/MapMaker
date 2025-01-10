@@ -1,7 +1,5 @@
 import ContextMenu from "@/editor/components/reusable/contextMenu/contextMenu";
-import FrameButton from "@/editor/components/frame/components/frameButton";
 import ContextButton from "@/editor/components/reusable/contextMenu/contextButton";
-import SecondLogo from "@editor/components/frame/components/secondLogo";
 import Modal from "@editor/components/reusable/modal";
 import {
   FrameContext as frameCtx,
@@ -13,6 +11,8 @@ import FrameModalList from "./modals";
 import { closeProject } from "@/API/project";
 import { getAPI } from "@/preload/getAPI";
 import Link from "@/vault/link";
+import FrameButton from "./components/frameButton";
+import SecondLogo from "./components/secondLogo";
 
 export default function Frame() {
   const frameContext = useContext(frameCtx)!;

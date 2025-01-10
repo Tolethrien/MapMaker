@@ -1,8 +1,8 @@
 import { Show, useContext } from "solid-js";
-import Canvas from "./components/canvas/canvas";
-import LeftBar from "./components/leftBar/leftBar";
-import RightBar from "./components/rightBar/rightBar";
-import { globalContext } from "./providers/global";
+import Canvas from "./canvas/canvas";
+import LeftBar from "./leftBar/leftBar";
+import { globalContext } from "../providers/global";
+import RightBar from "./rightBar/rightBar";
 
 export default function MainWindow() {
   const { isLeftBarVisible, isRightBarVisible } = useContext(globalContext)!;

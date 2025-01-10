@@ -1,5 +1,5 @@
 import GridSVG from "@/assets/icons/grid";
-import IconButton from "../reusable/buttonAsIcon";
+import IconButton from "../../reusable/buttonAsIcon";
 import TileSVG from "@/assets/icons/tile";
 import LayerSVG from "@/assets/icons/layer";
 import ZIndexSVG from "@/assets/icons/zIndex";

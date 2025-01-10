@@ -1,7 +1,7 @@
 import { ProjectConfig } from "@/engine/core/entitySystem/core/entityManager";
 import Link from "@/vault/link";
 export type Selectors = "tile" | "grid" | "layer";
-
+export type TextureViewSelected = Position2D & { index: number };
 export default function initLinks() {
   Link.add<boolean>("engineInit", false);
   Link.add<Selectors>("activeSelector", "tile");
@@ -12,5 +12,10 @@ export default function initLinks() {
     name: "",
     projectPath: "",
     tileSize: { h: 0, w: 0 },
+  });
+  Link.add<TextureViewSelected>("textureViewSelected", {
+    x: -1,
+    index: -1,
+    y: -1,
   });
 }

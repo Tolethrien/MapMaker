@@ -33,6 +33,11 @@ export async function createNewProject(
   const chunksStatus = await createFolder(joinPaths(folderPath, "chunks"));
   if (!chunksStatus.success) return chunksStatus;
 
+  const textureFolderStatus = await createFolder(
+    joinPaths(folderPath, "textures")
+  );
+  if (!textureFolderStatus.success) return textureFolderStatus;
+
   const projectConfig: ProjectConfig = {
     name: props.name,
     tileSize: props.tileSize,

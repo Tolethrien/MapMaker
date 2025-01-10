@@ -1,5 +1,5 @@
 import { createSignal } from "solid-js";
-import Selector from "../selectorBar/selector";
+import Selector from "../../components/modules/selectorBar/selector";
 export default function Canvas() {
   let ref!: HTMLCanvasElement;
   const [size, setSize] = createSignal({ w: 600, h: 600 });

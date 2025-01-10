@@ -6,9 +6,11 @@ import EntityManager, {
   ProjectConfig,
 } from "./core/entitySystem/core/entityManager";
 import Camera from "./core/entitySystem/entities/camera";
-import RenderStatsConnector from "@/editor/components/renderStats/connector";
+import RenderStatsConnector from "@/editor/components/modules/renderStats/connector";
 import GlobalStore from "./core/modules/globalStore";
 import Link from "@/vault/link";
+import world from "@/assets/world.png";
+import flora from "@/assets/flora.png";
 export default class Engine {
   private static isInit = false;
   private static loopID: number = 0;
@@ -36,6 +38,7 @@ export default class Engine {
       backgroundColor: [0, 0, 0, 255],
       bloom: { active: false, str: 0 },
       customCamera: true,
+      loadTextures: [{ name: "world", url: world }],
       lighting: false,
       maxQuadPerSceen: 100000,
     });

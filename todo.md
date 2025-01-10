@@ -1,10 +1,14 @@
-1. save snapshot/restore -> jesli chcesz zapisac zmiany bo cos zaraz bedziesz robic i nie bedziesz wiedzial czy chcesz to zachowac to by potem szybko przywrocic mape do stanu z save
+- skroty klawiszowe:
+  shift - chunk selector
+  ctrl - layer selector
+  x/z - z-index up/down
 
-2. skroty klawiszowe:
-   shift - chunk selector
-   ctrl - layer selector
-   x/z - z-index up/down
+- resize canvasu
 
-3. resize canvasu
+- przypisz jedne canvas wszedzie a nie inicjuj we wszystkim swojego
 
-4. przypisz jedne canvas wszedzie a nie inicjuj we wszystkim swojego
+- zrobic w pelni dzialajacy input handler
+
+- dodawanie tekstur do silnika i project configu
+
+- exportowanie gotowego projektu

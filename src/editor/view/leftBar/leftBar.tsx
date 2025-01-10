@@ -1,7 +1,7 @@
 import EntityManager, {
   ProjectConfig,
 } from "@/engine/core/entitySystem/core/entityManager";
-import Button from "../reusable/button";
+import Button from "../../components/reusable/button";
 import { createNewEmptyChunk } from "@/API/project";
 import Link from "@/vault/link";
 

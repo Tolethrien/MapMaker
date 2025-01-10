@@ -1,8 +1,8 @@
 import { FrameProvider } from "./providers/frame";
-import Frame from "./components/frame/frame";
-import MainWindow from "./mainWindow";
+import MainWindow from "./view/main";
 import { GlobalProvider } from "./providers/global";
 import initLinks from "@/API/links";
+import Frame from "./window/frame/frame";
 
 export default function App() {
   initLinks();

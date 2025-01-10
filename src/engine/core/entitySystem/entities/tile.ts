@@ -5,6 +5,8 @@ import { ProjectConfig } from "../core/entityManager";
 import { saveOnChange } from "@/API/project";
 import GlobalStore from "../../modules/globalStore";
 import Link from "@/vault/link";
+import Vec4D from "@/math/vec4D";
+import { TextureViewSelected } from "@/API/links";
 interface TileProps {
   pos: { x: number; y: number };
   color: HSLA;
@@ -29,10 +31,12 @@ export default class Tile extends Entity {
   color: HSLA;
   tileIndex: number;
   chunkIndex: number;
+  crop: Position2D | undefined;
   constructor({ pos, color, chunkIndex, tileIndex }: TileProps) {
     const config = Link.get<ProjectConfig>("projectConfig")();
 
     super();
+    this.crop = undefined;
     this.transform = this.addComponent("Transform", {
       position: {
         x: pos.x + config.tileSize.w * 0.5,
@@ -48,35 +52,62 @@ export default class Tile extends Entity {
     this.color = color;
     this.mouseEvent = this.addComponent("MouseEvents", {
       leftClick: (e) => {
-        if (e.shift) this.color = [0, 0, 0, 255];
-        else this.color = [50, 50, 50, 255];
+        const a = Link.get<TextureViewSelected>("textureViewSelected");
+        this.crop = { x: a().x, y: a().y };
+        console.log(this.crop);
+        // if (e.shift) this.color = [0, 0, 0, 255];
+        // else this.color = [50, 50, 50, 255];
         //TODO: to powinno sie tylko wykonywac z flaga z projektu autosave
-        saveOnChange(chunkIndex);
+        // saveOnChange(chunkIndex);
       },
       rightClick: () => {
         this.color = [255, 255, 255, 255];
-        saveOnChange(chunkIndex);
+        // saveOnChange(chunkIndex);
       },
     });
   }
   update() {}
   render(): void {
-    Draw.Quad({
-      alpha: 255,
-      bloom: 0,
-      crop: new Float32Array([0, 0, 1, 1]),
-      isTexture: 0,
-      position: {
-        x: this.transform.position.x,
-        y: this.transform.position.y,
-      },
-      size: {
-        w: this.transform.size.x,
-        h: this.transform.size.y,
-      },
-      textureToUse: 0,
-      tint: new Uint8ClampedArray(this.color),
-    });
+    if (!this.crop) {
+      Draw.Quad({
+        alpha: 255,
+        bloom: 0,
+        crop: new Float32Array([0, 0, 1, 1]),
+        isTexture: 0,
+        position: {
+          x: this.transform.position.x,
+          y: this.transform.position.y,
+        },
+        size: {
+          w: this.transform.size.x,
+          h: this.transform.size.y,
+        },
+        textureToUse: 0,
+        tint: new Uint8ClampedArray([0, 0, 0]),
+      });
+    } else {
+      Draw.Quad({
+        alpha: 255,
+        bloom: 0,
+        crop: new Float32Array([
+          this.crop.x / 1025,
+          this.crop.y / 640,
+          (this.crop.x + 16) / 1025,
+          (this.crop.y + 16) / 640,
+        ]),
+        isTexture: 1,
+        position: {
+          x: this.transform.position.x,
+          y: this.transform.position.y,
+        },
+        size: {
+          w: this.transform.size.x,
+          h: this.transform.size.y,
+        },
+        textureToUse: 1,
+        tint: new Uint8ClampedArray([255, 255, 255]),
+      });
+    }
   }
   public isMouseCollide(mousePos: Position2D) {
     const normalizedMouse = InputManager.mouseToWorld(mousePos);
