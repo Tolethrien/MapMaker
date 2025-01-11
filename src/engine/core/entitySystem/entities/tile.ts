@@ -1,11 +1,7 @@
 import Draw from "@/engine/core/aurora/urp/draw";
 import InputManager from "@/engine/core/modules/inputManager";
 import Entity from "../core/entity";
-import { ProjectConfig } from "../core/entityManager";
-import { saveOnChange } from "@/API/project";
-import GlobalStore from "../../modules/globalStore";
 import Link from "@/vault/link";
-import Vec4D from "@/math/vec4D";
 import { TextureViewSelected } from "@/API/links";
 interface TileProps {
   pos: { x: number; y: number };
@@ -31,7 +27,7 @@ export default class Tile extends Entity {
   color: HSLA;
   tileIndex: number;
   chunkIndex: number;
-  crop: Position2D | undefined;
+  crop: TextureViewSelected | undefined;
   constructor({ pos, color, chunkIndex, tileIndex }: TileProps) {
     const config = Link.get<ProjectConfig>("projectConfig")();
 
@@ -52,8 +48,8 @@ export default class Tile extends Entity {
     this.color = color;
     this.mouseEvent = this.addComponent("MouseEvents", {
       leftClick: (e) => {
-        const a = Link.get<TextureViewSelected>("textureViewSelected");
-        this.crop = { x: a().x, y: a().y };
+        const selector = Link.get<TextureViewSelected>("textureViewSelected");
+        this.crop = selector();
         console.log(this.crop);
         // if (e.shift) this.color = [0, 0, 0, 255];
         // else this.color = [50, 50, 50, 255];
@@ -89,11 +85,15 @@ export default class Tile extends Entity {
       Draw.Quad({
         alpha: 255,
         bloom: 0,
+        //TODO: niech to sie dzieje w shaderze a nie tutaj
+        //TODO: nie działają różne wielkosci tekstur
         crop: new Float32Array([
-          this.crop.x / 1025,
-          this.crop.y / 640,
-          (this.crop.x + 16) / 1025,
-          (this.crop.y + 16) / 640,
+          this.crop.position.x / this.crop.textureSize.w,
+          this.crop.position.y / this.crop.textureSize.h,
+          (this.crop.position.x + this.crop.tileSize.w) /
+            this.crop.textureSize.w,
+          (this.crop.position.y + this.crop.tileSize.h) /
+            this.crop.textureSize.h,
         ]),
         isTexture: 1,
         position: {
@@ -104,7 +104,7 @@ export default class Tile extends Entity {
           w: this.transform.size.x,
           h: this.transform.size.y,
         },
-        textureToUse: 1,
+        textureToUse: this.crop.index + 1,
         tint: new Uint8ClampedArray([255, 255, 255]),
       });
     }

@@ -1,5 +1,12 @@
 import { ipcMain } from "electron";
-import { mkdir, readdir, readFile, writeFile, open } from "fs/promises";
+import {
+  mkdir,
+  readdir,
+  readFile,
+  writeFile,
+  open,
+  copyFile,
+} from "fs/promises";
 const TYPED_ARRAY_MAP = {
   Int8Array,
   Uint8Array,
@@ -45,6 +52,8 @@ export function fileSystemIPC() {
   ipcMain.handle("readFile", readFromFile);
   ipcMain.handle("readDir", readFromDir);
   ipcMain.handle("editFile", editFile);
+  ipcMain.handle("copyFile", cloneFile);
+  ipcMain.handle("loadTexture", loadTexture);
 }
 
 async function createFolder(
@@ -72,7 +81,7 @@ async function createFile(
     if (typeof data === "string") {
       await writeFile(filePath, data, { encoding: "utf-8", ...over });
     } else {
-      const typeArr = TYPED_ARRAY_MAP[typed];
+      const typeArr = TYPED_ARRAY_MAP[typed!];
       const typeData = new typeArr(data);
       await writeFile(filePath, Buffer.from(typeData.buffer), { ...over });
     }
@@ -84,6 +93,7 @@ async function createFile(
     };
   }
 }
+
 async function editFile(
   _: Electron.IpcMainInvokeEvent,
   { filePath, index, value, type, typed }: EditFile
@@ -108,7 +118,7 @@ async function editFile(
     try {
       const fileHandle = await open(path, "r+");
 
-      const typeArr = TYPED_ARRAY_MAP[typed];
+      const typeArr = TYPED_ARRAY_MAP[typed!];
       const typeData = new typeArr(value as number[]);
       const buffer = Buffer.from(typeData.buffer);
       //tu coś
@@ -134,7 +144,6 @@ async function getAppPath(): Promise<AsyncStatus & { path: string }> {
   }
 }
 
-//
 async function readFromDir(
   _: Electron.IpcMainInvokeEvent,
   filePath: string
@@ -150,6 +159,7 @@ async function readFromDir(
     };
   }
 }
+
 async function readFromFile<P extends TypedKeys>(
   _: Electron.IpcMainInvokeEvent,
   { filePath, type, typed }: ReadFile
@@ -160,11 +170,11 @@ async function readFromFile<P extends TypedKeys>(
       return { success: true, error: "", data: text };
     } else {
       const buffer = await readFile(`${filePath}.${type}`);
-      const typeArr = TYPED_ARRAY_MAP[typed];
+      const typeArr = TYPED_ARRAY_MAP[typed!];
       const dataView = new DataView(buffer.buffer);
       const length = buffer.length / typeArr.BYTES_PER_ELEMENT;
       const returnData = new typeArr(length);
-      const method = `get${typed.replace("Array", "")}`;
+      const method = `get${typed!.replace("Array", "")}`;
 
       for (let i = 0; i < length; i++) {
         //magic fix just to let TS pass - this will be valid function name
@@ -180,6 +190,37 @@ async function readFromFile<P extends TypedKeys>(
       success: false,
       error: error.message || `readFile error from file: ${filePath}`,
       data: undefined,
+    };
+  }
+}
+async function cloneFile(
+  _: Electron.IpcMainInvokeEvent,
+  from: string,
+  to: string
+): Promise<AsyncStatus> {
+  try {
+    await copyFile(from, to);
+    return { success: true, error: "" };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message || `copyFile error`,
+    };
+  }
+}
+async function loadTexture(
+  _: Electron.IpcMainInvokeEvent,
+  path: string
+): Promise<AsyncStatus & { src: string }> {
+  try {
+    const buffer = await readFile(path);
+    const base = buffer.toString("base64");
+    return { success: true, error: "", src: `data:image/png;base64,${base}` };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message || `copyFile error`,
+      src: "",
     };
   }
 }

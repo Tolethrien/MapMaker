@@ -1,6 +1,5 @@
 import EntityManager, {
   ChunkPosition,
-  ProjectConfig,
 } from "@/engine/core/entitySystem/core/entityManager";
 import { ChunkTemplate } from "@/engine/core/entitySystem/entities/chunk";
 import { TileTemplate } from "@/engine/core/entitySystem/entities/tile";
@@ -11,7 +10,9 @@ import { getAPI } from "@/preload/getAPI";
 import { joinPaths } from "@/utils/utils";
 import Link from "@/vault/link";
 
-const { createFolder, createFile, readFile } = getAPI("API_FILE_SYSTEM");
+const { createFolder, createFile, readFile, copyFile } =
+  getAPI("API_FILE_SYSTEM");
+const { openFilePicker } = getAPI("API_DIALOG");
 export interface NewProjectProps {
   dirPath: string;
   name: string;
@@ -47,6 +48,7 @@ export async function createNewProject(
       h: props.chunkSize.h * props.tileSize.h,
     },
     projectPath: props.dirPath,
+    textureUsed: [],
   };
   const configFileStatus = await createFile({
     data: JSON.stringify(projectConfig),
@@ -212,5 +214,31 @@ export async function createNewEmptyChunk(
     type: "json",
   });
   if (!ChunkFileStatus.success) return ChunkFileStatus;
+  return { error: "", success: true };
+}
+export async function saveTexture(
+  filePath: string,
+  file: string,
+  fileName: string,
+  tileSize: Size2D
+) {
+  const [getConfig, setConfig] = Link.getLink<ProjectConfig>("projectConfig");
+  const config = getConfig();
+  const newPath = joinPaths(config.projectPath, config.name, "textures", file);
+
+  const copyStatus = await copyFile(filePath, newPath);
+  if (!copyStatus.success) return copyStatus;
+
+  config.textureUsed.push({ name: fileName, path: newPath, tileSize });
+  setConfig(config);
+
+  const newConfigFileStatus = await createFile({
+    data: JSON.stringify(config),
+    dirPath: joinPaths(config.projectPath, config.name),
+    fileName: "config",
+    type: "json",
+    allowOverride: true,
+  });
+  if (!newConfigFileStatus.success) return newConfigFileStatus;
   return { error: "", success: true };
 }

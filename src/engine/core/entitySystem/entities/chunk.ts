@@ -2,9 +2,8 @@ import EventBus from "@/vault/eventBus";
 import Draw from "../../aurora/urp/draw";
 import InputManager from "../../modules/inputManager";
 import Entity from "../core/entity";
-import EntityManager, { ProjectConfig } from "../core/entityManager";
+import EntityManager from "../core/entityManager";
 import Tile, { TileTemplate } from "./tile";
-import GlobalStore from "../../modules/globalStore";
 import Link from "@/vault/link";
 interface Props {
   index: number;

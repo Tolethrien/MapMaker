@@ -7,7 +7,7 @@ const MODAL_LIST = {
   closeApp: lazy(() => import("./closeApp")),
 };
 export default function FrameModalList() {
-  const context = useContext(FrameContext);
+  const context = useContext(FrameContext)!;
 
   //TODO: how to fix this crap
   return (

@@ -6,7 +6,7 @@ import { getAPI } from "@/preload/getAPI";
 import { createNewProject, NewProjectProps } from "@/API/project";
 import ArrowSVG from "@/assets/icons/arrows";
 export default function NewProject() {
-  const context = useContext(FrameContext);
+  const context = useContext(FrameContext)!;
   const [isLoading, setIsLoading] = createSignal(false);
 
   const [state, setState] = createStore<NewProjectProps>({
@@ -88,15 +88,6 @@ export default function NewProject() {
           ></input>
           <button onClick={setProjectPath}>...</button>
         </label>
-        <div class="text-xl flex gap-4 items-center">
-          Auto-save:
-          <input
-            type="checkbox"
-            class="border-b-main-4 w-5 h-5 bg-app-bg-3 border-b-1 checked:bg-red-500"
-            checked={state.autosave}
-            onChange={(e) => setState("autosave", e.target.checked)}
-          ></input>
-        </div>
       </div>
       <div>
         <p class="text-2xl font-bold text-main-acc-1 text-center">Sizing</p>

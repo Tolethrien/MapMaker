@@ -1,20 +1,28 @@
 import { TextureViewSelected } from "@/API/links";
 import Link from "@/vault/link";
 
-const TILE_SIZE = 16;
 export default class CanvasController {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   texture: HTMLImageElement;
   scalar: number;
   selected: Position2D;
-  constructor(canvas: HTMLCanvasElement, image: string) {
+  canvasIndex: number;
+  tileSize: Size2D;
+  constructor(
+    canvas: HTMLCanvasElement,
+    image: string,
+    index: number,
+    tileSize: Size2D
+  ) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
     this.loadImage(image);
     this.canvas.addEventListener("click", (e) => this.inputs(e));
     this.scalar = 1;
     this.selected = { x: -1, y: -1 };
+    this.canvasIndex = index;
+    this.tileSize = tileSize;
   }
   public scaleCanvas(scalar: number) {
     this.scalar = scalar;
@@ -46,7 +54,7 @@ export default class CanvasController {
   }
   private drawSelected(x: number, y: number) {
     this.ctx.strokeStyle = "red";
-    this.ctx.strokeRect(x, y, TILE_SIZE, TILE_SIZE);
+    this.ctx.strokeRect(x, y, this.tileSize.w, this.tileSize.h);
     this.ctx.stroke();
   }
   private inputs(event: MouseEvent) {
@@ -55,17 +63,18 @@ export default class CanvasController {
     this.drawBackground();
     this.selected = tile;
     Link.set<TextureViewSelected>("textureViewSelected")({
-      index: 1,
-      x: tile.x,
-      y: tile.y,
+      index: this.canvasIndex,
+      position: { x: tile.x, y: tile.y },
+      tileSize: this.tileSize,
+      textureSize: { w: this.texture.width, h: this.texture.height },
     });
     console.log(this.texture.width, this.texture.height);
     console.log(tile.x, tile.y);
     this.drawSelected(tile.x, tile.y);
   }
   private getTileCoordinates(mousePos: Position2D) {
-    const x = Math.floor(mousePos.x / TILE_SIZE) * TILE_SIZE;
-    const y = Math.floor(mousePos.y / TILE_SIZE) * TILE_SIZE;
+    const x = Math.floor(mousePos.x / this.tileSize.w) * this.tileSize.w;
+    const y = Math.floor(mousePos.y / this.tileSize.h) * this.tileSize.h;
     return { x, y };
   }
 }

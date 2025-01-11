@@ -1,7 +1,7 @@
 import { useContext } from "solid-js";
-import Button from "../../reusable/button";
 import { FrameContext } from "../../../providers/frame";
 import { getAPI } from "@/preload/getAPI";
+import Button from "@/editor/components/reusable/button";
 
 export default function CloseApp() {
   const context = useContext(FrameContext);

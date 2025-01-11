@@ -3,15 +3,7 @@ import { randomColor } from "@/utils/utils";
 import EngineDebugger from "../../modules/debugger";
 import Chunk, { ChunkTemplate } from "../entities/chunk";
 import { loadChunks } from "@/API/project";
-import GlobalStore from "../../modules/globalStore";
 import Link from "@/vault/link";
-export interface ProjectConfig {
-  projectPath: string;
-  name: string;
-  tileSize: Size2D;
-  chunkSizeInTiles: Size2D;
-  chunkSizeInPixels: Size2D;
-}
 
 const SPIRAL_POSITION = {
   central: 0,
