@@ -3,6 +3,7 @@ import InputManager from "@/engine/core/modules/inputManager";
 import Entity from "../core/entity";
 import Link from "@/vault/link";
 import { TextureViewSelected } from "@/API/links";
+import { randomColor } from "@/utils/utils";
 interface TileProps {
   pos: { x: number; y: number };
   color: HSLA;
@@ -45,12 +46,12 @@ export default class Tile extends Entity {
     });
     this.tileIndex = tileIndex;
     this.chunkIndex = chunkIndex;
-    this.color = color;
+    this.color = randomColor();
     this.mouseEvent = this.addComponent("MouseEvents", {
       leftClick: (e) => {
         const selector = Link.get<TextureViewSelected>("textureViewSelected");
+        //todo: Pzebudowc to na manifold
         this.crop = selector();
-        console.log(this.crop);
         // if (e.shift) this.color = [0, 0, 0, 255];
         // else this.color = [50, 50, 50, 255];
         //TODO: to powinno sie tylko wykonywac z flaga z projektu autosave
@@ -66,7 +67,7 @@ export default class Tile extends Entity {
   render(): void {
     if (!this.crop) {
       Draw.Quad({
-        alpha: 255,
+        alpha: 25,
         bloom: 0,
         crop: new Float32Array([0, 0, 1, 1]),
         isTexture: 0,
@@ -79,21 +80,19 @@ export default class Tile extends Entity {
           h: this.transform.size.y,
         },
         textureToUse: 0,
-        tint: new Uint8ClampedArray([0, 0, 0]),
+        tint: new Uint8ClampedArray(this.color),
       });
     } else {
+      const size = Draw.getTextureMeta();
       Draw.Quad({
         alpha: 255,
         bloom: 0,
         //TODO: niech to sie dzieje w shaderze a nie tutaj
-        //TODO: nie działają różne wielkosci tekstur
         crop: new Float32Array([
-          this.crop.position.x / this.crop.textureSize.w,
-          this.crop.position.y / this.crop.textureSize.h,
-          (this.crop.position.x + this.crop.tileSize.w) /
-            this.crop.textureSize.w,
-          (this.crop.position.y + this.crop.tileSize.h) /
-            this.crop.textureSize.h,
+          this.crop.position.x / size.width,
+          this.crop.position.y / size.height,
+          (this.crop.position.x + this.crop.tileSize.w) / size.width,
+          (this.crop.position.y + this.crop.tileSize.h) / size.height,
         ]),
         isTexture: 1,
         position: {

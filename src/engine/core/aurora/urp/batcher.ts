@@ -28,6 +28,8 @@ import dummyTexture from "./assets/dummy.png";
 import MathUtils from "@/math/math";
 import AuroraShader from "../auroraShader";
 import Vec4D from "@/math/vec4D";
+import Link from "@/vault/link";
+import { convertTextures } from "@/utils/utils";
 
 interface RenderData {
   numberOfQuads: {
@@ -138,6 +140,7 @@ export default class Batcher {
       PresentGuiPipeline.createPipeline();
     }
   }
+
   public static closeBatcher() {
     // dirty fix for now to planned reword of aurora
     // for now it works!
@@ -148,7 +151,22 @@ export default class Batcher {
     Fonter.getAllFontsMeta.clear();
     this.renderData = structuredClone(INIT_DATA);
   }
-
+  public static async reTextureBatcher() {
+    const config = Link.get<ProjectConfig>("projectConfig")();
+    const textures = await convertTextures(config.textureUsed);
+    await this.createTextureBatch(textures);
+    OffscreenPipeline.createPipeline();
+    TresholdPipeline.createPipeline();
+    BloomPipeline.createPipeline();
+    LightsPipeline.createPipeline();
+    CompositePipeline.createPipeline();
+    GUIPipeline.createPipeline();
+    if (this.testMode) LayeredTestPipeline.createPipeline();
+    else {
+      PresentationPipeline.createPipeline();
+      PresentGuiPipeline.createPipeline();
+    }
+  }
   public static get getRenderData() {
     return this.renderData;
   }
@@ -345,7 +363,7 @@ export default class Batcher {
     this.recalculateUVS(meta);
   }
 
-  private static async createTextureBatch(
+  public static async createTextureBatch(
     textures?: BatcherOptions["loadTextures"]
   ) {
     let texturesToUse = textures;

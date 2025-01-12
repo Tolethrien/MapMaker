@@ -68,7 +68,10 @@ export default class Engine {
     Aurora.setFirstAuroraFrame();
     this.isInit = false;
   }
-
+  public static async reTexture() {
+    console.log("retexturing");
+    await Batcher.reTextureBatcher();
+  }
   private static loop() {
     RenderStatsConnector.start();
     Batcher.startBatch();

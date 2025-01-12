@@ -214,7 +214,7 @@ export default class AuroraTexture {
         }
       );
     });
-
+    console.log("new texture: ", label, textureMeta);
     this.useStore && this.textureStore.set(label, textureMeta);
     return textureMeta;
   }

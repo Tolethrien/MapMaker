@@ -5,6 +5,7 @@ import { getAPI } from "@/preload/getAPI";
 import { saveTexture } from "@/API/project";
 import { createStore } from "solid-js/store";
 import ArrowSVG from "@/assets/icons/arrows";
+import Engine from "@/engine/engine";
 interface Props {
   open: Accessor<boolean>;
   setOpen: Setter<boolean>;
@@ -28,7 +29,6 @@ export default function NewTextureModal(props: Props) {
       console.log(pathStatus);
       return;
     }
-    console.log(pathStatus);
     const path = pathStatus.filePaths[0];
     const file = path.split("\\").at(-1);
     if (!file) {
@@ -50,6 +50,7 @@ export default function NewTextureModal(props: Props) {
       state.tileSize
     );
     if (!saveStatus.success) console.log("path", state.path, "name", name);
+    await Engine.reTexture();
     batch(() => {
       setLoading(false);
       props.setOpen(false);

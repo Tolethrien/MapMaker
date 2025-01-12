@@ -6,6 +6,7 @@ import { getTextShape } from "./parserTTF/shapeText";
 import GUIPipeline from "./pipelines/guiPipeline";
 import LightsPipeline from "./pipelines/lightsPipeline";
 import OffscreenPipeline from "./pipelines/offscreenPipeline";
+import AuroraTexture from "../auroraTexture";
 
 interface SpriteProps {
   position: Position2D;
@@ -101,6 +102,9 @@ export default class Draw {
     lights[(1 + lightsTotal) * stride.lights + 7] = intensity;
     lights[(1 + lightsTotal) * stride.lights + 8] = lightTypes[type];
     Batcher.getRenderData.numberOfLights++;
+  }
+  public static getTextureMeta() {
+    return AuroraTexture.getTexture("TextureBatchGame").meta;
   }
   public static Text({
     alpha,

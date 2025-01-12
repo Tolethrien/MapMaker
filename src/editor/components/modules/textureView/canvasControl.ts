@@ -68,8 +68,11 @@ export default class CanvasController {
       tileSize: this.tileSize,
       textureSize: { w: this.texture.width, h: this.texture.height },
     });
-    console.log(this.texture.width, this.texture.height);
-    console.log(tile.x, tile.y);
+    console.log({
+      index: this.canvasIndex,
+      position: { x: tile.x, y: tile.y },
+      tileSize: this.tileSize,
+    });
     this.drawSelected(tile.x, tile.y);
   }
   private getTileCoordinates(mousePos: Position2D) {

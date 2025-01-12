@@ -25,9 +25,7 @@ export default class InputManager {
       if (e.button === 2) this.mouseClickEvent(e, "rightClick");
       else if (e.button === 1) this.mouseClickEvent(e, "scrollClick");
     });
-    window.addEventListener("keypress", () => {
-      console.log("s");
-    });
+    // window.addEventListener("keypress", () => {});
     window.addEventListener("keydown", (e) => {
       this.selectorEvents("down", e);
     });
