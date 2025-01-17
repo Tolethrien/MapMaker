@@ -1,8 +1,8 @@
 import Draw from "@/engine/core/aurora/urp/draw";
 import InputManager from "@/engine/core/modules/inputManager";
 import Entity from "../core/entity";
-import Link from "@/vault/link";
-import { TextureViewSelected } from "@/API/links";
+import Link from "@/utils/link";
+import { TextureViewSelected } from "@/preload/globalLinks";
 import { randomColor } from "@/utils/utils";
 interface TileProps {
   pos: { x: number; y: number };

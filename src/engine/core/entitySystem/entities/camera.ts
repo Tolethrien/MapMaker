@@ -1,7 +1,7 @@
 import Aurora from "@/engine/core/aurora/auroraCore";
 import Mat4 from "@/math/mat4";
-import EventBus from "@/vault/eventBus";
-import Link from "@/vault/link";
+import EventBus from "@/utils/eventBus";
+import Link from "@/utils/link";
 import { Setter } from "solid-js";
 type CameraZoom = { current: number; max: number; min: number };
 const cameraData = {

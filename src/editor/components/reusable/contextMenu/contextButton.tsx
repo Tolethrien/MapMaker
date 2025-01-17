@@ -10,7 +10,7 @@ export default function ContextButton(props: Props) {
   return (
     <div
       class={`whitespace-nowrap py-2 px-8  rounded ${
-        isDisable() ? "brightness-50" : "hover:bg-app-bg-4"
+        isDisable() ? "brightness-50" : "hover:bg-app-main-3"
       }`}
       onClick={(e) => {
         if (isDisable()) return;

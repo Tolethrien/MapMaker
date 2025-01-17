@@ -1,4 +1,4 @@
-import Link from "@/vault/link";
+import Link from "@/utils/link";
 export type Selectors = "tile" | "grid" | "layer";
 export type TextureViewSelected = {
   index: number;
@@ -9,6 +9,7 @@ export type TextureViewSelected = {
 export default function initLinks() {
   Link.add<boolean>("engineInit", false);
   Link.add<Selectors>("activeSelector", "tile");
+  Link.add<number>("z-index", 0);
   Link.add<Position2D>("cameraPos", { x: 0, y: 0 }, { equals: false });
   Link.add<ProjectConfig>(
     "projectConfig",

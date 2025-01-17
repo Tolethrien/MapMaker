@@ -2,9 +2,9 @@ import { Accessor, batch, createSignal, Setter } from "solid-js";
 import Modal from "../../reusable/modal";
 import Button from "../../reusable/button";
 import { getAPI } from "@/preload/getAPI";
-import { saveTexture } from "@/API/project";
+import { saveTexture } from "@/preload/api/project";
 import { createStore } from "solid-js/store";
-import ArrowSVG from "@/assets/icons/arrows";
+import ArrowSVG from "@/assets/icons/sizeArrows";
 import Engine from "@/engine/engine";
 interface Props {
   open: Accessor<boolean>;

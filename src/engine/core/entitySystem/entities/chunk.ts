@@ -1,10 +1,10 @@
-import EventBus from "@/vault/eventBus";
+import EventBus from "@/utils/eventBus";
 import Draw from "../../aurora/urp/draw";
 import InputManager from "../../modules/inputManager";
 import Entity from "../core/entity";
 import EntityManager from "../core/entityManager";
 import Tile, { TileTemplate } from "./tile";
-import Link from "@/vault/link";
+import Link from "@/utils/link";
 interface Props {
   index: number;
   position: Position2D;

@@ -2,8 +2,8 @@ import Tile from "../entities/tile";
 import { randomColor } from "@/utils/utils";
 import EngineDebugger from "../../modules/debugger";
 import Chunk, { ChunkTemplate } from "../entities/chunk";
-import { loadChunks } from "@/API/project";
-import Link from "@/vault/link";
+import Link from "@/utils/link";
+import { loadChunks } from "@/preload/api/world";
 
 const SPIRAL_POSITION = {
   central: 0,

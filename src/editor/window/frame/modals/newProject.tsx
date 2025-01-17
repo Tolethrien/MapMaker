@@ -3,8 +3,8 @@ import { createStore } from "solid-js/store";
 import Button from "@editor/components/reusable/button";
 import { FrameContext } from "@/editor/providers/frame";
 import { getAPI } from "@/preload/getAPI";
-import { createNewProject, NewProjectProps } from "@/API/project";
-import ArrowSVG from "@/assets/icons/arrows";
+import { createNewProject, NewProjectProps } from "@/preload/api/project";
+import ArrowSVG from "@/assets/icons/sizeArrows";
 export default function NewProject() {
   const context = useContext(FrameContext)!;
   const [isLoading, setIsLoading] = createSignal(false);
@@ -19,11 +19,12 @@ export default function NewProject() {
 
   createEffect(async () => {
     const { getAppPath } = getAPI("API_FILE_SYSTEM");
-    const { success, path, error } = await getAppPath();
-    if (!success) {
-      console.error(error);
+    const path = await getAppPath("app");
+    if (path === "") {
+      console.error("path error", path);
       return;
     }
+
     batch(() => {
       setState("dirPath", path);
       setState("defaultPath", path);
@@ -66,7 +67,7 @@ export default function NewProject() {
     setState(type, size);
   };
   return (
-    <div class="px-16 py-8 bg-app-bg-1 text-app-acc-wheat flex flex-col gap-4">
+    <div class="px-16 py-8 bg-app-main-2 text-app-acc-wheat  flex flex-col gap-4">
       <p class="text-3xl font-bold text-center">New Project!</p>
       <div class="flex flex-col gap-4">
         <p class="text-2xl font-bold text-main-acc-1 text-center">General</p>

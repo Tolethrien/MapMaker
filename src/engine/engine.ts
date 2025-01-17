@@ -6,12 +6,10 @@ import EntityManager from "./core/entitySystem/core/entityManager";
 import Camera from "./core/entitySystem/entities/camera";
 import RenderStatsConnector from "@/editor/components/modules/renderStats/connector";
 import GlobalStore from "./core/modules/globalStore";
-import Link from "@/vault/link";
-import world from "@/assets/world.png";
-import flora from "@/assets/flora.png";
+import Link from "@/utils/link";
 import { getAPI } from "@/preload/getAPI";
-const { loadTexture } = getAPI("API_FILE_SYSTEM");
-//TODO: przerob by w config projectPath mial tez nazwe folderu a nie prowadzil do rodzica
+import { convertTextures } from "@/utils/utils";
+//TODO: masz 3 load texture a mozesz wczytywac raz
 export default class Engine {
   private static isInit = false;
   private static loopID: number = 0;
@@ -28,15 +26,10 @@ export default class Engine {
     // GlobalStore.add("projectConfig", config);
     Link.set<ProjectConfig>("projectConfig")(config);
 
-    GlobalStore.add(
-      "currentProjectPath",
-      `${config.projectPath}\\${config.name}`
-    );
-
     await Aurora.initialize(canvas); // needs to be before preload
     Camera.initialize();
 
-    const textures = await this.convertTextures(config.textureUsed);
+    const textures = await convertTextures(config.textureUsed);
 
     await Batcher.createBatcher({
       backgroundColor: [0, 0, 0, 255],
@@ -61,15 +54,12 @@ export default class Engine {
     cancelAnimationFrame(this.loopID);
     Batcher.closeBatcher();
     EntityManager.clearAll();
-    GlobalStore.remove("currentProjectPath");
     GlobalStore.remove("projectConfig");
     Link.set("engineInit")(false);
-
     Aurora.setFirstAuroraFrame();
     this.isInit = false;
   }
   public static async reTexture() {
-    console.log("retexturing");
     await Batcher.reTextureBatcher();
   }
   private static loop() {
@@ -85,18 +75,5 @@ export default class Engine {
     Batcher.endBatch();
     RenderStatsConnector.stop();
     this.loopID = requestAnimationFrame(() => this.loop());
-  }
-  private static async convertTextures(textures: ProjectConfig["textureUsed"]) {
-    const promises = textures.map(async (texture) => {
-      const textureStatus = await loadTexture(texture.path);
-      if (!textureStatus.success) {
-        throw new Error(`error loading texture ${texture.path}`);
-      }
-      return textureStatus.src;
-    });
-    const results = await Promise.all(promises);
-    return results.map((texture, index) => {
-      return { name: textures[index].name, url: texture };
-    });
   }
 }

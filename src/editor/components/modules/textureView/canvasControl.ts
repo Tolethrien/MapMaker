@@ -1,5 +1,5 @@
-import { TextureViewSelected } from "@/API/links";
-import Link from "@/vault/link";
+import { TextureViewSelected } from "@/preload/globalLinks";
+import Link from "@/utils/link";
 
 export default class CanvasController {
   canvas: HTMLCanvasElement;

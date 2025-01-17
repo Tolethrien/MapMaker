@@ -8,9 +8,9 @@ import {
 import { globalContext as globalCtx } from "@/editor/providers/global";
 import { batch, useContext } from "solid-js";
 import FrameModalList from "./modals";
-import { closeProject } from "@/API/project";
+import { closeProject } from "@/preload/api/project";
 import { getAPI } from "@/preload/getAPI";
-import Link from "@/vault/link";
+import Link from "@/utils/link";
 import FrameButton from "./components/frameButton";
 import SecondLogo from "./components/secondLogo";
 
@@ -48,7 +48,7 @@ export default function Frame() {
 
   return (
     <>
-      <div class="w-full h-[28px] app-drag text-app-acc-wheat bg-app-bg-3 flex items-center justify-between pr-36 gap-4">
+      <div class="w-full h-[28px] app-drag text-app-acc-wheat bg-app-main-2 flex items-center justify-between pr-36 gap-4">
         <div class="flex h-full gap-1">
           <FrameButton name="File">
             <ContextMenu>
@@ -75,26 +75,6 @@ export default function Frame() {
             </ContextMenu>
           </FrameButton>
           <FrameButton name="Project"></FrameButton>
-          <FrameButton name="Editor">
-            <ContextMenu>
-              <ContextButton
-                name={`Left Bar: ${
-                  globalContext.isLeftBarVisible() ? "On" : "Off"
-                }`}
-                onClick={() =>
-                  globalContext.setIsLeftBarVisible((prev) => !prev)
-                }
-              />
-              <ContextButton
-                name={`Right Bar: ${
-                  globalContext.isRightBarVisible() ? "On" : "Off"
-                }`}
-                onClick={() =>
-                  globalContext.setIsRightBarVisible((prev) => !prev)
-                }
-              />
-            </ContextMenu>
-          </FrameButton>
         </div>
         <SecondLogo />
       </div>

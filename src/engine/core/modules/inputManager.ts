@@ -1,8 +1,8 @@
 import Vec2D from "@/math/vec2D";
 import Camera from "../entitySystem/entities/camera";
 import EntityManager from "../entitySystem/core/entityManager";
-import Link from "@/vault/link";
-import { Selectors } from "@/API/links";
+import Link from "@/utils/link";
+import { Selectors } from "@/preload/globalLinks";
 export type mouseEvents = (typeof MOUSE_EVENTS)[number];
 
 export const MOUSE_EVENTS = ["leftClick", "rightClick", "scrollClick"] as const;

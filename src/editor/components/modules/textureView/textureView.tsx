@@ -1,7 +1,7 @@
 import Button from "../../reusable/button";
 import { createSignal, For, Show } from "solid-js";
 import TextureCanvas from "./textureCanvas";
-import Link from "@/vault/link";
+import Link from "@/utils/link";
 import NewTextureModal from "./addTexture";
 
 export default function TextureView() {

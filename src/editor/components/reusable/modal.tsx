@@ -5,7 +5,7 @@ interface Props {
   children: JSX.Element;
 }
 export default function Modal(props: Props) {
-  let ref: HTMLDialogElement;
+  let ref!: HTMLDialogElement;
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === "Escape") event.preventDefault();
@@ -19,7 +19,7 @@ export default function Modal(props: Props) {
   createEffect(() => (props.open() ? ref.showModal() : ref.close()));
   return (
     <dialog
-      class="backdrop:bg-gradient-to-br backdrop:from-teal-950 backdrop:to-indigo-950 backdrop:opacity-80 focus:outline-none"
+      class="backdrop:bg-black backdrop:opacity-80 focus:outline-none"
       ref={ref}
     >
       {props.children}

@@ -28,7 +28,7 @@ import dummyTexture from "./assets/dummy.png";
 import MathUtils from "@/math/math";
 import AuroraShader from "../auroraShader";
 import Vec4D from "@/math/vec4D";
-import Link from "@/vault/link";
+import Link from "@/utils/link";
 import { convertTextures } from "@/utils/utils";
 
 interface RenderData {

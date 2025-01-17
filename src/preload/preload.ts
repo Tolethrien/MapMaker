@@ -1,6 +1,11 @@
 import { DialogFileOptions, DialogPickerPromise } from "@/backend/IPC/dialog";
-import { CreateFile, EditFile, ReadFile } from "@/backend/IPC/fileSystem";
-import { contextBridge, FileFilter, ipcRenderer } from "electron";
+import {
+  CreateFile,
+  EditFile,
+  GetPaths,
+  ReadFile,
+} from "@/backend/IPC/fileSystem";
+import { contextBridge, ipcRenderer } from "electron";
 
 export const API_DIALOG = {
   openFolderPicker: async (desc?: string): Promise<DialogPickerPromise> => {
@@ -37,8 +42,8 @@ export const API_FILE_SYSTEM = {
   ): Promise<AsyncStatus & { paths: string[] | undefined }> => {
     return await ipcRenderer.invoke("readDir", path);
   },
-  getAppPath: async (): Promise<AsyncStatus & { path: string }> => {
-    return await ipcRenderer.invoke("getAppPath");
+  getAppPath: async (where: GetPaths): Promise<string> => {
+    return ipcRenderer.invoke("getPathTo", where);
   },
   copyFile: async (from: string, to: string): Promise<AsyncStatus> => {
     return await ipcRenderer.invoke("copyFile", from, to);

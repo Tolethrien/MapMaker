@@ -2,10 +2,10 @@ import { batch, createEffect, createSignal, useContext } from "solid-js";
 import Button from "@editor/components/reusable/button";
 import { FrameContext } from "@/editor/providers/frame";
 import { getAPI } from "@/preload/getAPI";
-import { openProject } from "@/API/project";
+import { openProject } from "@/preload/api/project";
 
 export default function NewProject() {
-  const context = useContext(FrameContext);
+  const context = useContext(FrameContext)!;
 
   const [path, setPath] = createSignal("C:\\");
   const [defPath, setDefPath] = createSignal("C:\\");
@@ -13,9 +13,9 @@ export default function NewProject() {
 
   createEffect(async () => {
     const { getAppPath } = getAPI("API_FILE_SYSTEM");
-    const { success, path, error } = await getAppPath();
-    if (!success) {
-      console.error(error);
+    const path = await getAppPath("app");
+    if (path === "") {
+      console.error("path error:", path);
       return;
     }
     batch(() => {

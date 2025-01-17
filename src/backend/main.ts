@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog } from "electron";
+import { app, BrowserWindow } from "electron";
 import path from "path";
 import installExtention from "electron-devtools-installer";
 import setIPCHandlers from "./IPC/ipc";
@@ -21,8 +21,6 @@ app.on("activate", () => {
   }
 });
 
-// Zapewnienie, że aplikacja nie zamknie się na `Cmd+Q` (MacOS)
-
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 800,
@@ -30,7 +28,7 @@ function createWindow() {
     frame: false,
     titleBarStyle: "hidden",
     titleBarOverlay: {
-      color: "#2B1A4D",
+      color: "#1A1A2E",
       height: 28,
       symbolColor: "#f5deb3",
     },

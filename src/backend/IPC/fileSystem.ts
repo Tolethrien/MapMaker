@@ -45,13 +45,13 @@ export type EditFile = { filePath: string; index: number } & (
   | (BinaryFile & { value: number[] })
   | (NonBinaryFile & { value: string })
 );
+export type GetPaths = "app" | "chunks" | "textures";
 export function fileSystemIPC() {
   ipcMain.handle("createFolder", createFolder);
   ipcMain.handle("createFile", createFile);
-  ipcMain.handle("getAppPath", getAppPath);
+  ipcMain.handle("getPathTo", getPathTo);
   ipcMain.handle("readFile", readFromFile);
   ipcMain.handle("readDir", readFromDir);
-  ipcMain.handle("editFile", editFile);
   ipcMain.handle("copyFile", cloneFile);
   ipcMain.handle("loadTexture", loadTexture);
 }
@@ -94,54 +94,11 @@ async function createFile(
   }
 }
 
-async function editFile(
-  _: Electron.IpcMainInvokeEvent,
-  { filePath, index, value, type, typed }: EditFile
-): Promise<AsyncStatus> {
-  const path = `${filePath}.${type}`;
-  if (type == "txt") {
-    const fileContent = await readFile(path, "utf-8");
-    const updated =
-      fileContent.substring(0, index) +
-      value +
-      fileContent.substring(index + value.length);
-    await writeFile(path, updated, "utf-8");
-    return { error: "", success: true };
-  } else if (type === "json") {
-    const fileContent = await readFile(path, "utf-8");
-    const jsonContent = JSON.parse(fileContent);
-    jsonContent[index] = value; // Zakładam, że `index` to klucz w JSON
-    const updated = JSON.stringify(jsonContent, null, 2);
-    await writeFile(path, updated, "utf-8");
-    return { error: "", success: true };
-  } else {
-    try {
-      const fileHandle = await open(path, "r+");
-
-      const typeArr = TYPED_ARRAY_MAP[typed!];
-      const typeData = new typeArr(value as number[]);
-      const buffer = Buffer.from(typeData.buffer);
-      //tu coś
-      await fileHandle.write(buffer, 0, buffer.length, index);
-      await fileHandle.close();
-
-      return { error: "", success: true };
-    } catch (error) {
-      return { error, success: false };
-    }
-  }
-}
-
-async function getAppPath(): Promise<AsyncStatus & { path: string }> {
-  try {
-    return { success: true, error: "", path: __dirname };
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message || `getAppPath error`,
-      path: "",
-    };
-  }
+function getPathTo(_: Electron.IpcMainInvokeEvent, where: GetPaths): string {
+  if (where === "app") return __dirname;
+  if (where === "chunks") return `${__dirname}\\chunks`;
+  if (where === "textures") return `${__dirname}\\textures`;
+  return "";
 }
 
 async function readFromDir(
