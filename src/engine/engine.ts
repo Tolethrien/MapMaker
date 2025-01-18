@@ -4,7 +4,7 @@ import InputManager from "./core/modules/inputManager";
 import EngineDebugger from "./core/modules/debugger";
 import EntityManager from "./core/entitySystem/core/entityManager";
 import Camera from "./core/entitySystem/entities/camera";
-import RenderStatsConnector from "@/editor/components/modules/renderStats/connector";
+import RenderStatsConnector from "@/editor/view/rightBar/modules/renderStats/connector";
 import GlobalStore from "./core/modules/globalStore";
 import Link from "@/utils/link";
 import { getAPI } from "@/preload/getAPI";

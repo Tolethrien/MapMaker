@@ -1,6 +1,6 @@
 import { Show, useContext } from "solid-js";
 import { JSX } from "solid-js/jsx-runtime";
-import { FrameButtonTypes, FrameContext } from "../../../providers/frame";
+import { FrameButtonTypes, FrameContext } from "../../providers/frame";
 
 interface Props {
   children?: JSX.Element;

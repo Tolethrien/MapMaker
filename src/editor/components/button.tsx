@@ -1,3 +1,4 @@
+import SpinnerSVG from "@/assets/icons/spinner";
 import { Accessor, Show } from "solid-js";
 
 interface Props {
@@ -14,9 +15,17 @@ export default function Button(props: Props) {
     <button
       onClick={() => props.onClick()}
       disabled={isDisable()}
-      class={`px-4 py-1  bg-app-bg-3 text-app-acc-wheat border-2 border-app-bg-4 rounded-md shadow-md hover:border-app-acc-wheat outline-none ${props.style}`}
+      class={`px-4 py-1  bg-app-main-3 text-app-acc-wheat border-1 border-app-acc-gray rounded-md shadow-lg hover:border-app-acc-ice outline-none ${props.style}`}
     >
-      <Show when={!isLoading()} fallback={"Loading..."}>
+      <Show
+        when={!isLoading()}
+        fallback={
+          <div class="flex items-center gap-2 justify-center">
+            <SpinnerSVG style="w-5 h-5 animate-spin" />
+            <span>Loading...</span>
+          </div>
+        }
+      >
         {props.name}
       </Show>
     </button>

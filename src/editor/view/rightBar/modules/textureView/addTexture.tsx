@@ -1,6 +1,6 @@
 import { Accessor, batch, createSignal, Setter } from "solid-js";
-import Modal from "../../reusable/modal";
-import Button from "../../reusable/button";
+import Modal from "../../../../components/modal";
+import Button from "../../../../components/button";
 import { getAPI } from "@/preload/getAPI";
 import { saveTexture } from "@/preload/api/project";
 import { createStore } from "solid-js/store";

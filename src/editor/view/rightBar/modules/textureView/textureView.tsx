@@ -1,4 +1,4 @@
-import Button from "../../reusable/button";
+import Button from "../../../../components/button";
 import { createSignal, For, Show } from "solid-js";
 import TextureCanvas from "./textureCanvas";
 import Link from "@/utils/link";

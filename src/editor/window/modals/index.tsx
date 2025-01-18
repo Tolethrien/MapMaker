@@ -1,5 +1,5 @@
 import { lazy, Show, useContext } from "solid-js";
-import { FrameContext } from "../../../providers/frame";
+import { FrameContext } from "../../providers/frame";
 
 const MODAL_LIST = {
   newProject: lazy(() => import("./newProject")),

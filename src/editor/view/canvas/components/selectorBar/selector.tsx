@@ -1,11 +1,11 @@
 import GridSVG from "@/assets/icons/grid";
-import IconButton from "../../reusable/buttonAsIcon";
 import TileSVG from "@/assets/icons/tile";
 import LayerSVG from "@/assets/icons/layer";
 import ZIndexSVG from "@/assets/icons/zIndex";
 import Link from "@/utils/link";
 import { Selectors } from "@/preload/globalLinks";
 import OpenArrowSVG from "@/assets/icons/openArrow";
+import IconButton from "@/editor/components/buttonAsIcon";
 
 export default function Selector() {
   const SVG_ACTIVE_STYLE = "w-8 h-8 stroke-app-acc-red";

@@ -1,6 +1,6 @@
-import ContextMenu from "@/editor/components/reusable/contextMenu/contextMenu";
-import ContextButton from "@/editor/components/reusable/contextMenu/contextButton";
-import Modal from "@editor/components/reusable/modal";
+import ContextMenu from "@/editor/components/contextMenu/contextMenu";
+import ContextButton from "@/editor/components/contextMenu/contextButton";
+import Modal from "@/editor/components/modal";
 import {
   FrameContext as frameCtx,
   FrameModalType,
