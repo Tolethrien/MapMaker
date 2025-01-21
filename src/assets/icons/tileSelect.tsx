@@ -1,7 +1,7 @@
 interface Props {
   style?: string;
 }
-export default function TileSVG(props: Props) {
+export default function TileSelectSVG(props: Props) {
   return (
     <svg
       width="50"

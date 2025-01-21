@@ -1,7 +1,8 @@
 import { batch, createEffect, createSignal, For, useContext } from "solid-js";
 import Button from "@/editor/components/button";
 import { FrameContext } from "@/editor/providers/frame";
-import { getAPI } from "@/preload/getAPI";
+import { getAPI } from "@/preload/api/getAPI";
+
 import { openProject } from "@/preload/api/project";
 import FolderSVG from "@/assets/icons/folder";
 import Input from "@/editor/components/input";
@@ -9,6 +10,7 @@ import IconButton from "@/editor/components/buttonAsIcon";
 import PickerSVG from "@/assets/icons/picker";
 import CloseSVG from "@/assets/icons/close";
 import TrashSVG from "@/assets/icons/trash";
+import { sendNotification } from "@/utils/utils";
 
 export default function NewProject() {
   const context = useContext(FrameContext)!;
@@ -21,7 +23,10 @@ export default function NewProject() {
     const { getAppPath } = getAPI("API_FILE_SYSTEM");
     const path = await getAppPath("app");
     if (path === "") {
-      console.error("path error:", path);
+      sendNotification({
+        type: "error",
+        value: "No project path? this should be imposable",
+      });
       return;
     }
     batch(() => {
@@ -41,7 +46,7 @@ export default function NewProject() {
     setIsLoading(true);
     const status = await openProject(path());
     if (!status.success) {
-      console.error(status.error);
+      sendNotification({ type: "error", value: status.error });
       setIsLoading(false);
       return;
     }
@@ -91,7 +96,7 @@ export default function NewProject() {
             <FolderSVG style="w-5 h-5" />
             <label class="text-xl">
               <span class="pr-4 pl-2">Path:</span>
-              <Input placeholder="C\\..." value={path()} type="no-change" />
+              <Input placeholder="C\\..." value={path()} type="selector" />
               <IconButton onClick={setProjectPath}>
                 <PickerSVG style="w-5 h-5 ml-2 translate-y-3" />
               </IconButton>

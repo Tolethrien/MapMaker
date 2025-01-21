@@ -5,8 +5,9 @@
 #root {
   width: 100vw;
   height: 100vh;
-  overflow: hidden;
+  /* overflow: hidden; */
 }
+
 * {
   user-select: none;
 }
@@ -20,6 +21,16 @@ textarea {
   }
   .app-prevent-drag {
     -webkit-app-region: no-drag;
+  }
+  .no-horizontal-scroll {
+    &::-webkit-scrollbar {
+      height: 0px;
+    }
+  }
+  .no-vertical-scroll {
+    &::-webkit-scrollbar {
+      width: 0px;
+    }
   }
 }
 button {

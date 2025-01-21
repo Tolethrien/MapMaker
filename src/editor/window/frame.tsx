@@ -5,18 +5,18 @@ import {
   FrameContext as frameCtx,
   FrameModalType,
 } from "@/editor/providers/frame";
-import { globalContext as globalCtx } from "@/editor/providers/global";
 import { batch, useContext } from "solid-js";
 import FrameModalList from "./modals";
 import { closeProject } from "@/preload/api/project";
-import { getAPI } from "@/preload/getAPI";
+import { getAPI } from "@/preload/api/getAPI";
+
 import Link from "@/utils/link";
 import FrameButton from "./components/frameButton";
 import SecondLogo from "./components/secondLogo";
+import StatusIcons from "./components/statusIcons";
 
 export default function Frame() {
   const frameContext = useContext(frameCtx)!;
-  const globalContext = useContext(globalCtx)!;
   const { onAppCloseEvent, appClose } = getAPI("API_APP");
   const engineInit = Link.get<boolean>("engineInit");
   const isEngineInit = () => !engineInit();
@@ -48,7 +48,7 @@ export default function Frame() {
 
   return (
     <>
-      <div class="w-full h-[28px] app-drag text-app-acc-wheat bg-app-main-2 flex items-center justify-between pr-36 gap-4">
+      <div class="w-full h-[28px]  app-drag text-app-acc-wheat bg-app-main-2 flex items-center justify-between pr-36 gap-4">
         <div class="flex h-full gap-1">
           <FrameButton name="File">
             <ContextMenu>
@@ -76,7 +76,11 @@ export default function Frame() {
           </FrameButton>
           <FrameButton name="Project"></FrameButton>
         </div>
-        <SecondLogo />
+
+        <div class="flex gap-4">
+          <StatusIcons />
+          <SecondLogo />
+        </div>
       </div>
       <Modal open={frameContext.isModalOpen}>
         <FrameModalList />

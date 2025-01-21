@@ -7,6 +7,8 @@ import {
 } from "@/backend/IPC/fileSystem";
 import { contextBridge, ipcRenderer } from "electron";
 
+export type AvailableAPIs = "API_DIALOG" | "API_FILE_SYSTEM" | "API_APP";
+
 export const API_DIALOG = {
   openFolderPicker: async (desc?: string): Promise<DialogPickerPromise> => {
     return await ipcRenderer.invoke("openFolderPicker", desc);

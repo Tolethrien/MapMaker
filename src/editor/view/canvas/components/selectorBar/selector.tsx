@@ -1,28 +1,30 @@
-import GridSVG from "@/assets/icons/grid";
-import TileSVG from "@/assets/icons/tile";
-import LayerSVG from "@/assets/icons/layer";
-import ZIndexSVG from "@/assets/icons/zIndex";
 import Link from "@/utils/link";
 import { Selectors } from "@/preload/globalLinks";
 import OpenArrowSVG from "@/assets/icons/openArrow";
 import IconButton from "@/editor/components/buttonAsIcon";
+import LayerSVG from "@/assets/icons/layer";
+import GridSelectSVG from "@/assets/icons/gridSelect";
+import TileSelectSVG from "@/assets/icons/tileSelect";
+import LayerSelectSVG from "@/assets/icons/layerSelect";
 
 export default function Selector() {
-  const SVG_ACTIVE_STYLE = "w-8 h-8 stroke-app-acc-red";
-  const SVG_INACTIVE_STYLE = "w-8 h-8 stroke-app-acc-ice";
+  const SVG_ACTIVE_STYLE = "w-6 h-6 stroke-app-acc-red";
+  const SVG_INACTIVE_STYLE = "w-6 h-6 stroke-app-acc-ice";
   const [selector, setSelector] = Link.getLink<Selectors>("activeSelector");
   const [zIndex, setZIndex] = Link.getLink<number>("z-index");
   return (
     <div class="absolute bottom-12 left-1/2 -translate-x-1/2 bg-app-main-2 flex gap-4 px-8 py-1 rounded-lg items-center shadow-lg border-1 border-app-acc-gray">
-      <div class="flex">
-        <div class="relative flex flex-col items-center">
-          <ZIndexSVG style="w-10 h-9 stroke-app-acc-ice opacity-50" />
-          <p class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-3/4 text-lg font-medium">
-            {zIndex()}
-          </p>
-          <p class="whitespace-nowrap">z-Index</p>
+      <div class="flex gap-2">
+        <div class="flex flex-col items-center">
+          <div class="p-1 relative">
+            <LayerSVG style="w-6 h-6 stroke-app-acc-ice opacity-50" />
+            <p class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lg font-medium">
+              {zIndex()}
+            </p>
+          </div>
+          <p>Z-Index</p>
         </div>
-        <div class="flex flex-col">
+        <div class="flex flex-col justify-center">
           <IconButton onClick={() => setZIndex((prev) => prev + 1)}>
             <OpenArrowSVG style="w-4 h-4 stroke-app-acc-wheat stroke-[10px]"></OpenArrowSVG>
           </IconButton>
@@ -33,10 +35,10 @@ export default function Selector() {
           </IconButton>
         </div>
       </div>
-      <div class="w-[2px] h-8 bg-app-acc-wheat" />
+      <div class="flex w-[2px] h-12 bg-app-acc-wheat" />
       <div class="flex flex-col items-center">
         <IconButton onClick={() => setSelector("grid")}>
-          <GridSVG
+          <GridSelectSVG
             style={`${
               selector() === "grid" ? SVG_ACTIVE_STYLE : SVG_INACTIVE_STYLE
             }`}
@@ -46,7 +48,7 @@ export default function Selector() {
       </div>
       <div class="flex flex-col items-center">
         <IconButton onClick={() => setSelector("tile")}>
-          <TileSVG
+          <TileSelectSVG
             style={`${
               selector() === "tile" ? SVG_ACTIVE_STYLE : SVG_INACTIVE_STYLE
             }`}
@@ -56,7 +58,7 @@ export default function Selector() {
       </div>
       <div class="flex flex-col items-center">
         <IconButton onClick={() => setSelector("layer")}>
-          <LayerSVG
+          <LayerSelectSVG
             style={`${
               selector() === "layer" ? SVG_ACTIVE_STYLE : SVG_INACTIVE_STYLE
             }`}

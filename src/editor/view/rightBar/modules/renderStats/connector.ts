@@ -167,7 +167,9 @@ export default class RenderStatsConnector {
       const color = this.colorLerp(value, this.barSize.h);
       this.ctx.fillStyle = color;
       this.ctx.fillRect(
-        this.canvas.width - (BAR_GAP + index * (this.barSize.w + BAR_GAP)),
+        this.canvas.width -
+          this.barSize.w -
+          (BAR_GAP + index * (this.barSize.w + BAR_GAP)),
         this.canvas.height,
         this.barSize.w,
         -value

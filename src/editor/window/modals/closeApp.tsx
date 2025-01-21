@@ -1,6 +1,7 @@
 import { useContext } from "solid-js";
 import { FrameContext } from "../../providers/frame";
-import { getAPI } from "@/preload/getAPI";
+import { getAPI } from "@/preload/api/getAPI";
+
 import Button from "@/editor/components/button";
 
 export default function CloseApp() {

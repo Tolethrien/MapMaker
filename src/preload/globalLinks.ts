@@ -6,6 +6,7 @@ export type TextureViewSelected = {
   tileSize: Size2D;
   textureSize: Size2D;
 };
+export type Note = { type: "error" | "info" | "success"; value: string };
 export default function initLinks() {
   Link.add<boolean>("engineInit", false);
   Link.add<Selectors>("activeSelector", "tile");
@@ -23,6 +24,7 @@ export default function initLinks() {
     },
     { equals: false }
   );
+  Link.add<Note[]>("notify", []);
   Link.add<TextureViewSelected>("textureViewSelected", {
     position: { x: -1, y: -1 },
     tileSize: { w: -1, h: -1 },

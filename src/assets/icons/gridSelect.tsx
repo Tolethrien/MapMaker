@@ -1,7 +1,7 @@
 interface Props {
   style?: string;
 }
-export default function GridSVG(props: Props) {
+export default function GridSelectSVG(props: Props) {
   return (
     <svg
       width="50"

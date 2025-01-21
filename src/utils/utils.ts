@@ -1,4 +1,7 @@
-import { getAPI } from "@/preload/getAPI";
+import { getAPI } from "@/preload/api/getAPI";
+
+import Link from "./link";
+import { Note } from "@/preload/globalLinks";
 
 const { loadTexture } = getAPI("API_FILE_SYSTEM");
 
@@ -43,4 +46,8 @@ export const convertTextures = async (
   return results.map((texture, index) => {
     return { name: textures[index].name, url: texture };
   });
+};
+
+export const sendNotification = (note: Note) => {
+  Link.set<Note[]>("notify")((prev) => [...prev, note]);
 };

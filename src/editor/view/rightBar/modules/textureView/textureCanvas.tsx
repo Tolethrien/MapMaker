@@ -1,6 +1,7 @@
 import { createEffect } from "solid-js";
 import CanvasController from "./canvasControl";
-import { getAPI } from "@/preload/getAPI";
+import { getAPI } from "@/preload/api/getAPI";
+
 interface Props {
   index: number;
   texture: ProjectTextureFile;

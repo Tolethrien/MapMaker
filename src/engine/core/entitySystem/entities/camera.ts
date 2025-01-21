@@ -61,10 +61,10 @@ export default class Camera {
     else if (cameraData.keyPressed.has("a")) this.position.x -= this.speed;
     if (cameraData.keyPressed.has("w")) this.position.y -= this.speed;
     else if (cameraData.keyPressed.has("s")) this.position.y += this.speed;
-    if (cameraData.keyPressed.has("ArrowDown"))
+    if (cameraData.keyPressed.has("e"))
       this.zoom.current > this.zoom.min &&
         (this.zoom.current -= 0.01 * Math.log(this.zoom.current + 1));
-    else if (cameraData.keyPressed.has("ArrowUp"))
+    else if (cameraData.keyPressed.has("q"))
       this.zoom.current < this.zoom.max &&
         (this.zoom.current += 0.01 * Math.log(this.zoom.current + 1));
     EventBus.emit<Position2D>("cameraMove", this.position);

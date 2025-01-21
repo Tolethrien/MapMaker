@@ -2,7 +2,8 @@ import { batch, createEffect, createSignal, useContext } from "solid-js";
 import { createStore } from "solid-js/store";
 import Button from "@/editor/components/button";
 import { FrameContext } from "@/editor/providers/frame";
-import { getAPI } from "@/preload/getAPI";
+import { getAPI } from "@/preload/api/getAPI";
+
 import { createNewProject, NewProjectProps } from "@/preload/api/project";
 import ArrowSVG from "@/assets/icons/sizeArrows";
 import Input from "@/editor/components/input";
@@ -11,6 +12,7 @@ import FolderSVG from "@/assets/icons/folder";
 import IconButton from "@/editor/components/buttonAsIcon";
 import PickerSVG from "@/assets/icons/picker";
 import CloseSVG from "@/assets/icons/close";
+import { sendNotification } from "@/utils/utils";
 
 export default function NewProject() {
   const context = useContext(FrameContext)!;
@@ -27,10 +29,12 @@ export default function NewProject() {
     const { getAppPath } = getAPI("API_FILE_SYSTEM");
     const path = await getAppPath("app");
     if (path === "") {
-      console.error("path error", path);
+      sendNotification({
+        type: "error",
+        value: "No project path? this should be imposable",
+      });
       return;
     }
-
     batch(() => {
       setState("dirPath", path);
       setState("defaultPath", path);
@@ -49,8 +53,8 @@ export default function NewProject() {
     setIsLoading(true);
     const status = await createNewProject(state);
     if (!status.success) {
-      console.error(status.error);
-      setIsLoading(true);
+      sendNotification({ type: "error", value: status.error });
+      setIsLoading(false);
       return;
     }
     batch(() => {
@@ -90,7 +94,7 @@ export default function NewProject() {
             <Input
               placeholder="C\\..."
               value={`${state.dirPath}\\${state.name}`}
-              type="no-change"
+              type="selector"
             />
             <IconButton onClick={setProjectPath}>
               <PickerSVG style="w-5 h-5 ml-2 translate-y-3" />

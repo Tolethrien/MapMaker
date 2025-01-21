@@ -7,8 +7,8 @@ import Camera from "./core/entitySystem/entities/camera";
 import RenderStatsConnector from "@/editor/view/rightBar/modules/renderStats/connector";
 import GlobalStore from "./core/modules/globalStore";
 import Link from "@/utils/link";
-import { getAPI } from "@/preload/getAPI";
-import { convertTextures } from "@/utils/utils";
+
+import { convertTextures, sendNotification } from "@/utils/utils";
 //TODO: masz 3 load texture a mozesz wczytywac raz
 export default class Engine {
   private static isInit = false;
@@ -41,6 +41,10 @@ export default class Engine {
     });
     //TODO: te wszystkie inity zrobic w eventBusie
     Link.set("engineInit")(true);
+    sendNotification({
+      type: "info",
+      value: `Engine Initialize with project: ${config.name}`,
+    });
     InputManager.init(canvas);
     this.isInit = true;
     this.loop();

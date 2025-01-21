@@ -1,6 +1,7 @@
 import EngineDebugger from "@/engine/core/modules/debugger";
 import Link from "@/utils/link";
-import { getAPI } from "../getAPI";
+import { getAPI } from "@/preload/api/getAPI";
+
 import { joinPaths } from "@/utils/utils";
 import { ChunkTemplate } from "@/engine/core/entitySystem/entities/chunk";
 import EntityManager, {

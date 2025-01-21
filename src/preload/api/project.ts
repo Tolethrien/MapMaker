@@ -1,7 +1,8 @@
 import EntityManager from "@/engine/core/entitySystem/core/entityManager";
 import { ChunkTemplate } from "@/engine/core/entitySystem/entities/chunk";
 import Engine from "@/engine/engine";
-import { getAPI } from "@/preload/getAPI";
+import { getAPI } from "@/preload/api/getAPI";
+
 import { joinPaths } from "@/utils/utils";
 import Link from "@/utils/link";
 
@@ -135,7 +136,7 @@ export async function saveTexture(
 
   const newConfigFileStatus = await createFile({
     data: JSON.stringify(config),
-    dirPath: joinPaths(config.projectPath, config.name),
+    dirPath: config.projectPath,
     fileName: "config",
     type: "json",
     allowOverride: true,

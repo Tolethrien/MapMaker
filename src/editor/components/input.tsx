@@ -9,7 +9,7 @@ interface Props {
     }
   ) => void;
   placeholder?: string;
-  type?: "change" | "no-change";
+  type?: "input" | "selector";
 }
 export default function Input(props: Props) {
   const isNormal = props.type ?? "change";
