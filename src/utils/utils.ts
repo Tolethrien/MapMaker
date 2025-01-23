@@ -44,7 +44,7 @@ export const convertTextures = async (
   });
   const results = await Promise.all(promises);
   return results.map((texture, index) => {
-    return { name: textures[index].name, url: texture };
+    return { name: textures[index].name, url: texture, id: textures[index].id };
   });
 };
 

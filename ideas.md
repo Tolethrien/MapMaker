@@ -7,5 +7,3 @@
 - pełne oswietlenie
 
 - tworzenie obiektów
-
-- skalowanie texture np 32 na 16 by dalo sie wiekszych/mniejsyzch uzywac normalnie

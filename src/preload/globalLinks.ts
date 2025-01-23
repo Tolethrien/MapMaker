@@ -1,7 +1,7 @@
 import Link from "@/utils/link";
 export type Selectors = "tile" | "grid" | "layer";
 export type TextureViewSelected = {
-  index: number;
+  textureID: string;
   position: Position2D;
   tileSize: Size2D;
   textureSize: Size2D;
@@ -29,6 +29,6 @@ export default function initLinks() {
     position: { x: -1, y: -1 },
     tileSize: { w: -1, h: -1 },
     textureSize: { w: -1, h: -1 },
-    index: -1,
+    textureID: "",
   });
 }

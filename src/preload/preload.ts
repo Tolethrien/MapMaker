@@ -39,6 +39,9 @@ export const API_FILE_SYSTEM = {
   editFile: async (props: EditFile): Promise<AsyncStatus> => {
     return await ipcRenderer.invoke("editFile", props);
   },
+  deleteFile: async (path: string): Promise<AsyncStatus> => {
+    return await ipcRenderer.invoke("deleteFile", path);
+  },
   readDir: async (
     path: string
   ): Promise<AsyncStatus & { paths: string[] | undefined }> => {

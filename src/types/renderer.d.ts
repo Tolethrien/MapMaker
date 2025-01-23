@@ -6,7 +6,12 @@ declare global {
   type Position2D = { x: number; y: number };
   type Size2D = { w: number; h: number };
   type HSLA = [number, number, number, number];
-  type ProjectTextureFile = { name: string; path: string; tileSize: Size2D };
+  type ProjectTextureFile = {
+    name: string;
+    path: string;
+    tileSize: Size2D;
+    id: string;
+  };
   export interface ProjectConfig {
     projectPath: string;
     name: string;

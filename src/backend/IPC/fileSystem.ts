@@ -1,4 +1,4 @@
-import { ipcMain } from "electron";
+import { app, ipcMain } from "electron";
 import {
   mkdir,
   readdir,
@@ -6,6 +6,7 @@ import {
   writeFile,
   open,
   copyFile,
+  rm,
 } from "fs/promises";
 const TYPED_ARRAY_MAP = {
   Int8Array,
@@ -45,7 +46,7 @@ export type EditFile = { filePath: string; index: number } & (
   | (BinaryFile & { value: number[] })
   | (NonBinaryFile & { value: string })
 );
-export type GetPaths = "app" | "chunks" | "textures";
+export type GetPaths = "app" | "chunks" | "textures" | "userData";
 export function fileSystemIPC() {
   ipcMain.handle("createFolder", createFolder);
   ipcMain.handle("createFile", createFile);
@@ -53,6 +54,7 @@ export function fileSystemIPC() {
   ipcMain.handle("readFile", readFromFile);
   ipcMain.handle("readDir", readFromDir);
   ipcMain.handle("copyFile", cloneFile);
+  ipcMain.handle("deleteFile", deleteFile);
   ipcMain.handle("loadTexture", loadTexture);
 }
 
@@ -98,6 +100,7 @@ function getPathTo(_: Electron.IpcMainInvokeEvent, where: GetPaths): string {
   if (where === "app") return __dirname;
   if (where === "chunks") return `${__dirname}\\chunks`;
   if (where === "textures") return `${__dirname}\\textures`;
+  if (where === "userData") return app.getPath("userData");
   return "";
 }
 
@@ -162,6 +165,20 @@ async function cloneFile(
     return {
       success: false,
       error: error.message || `copyFile error`,
+    };
+  }
+}
+async function deleteFile(
+  _: Electron.IpcMainInvokeEvent,
+  path: string
+): Promise<AsyncStatus> {
+  try {
+    await rm(path);
+    return { success: true, error: "" };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message || `removeFile error`,
     };
   }
 }

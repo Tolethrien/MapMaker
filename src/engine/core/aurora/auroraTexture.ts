@@ -214,7 +214,6 @@ export default class AuroraTexture {
         }
       );
     });
-    console.log("new texture: ", label, textureMeta);
     this.useStore && this.textureStore.set(label, textureMeta);
     return textureMeta;
   }
@@ -225,7 +224,7 @@ export default class AuroraTexture {
   }: GeneralTextureProps & {
     bitmaps: { name: string; bitmap: ImageBitmap }[];
   }) {
-    // this.checkLenght(bitmaps, label);
+    this.checkLenght(bitmaps, label);
     const { textureHeight, textureWidth } = this.calculateDimension(
       bitmaps.map((bit) => bit.bitmap)
     );

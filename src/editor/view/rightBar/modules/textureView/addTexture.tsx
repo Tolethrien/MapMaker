@@ -2,7 +2,7 @@ import { Accessor, batch, createSignal, Setter } from "solid-js";
 import Modal from "../../../../components/modal";
 import Button from "../../../../components/button";
 import { getAPI } from "@/preload/api/getAPI";
-import { saveTexture } from "@/preload/api/project";
+import { addTextureFile } from "@/preload/api/project";
 import { createStore } from "solid-js/store";
 import ArrowSVG from "@/assets/icons/sizeArrows";
 import Engine from "@/engine/engine";
@@ -50,7 +50,7 @@ export default function NewTextureModal(props: Props) {
   const textureLoader = async () => {
     setLoading(true);
     const name = state.file.slice(0, -4);
-    const saveStatus = await saveTexture(
+    const saveStatus = await addTextureFile(
       state.path,
       state.file,
       name,
@@ -65,6 +65,10 @@ export default function NewTextureModal(props: Props) {
       setLoading(false);
     }
     await Engine.reTexture();
+    sendNotification({
+      type: "success",
+      value: `Texture: "${name}" successfully added`,
+    });
     batch(() => {
       setLoading(false);
       props.setOpen(false);

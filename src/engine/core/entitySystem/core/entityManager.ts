@@ -16,8 +16,9 @@ const SPIRAL_POSITION = {
   N: 7,
   NE: 8,
 } as const;
+
 export type ChunkPosition = keyof typeof SPIRAL_POSITION;
-//TODO: czegos nie czyscisz jak wczytujesz projekt z juz wczytanego
+//TODO: czegos nie czyścisz jak wczytujesz projekt z juz wczytanego
 //TODO: przenies API wczytywania mapy tutaj bo w sumie tym jest
 export default class EntityManager {
   private static loadedChunks: Map<number, Chunk> = new Map();

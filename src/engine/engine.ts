@@ -13,6 +13,7 @@ import { convertTextures, sendNotification } from "@/utils/utils";
 export default class Engine {
   private static isInit = false;
   private static loopID: number = 0;
+  public static TexturesIDs: Map<string, number> = new Map();
   public static async initialize(config: ProjectConfig) {
     if (this.isInit) {
       EngineDebugger.showInfo(
@@ -30,7 +31,10 @@ export default class Engine {
     Camera.initialize();
 
     const textures = await convertTextures(config.textureUsed);
-
+    Engine.TexturesIDs.set("dummy", 0);
+    textures.forEach((texture, index) =>
+      Engine.TexturesIDs.set(texture.id, index + 1)
+    );
     await Batcher.createBatcher({
       backgroundColor: [0, 0, 0, 255],
       bloom: { active: false, str: 0 },

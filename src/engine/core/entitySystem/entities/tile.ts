@@ -4,6 +4,7 @@ import Entity from "../core/entity";
 import Link from "@/utils/link";
 import { TextureViewSelected } from "@/preload/globalLinks";
 import { randomColor } from "@/utils/utils";
+import Engine from "@/engine/engine";
 interface TileProps {
   pos: { x: number; y: number };
   color: HSLA;
@@ -65,7 +66,7 @@ export default class Tile extends Entity {
   }
   update() {}
   render(): void {
-    if (!this.crop) {
+    if (!this.crop || !Engine.TexturesIDs.has(this.crop.textureID)) {
       Draw.Quad({
         alpha: 25,
         bloom: 0,
@@ -103,7 +104,7 @@ export default class Tile extends Entity {
           w: this.transform.size.x,
           h: this.transform.size.y,
         },
-        textureToUse: this.crop.index + 1,
+        textureToUse: Engine.TexturesIDs.get(this.crop.textureID)!,
         tint: new Uint8ClampedArray([255, 255, 255]),
       });
     }

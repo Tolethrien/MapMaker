@@ -30,6 +30,7 @@ import AuroraShader from "../auroraShader";
 import Vec4D from "@/math/vec4D";
 import Link from "@/utils/link";
 import { convertTextures } from "@/utils/utils";
+import Engine from "@/engine/engine";
 
 interface RenderData {
   numberOfQuads: {
@@ -154,7 +155,12 @@ export default class Batcher {
   public static async reTextureBatcher() {
     const config = Link.get<ProjectConfig>("projectConfig")();
     const textures = await convertTextures(config.textureUsed);
-    await this.createTextureBatch(textures);
+    await this.createTextureBatch(textures.length > 0 ? textures : undefined);
+    Engine.TexturesIDs.clear();
+    textures.forEach((texture, index) =>
+      Engine.TexturesIDs.set(texture.id, index)
+    );
+    console.log(Engine.TexturesIDs);
     OffscreenPipeline.createPipeline();
     TresholdPipeline.createPipeline();
     BloomPipeline.createPipeline();

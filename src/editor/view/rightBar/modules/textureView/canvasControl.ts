@@ -7,21 +7,22 @@ export default class CanvasController {
   texture: HTMLImageElement;
   scalar: number;
   selected: Position2D;
-  canvasIndex: number;
+  canvasID: string;
   tileSize: Size2D;
   constructor(
     canvas: HTMLCanvasElement,
     image: string,
-    index: number,
+    canvasID: string,
     tileSize: Size2D
   ) {
+    //TODO: to moze byc jeden kontroler i po prostu zmienia co jest na canvasie i jaki jest crop podczas zmiany tekstury
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
     this.loadImage(image);
     this.canvas.addEventListener("click", (e) => this.inputs(e));
     this.scalar = 1;
     this.selected = { x: -1, y: -1 };
-    this.canvasIndex = index;
+    this.canvasID = canvasID;
     this.tileSize = tileSize;
   }
   public scaleCanvas(scalar: number) {
@@ -63,7 +64,7 @@ export default class CanvasController {
     this.drawBackground();
     this.selected = tile;
     Link.set<TextureViewSelected>("textureViewSelected")({
-      index: this.canvasIndex,
+      textureID: this.canvasID,
       position: { x: tile.x, y: tile.y },
       tileSize: this.tileSize,
       textureSize: { w: this.texture.width, h: this.texture.height },

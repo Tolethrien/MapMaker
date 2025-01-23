@@ -8,11 +8,15 @@ interface Props {
   children: JSXElement;
   title: string;
   pinnedComponent?: JSXElement;
-  allowBeforeInit: boolean;
+  allowBeforeInit?: boolean;
 }
 export default function ModuleFrame(props: Props) {
   //TODO: settings oraz close
   const engineInit = Link.get<boolean>("engineInit");
+  const isDisableOnStart = () => {
+    if (props.allowBeforeInit) return false;
+    return !engineInit();
+  };
   return (
     <div class="relative border-b-[3px] border-t-[3px]  border-app-acc-purp shadow-lg">
       <div class="flex items-center relative bg-app-acc-purp text-app-acc-wheat font-medium text-xl justify-center">
@@ -24,7 +28,9 @@ export default function ModuleFrame(props: Props) {
           <CloseSVG style="w-4 h-4" />
         </IconButton>
       </div>
-      <div class={`${!engineInit() && "brightness-50 pointer-events-none"}`}>
+      <div
+        class={`${isDisableOnStart() && "brightness-50 pointer-events-none"}`}
+      >
         <Show when={props.pinnedComponent}>
           <div class="border-b-1 border-app-acc-purp">
             {props.pinnedComponent}

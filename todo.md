@@ -9,6 +9,8 @@
 
 - zrobic w pelni dzialajacy input handler
 
-- dodawanie tekstur do silnika i project configu
+- module settings
+
+- module picker(ktore maja byc widoczne) plus module close
 
 - exportowanie gotowego projektu

@@ -12,8 +12,13 @@ export default function Selector() {
   const SVG_INACTIVE_STYLE = "w-6 h-6 stroke-app-acc-ice";
   const [selector, setSelector] = Link.getLink<Selectors>("activeSelector");
   const [zIndex, setZIndex] = Link.getLink<number>("z-index");
+  const engineInit = Link.get<number>("engineInit");
   return (
-    <div class="absolute bottom-12 left-1/2 -translate-x-1/2 bg-app-main-2 flex gap-4 px-8 py-1 rounded-lg items-center shadow-lg border-1 border-app-acc-gray">
+    <div
+      class={`absolute bottom-12 left-1/2 -translate-x-1/2 bg-app-main-2 flex gap-4 px-8 py-1 rounded-lg items-center shadow-lg border-1 border-app-acc-gray ${
+        !engineInit() && "pointer-events-none brightness-75"
+      }`}
+    >
       <div class="flex gap-2">
         <div class="flex flex-col items-center">
           <div class="p-1 relative">

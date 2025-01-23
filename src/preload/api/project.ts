@@ -6,9 +6,8 @@ import { getAPI } from "@/preload/api/getAPI";
 import { joinPaths } from "@/utils/utils";
 import Link from "@/utils/link";
 
-const { createFolder, createFile, readFile, copyFile } =
+const { createFolder, createFile, readFile, copyFile, deleteFile } =
   getAPI("API_FILE_SYSTEM");
-const { openFilePicker } = getAPI("API_DIALOG");
 export interface NewProjectProps {
   dirPath: string;
   name: string;
@@ -118,7 +117,7 @@ export function closeProject() {
   Engine.closeEngine();
 }
 
-export async function saveTexture(
+export async function addTextureFile(
   filePath: string,
   file: string,
   fileName: string,
@@ -131,8 +130,12 @@ export async function saveTexture(
   const copyStatus = await copyFile(filePath, newPath);
   if (!copyStatus.success) return copyStatus;
 
-  config.textureUsed.push({ name: fileName, path: newPath, tileSize });
-  setConfig(config);
+  config.textureUsed.push({
+    name: fileName,
+    path: newPath,
+    tileSize,
+    id: crypto.randomUUID(),
+  });
 
   const newConfigFileStatus = await createFile({
     data: JSON.stringify(config),
@@ -142,5 +145,27 @@ export async function saveTexture(
     allowOverride: true,
   });
   if (!newConfigFileStatus.success) return newConfigFileStatus;
+  setConfig(config);
+  return { error: "", success: true };
+}
+export async function deleteTextureFile(id: string) {
+  const [getConfig, setConfig] = Link.getLink<ProjectConfig>("projectConfig");
+  const config = getConfig();
+  const index = config.textureUsed.findIndex((texture) => texture.id === id);
+  const path = config.textureUsed[index].path;
+  const deleteStatus = await deleteFile(path);
+  if (!deleteStatus.success) return deleteStatus;
+
+  config.textureUsed.splice(index, 1);
+
+  const newConfigFileStatus = await createFile({
+    data: JSON.stringify(config),
+    dirPath: config.projectPath,
+    fileName: "config",
+    type: "json",
+    allowOverride: true,
+  });
+  if (!newConfigFileStatus.success) return newConfigFileStatus;
+  setConfig(config);
   return { error: "", success: true };
 }
