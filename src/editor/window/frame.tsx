@@ -17,7 +17,7 @@ import StatusIcons from "./components/statusIcons";
 
 export default function Frame() {
   const frameContext = useContext(frameCtx)!;
-  const { onAppCloseEvent, appClose } = getAPI("API_APP");
+  const { onAppCloseEvent, appClose } = getAPI("app");
   const engineInit = Link.get<boolean>("engineInit");
   const isEngineInit = () => !engineInit();
 

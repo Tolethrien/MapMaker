@@ -1,4 +1,11 @@
-import { batch, createEffect, createSignal, For, useContext } from "solid-js";
+import {
+  batch,
+  createEffect,
+  createSignal,
+  For,
+  Show,
+  useContext,
+} from "solid-js";
 import Button from "@/editor/components/button";
 import { FrameContext } from "@/editor/providers/frame";
 import { getAPI } from "@/preload/api/getAPI";
@@ -11,6 +18,8 @@ import PickerSVG from "@/assets/icons/picker";
 import CloseSVG from "@/assets/icons/close";
 import TrashSVG from "@/assets/icons/trash";
 import { sendNotification } from "@/utils/utils";
+import { RecentProject } from "@/backend/settings/app";
+import SpinnerSVG from "@/assets/icons/spinner";
 
 export default function NewProject() {
   const context = useContext(FrameContext)!;
@@ -18,9 +27,24 @@ export default function NewProject() {
   const [path, setPath] = createSignal("C:\\");
   const [defPath, setDefPath] = createSignal("C:\\");
   const [isLoading, setIsLoading] = createSignal(false);
-
+  const [recent, setRecent] = createSignal<RecentProject[] | undefined>(
+    undefined
+  );
   createEffect(async () => {
-    const { getAppPath } = getAPI("API_FILE_SYSTEM");
+    if (recent() !== undefined) return;
+    const { getAppSettings } = getAPI("settings");
+    const projects = await getAppSettings();
+    if (!projects.success) {
+      sendNotification({
+        type: "error",
+        value: `error trying to load recent projects`,
+      });
+      return;
+    }
+    setRecent(projects.appSettings.recentProjects);
+  });
+  createEffect(async () => {
+    const { getAppPath } = getAPI("fileSystem");
     const path = await getAppPath("app");
     if (path === "") {
       sendNotification({
@@ -36,7 +60,7 @@ export default function NewProject() {
   });
 
   const setProjectPath = async () => {
-    const { openFolderPicker } = getAPI("API_DIALOG");
+    const { openFolderPicker } = getAPI("dialog");
     const { canceled, filePaths } = await openFolderPicker();
     if (canceled) return;
     setPath(filePaths[0]);
@@ -44,15 +68,37 @@ export default function NewProject() {
 
   const onOpenProject = async () => {
     setIsLoading(true);
+    const { addToRecent } = getAPI("settings");
     const status = await openProject(path());
     if (!status.success) {
       sendNotification({ type: "error", value: status.error });
       setIsLoading(false);
       return;
     }
-    setPath(defPath());
-    setIsLoading(false);
-    context.setModalOpen(false);
+    const name = path().split("\\").at(-1)!;
+    const recentStatus = await addToRecent({ name, path: path() });
+    if (!recentStatus.success) {
+      sendNotification({ type: "error", value: status.error });
+      setIsLoading(false);
+    }
+    batch(() => {
+      setPath(defPath());
+      setIsLoading(false);
+      setRecent(undefined);
+      context.setModalOpen(false);
+    });
+  };
+  const deleteRecent = async (path: string) => {
+    const { deleteFromRecent } = getAPI("settings");
+    const deleteStatus = await deleteFromRecent(path);
+    if (!deleteStatus.success) {
+      sendNotification({
+        type: "error",
+        value: deleteStatus.error,
+      });
+      return;
+    }
+    setRecent(undefined);
   };
 
   return (
@@ -68,25 +114,33 @@ export default function NewProject() {
           Recent
         </p>
         <div class="flex flex-col items-center gap-2 overflow-y-auto h-full py-2">
-          <For each={[0]}>
-            {() => (
-              <div class="grid grid-cols-10 items-center justify-items-center bg-app-main-2 rounded-md border-2 border-app-acc-gray py-2 w-[96%] hover:brightness-125 shadow-lg">
-                <FolderSVG style="w-5 h-5 col-span-2" />
-                <p
-                  class="col-span-6 justify-self-start border-r-2 w-full border-app-acc-gray"
-                  onDblClick={() => {
-                    setPath("C:\\Users\\Tolet\\Desktop\\3");
-                    onOpenProject();
-                  }}
-                >
-                  Lazarus
-                </p>
-                <IconButton onClick={() => {}} style="col-span-2">
-                  <TrashSVG style="w-5 h-5" />
-                </IconButton>
-              </div>
-            )}
-          </For>
+          <Show
+            when={recent() !== undefined}
+            fallback={<SpinnerSVG style="w-5 h-5 animate-spin" />}
+          >
+            <For each={recent()}>
+              {(project) => (
+                <div class="grid grid-cols-10 items-center justify-items-center bg-app-main-2 rounded-md border-2 border-app-acc-gray py-2 w-[96%] hover:brightness-125 shadow-lg">
+                  <FolderSVG style="w-5 h-5 col-span-2" />
+                  <p
+                    class="col-span-6 justify-self-start border-r-2 w-full border-app-acc-gray"
+                    onDblClick={() => {
+                      setPath(project.path);
+                      onOpenProject();
+                    }}
+                  >
+                    {project.name}
+                  </p>
+                  <IconButton
+                    onClick={() => deleteRecent(project.path)}
+                    style="col-span-2"
+                  >
+                    <TrashSVG style="w-5 h-5" />
+                  </IconButton>
+                </div>
+              )}
+            </For>
+          </Show>
         </div>
       </div>
       <div class="col-span-6 flex flex-col items-center">

@@ -26,7 +26,7 @@ export default function NewProject() {
   });
 
   createEffect(async () => {
-    const { getAppPath } = getAPI("API_FILE_SYSTEM");
+    const { getAppPath } = getAPI("fileSystem");
     const path = await getAppPath("app");
     if (path === "") {
       sendNotification({
@@ -42,7 +42,7 @@ export default function NewProject() {
   });
 
   const setProjectPath = async () => {
-    const { openFolderPicker } = getAPI("API_DIALOG");
+    const { openFolderPicker } = getAPI("dialog");
     const { canceled, filePaths } = await openFolderPicker();
     if (canceled) return;
     setState("dirPath", filePaths[0]);

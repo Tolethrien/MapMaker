@@ -5,7 +5,7 @@ import { getAPI } from "@/preload/api/getAPI";
 interface Props {
   texture: ProjectTextureFile;
 }
-const { loadTexture } = getAPI("API_FILE_SYSTEM");
+const { loadTexture } = getAPI("fileSystem");
 export default function TextureCanvas(props: Props) {
   let canvas!: HTMLCanvasElement;
   let controller!: CanvasController;

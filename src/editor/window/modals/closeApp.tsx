@@ -6,7 +6,7 @@ import Button from "@/editor/components/button";
 
 export default function CloseApp() {
   const context = useContext(FrameContext)!;
-  const { appTerminate } = getAPI("API_APP");
+  const { appTerminate } = getAPI("app");
 
   return (
     <div class="bg-app-main-2 p-12 flex flex-col gap-8">

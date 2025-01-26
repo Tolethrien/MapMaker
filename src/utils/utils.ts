@@ -3,7 +3,7 @@ import { getAPI } from "@/preload/api/getAPI";
 import Link from "./link";
 import { Note } from "@/preload/globalLinks";
 
-const { loadTexture } = getAPI("API_FILE_SYSTEM");
+const { loadTexture } = getAPI("fileSystem");
 
 export const joinPaths = (...paths: string[]) => paths.join("\\");
 export const randomColor = (): HSLA => [

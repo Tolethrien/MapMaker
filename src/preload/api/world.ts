@@ -8,7 +8,7 @@ import EntityManager, {
   ChunkPosition,
 } from "@/engine/core/entitySystem/core/entityManager";
 import { TileTemplate } from "@/engine/core/entitySystem/entities/tile";
-const { createFile, readFile } = getAPI("API_FILE_SYSTEM");
+const { createFile, readFile } = getAPI("fileSystem");
 
 export async function loadChunks(chunks: Set<number>) {
   const config = Link.get<ProjectConfig>("projectConfig")();

@@ -1,10 +1,10 @@
 import { app, BrowserWindow } from "electron";
-import path from "path";
-import installExtention from "electron-devtools-installer";
-import setIPCHandlers from "./IPC/ipc";
-if (require("electron-squirrel-startup")) {
+import starter from "electron-squirrel-startup";
+import createWindow from "./window";
+if (starter) {
   app.quit();
 }
+
 export let mainWindow: BrowserWindow;
 
 app.on("ready", createWindow);
@@ -20,43 +20,3 @@ app.on("activate", () => {
     createWindow();
   }
 });
-
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    frame: false,
-    titleBarStyle: "hidden",
-    titleBarOverlay: {
-      color: "#1A1A2E",
-      height: 28,
-      symbolColor: "#f5deb3",
-    },
-    webPreferences: {
-      contextIsolation: true,
-      nodeIntegration: false,
-      preload: path.join(__dirname, "preload.js"),
-    },
-  });
-  mainWindow.on("close", (event) => {
-    event.preventDefault();
-    mainWindow.webContents.send("appCloseEvent", true);
-  });
-  setIPCHandlers();
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) onDev();
-  else onProd();
-}
-function onDev() {
-  mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-  try {
-    installExtention("ckabpgjkjmbkfmichbbgcgbelkbbpopi");
-  } catch (error) {
-    console.error("Extension Error: ", error);
-  }
-  mainWindow.webContents.openDevTools();
-}
-function onProd() {
-  mainWindow.loadFile(
-    path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
-  );
-}

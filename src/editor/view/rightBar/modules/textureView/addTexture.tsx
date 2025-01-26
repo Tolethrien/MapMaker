@@ -16,7 +16,7 @@ interface Props {
   open: Accessor<boolean>;
   setOpen: Setter<boolean>;
 }
-const { openFilePicker } = getAPI("API_DIALOG");
+const { openFilePicker } = getAPI("dialog");
 
 export default function NewTextureModal(props: Props) {
   const [loading, setLoading] = createSignal(false);

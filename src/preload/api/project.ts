@@ -7,7 +7,7 @@ import { joinPaths } from "@/utils/utils";
 import Link from "@/utils/link";
 
 const { createFolder, createFile, readFile, copyFile, deleteFile } =
-  getAPI("API_FILE_SYSTEM");
+  getAPI("fileSystem");
 export interface NewProjectProps {
   dirPath: string;
   name: string;

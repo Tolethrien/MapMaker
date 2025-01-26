@@ -1,13 +1,5 @@
 import { app, ipcMain } from "electron";
-import {
-  mkdir,
-  readdir,
-  readFile,
-  writeFile,
-  open,
-  copyFile,
-  rm,
-} from "fs/promises";
+import { mkdir, readdir, readFile, writeFile, copyFile, rm } from "fs/promises";
 const TYPED_ARRAY_MAP = {
   Int8Array,
   Uint8Array,
@@ -47,6 +39,7 @@ export type EditFile = { filePath: string; index: number } & (
   | (NonBinaryFile & { value: string })
 );
 export type GetPaths = "app" | "chunks" | "textures" | "userData";
+
 export function fileSystemIPC() {
   ipcMain.handle("createFolder", createFolder);
   ipcMain.handle("createFile", createFile);
