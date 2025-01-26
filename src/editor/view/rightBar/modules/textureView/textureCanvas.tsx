@@ -23,5 +23,5 @@ export default function TextureCanvas(props: Props) {
       );
     }
   });
-  return <canvas ref={canvas} class="bg-app-bg-3" />;
+  return <canvas ref={canvas} class="bg-app-bg-3 border-1 border-white" />;
 }

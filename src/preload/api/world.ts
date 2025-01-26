@@ -54,7 +54,7 @@ export async function createNewEmptyChunk(
       return {
         collider: 0,
         index: tile.tileIndex,
-        layers: [{ color: tile.color, zIndex: 0, graphicID: 0 }],
+        layers: [],
       };
     }),
   };
@@ -80,7 +80,7 @@ export async function saveOnChange(chunkIndex: number) {
     tiles.push({
       collider: 0,
       index: tile.tileIndex,
-      layers: [{ zIndex: 0, color: tile.color, graphicID: 0 }],
+      layers: tile.layers,
     })
   );
   const saveData: ChunkTemplate = {

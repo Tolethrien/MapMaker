@@ -23,7 +23,7 @@ export default function NewTextureModal(props: Props) {
   const [state, setState] = createStore({
     path: "C:\\",
     file: "",
-    tileSize: { w: 32, h: 32 },
+    tileSize: { w: 16, h: 16 },
   });
 
   const pickFile = async () => {

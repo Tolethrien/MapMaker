@@ -3,65 +3,54 @@ import Camera from "../entitySystem/entities/camera";
 import EntityManager from "../entitySystem/core/entityManager";
 import Link from "@/utils/link";
 import { Selectors } from "@/preload/globalLinks";
+import GlobalStore from "./globalStore";
 export type mouseEvents = (typeof MOUSE_EVENTS)[number];
 
 export const MOUSE_EVENTS = ["leftClick", "rightClick", "scrollClick"] as const;
-export interface MouseEventMod {
-  x: number;
-  y: number;
+export interface MouseManifold {
   alt: boolean;
   shift: boolean;
   ctrl: boolean;
+  left: boolean;
+  right: boolean;
 }
+
 export default class InputManager {
   private static canvas: HTMLCanvasElement;
+  private static newMouseManifold: MouseManifold = {
+    alt: false,
+    shift: false,
+    ctrl: false,
+    left: false,
+    right: false,
+  };
+  private static currentMouseManifold: MouseManifold = {
+    alt: false,
+    shift: false,
+    ctrl: false,
+    left: false,
+    right: false,
+  };
+  private static mousePosition: Position2D = { x: 0, y: 0 };
   public static init(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-
-    canvas.addEventListener("click", (e) =>
-      this.mouseClickEvent(e, "leftClick")
+    this.canvas.addEventListener("mousedown", (e) =>
+      this.mouseClickEvent("down", e)
     );
-    canvas.addEventListener("auxclick", (e) => {
-      if (e.button === 2) this.mouseClickEvent(e, "rightClick");
-      else if (e.button === 1) this.mouseClickEvent(e, "scrollClick");
-    });
-    // window.addEventListener("keypress", () => {});
-    window.addEventListener("keydown", (e) => {
-      this.selectorEvents("down", e);
-    });
-    window.addEventListener("keyup", (e) => {
-      this.selectorEvents("up", e);
-    });
+    this.canvas.addEventListener("mouseup", (e) =>
+      this.mouseClickEvent("up", e)
+    );
+    this.canvas.addEventListener("mousemove", (e) => this.mouseMoveEvent(e));
+  }
+  public static update() {
+    this.currentMouseManifold = this.newMouseManifold;
   }
 
-  private static mouseClickEvent(e: MouseEvent, type: mouseEvents) {
-    const mouseEventMod: MouseEventMod = {
-      x: e.offsetX,
-      y: e.offsetY,
-      alt: e.altKey,
-      shift: e.shiftKey,
-      ctrl: e.ctrlKey,
-    };
-    const mousePos = { x: e.offsetX, y: e.offsetY };
-
-    const chunks = EntityManager.getAllChunks();
-    for (const [_, chunk] of chunks) {
-      if (!chunk.isMouseCollide(mousePos)) continue;
-      const selector = Link.get<Selectors>("activeSelector");
-      if (selector() === "grid") {
-        chunk.mouseEvent.onEvent[type]?.(mouseEventMod);
-        break;
-      }
-      for (const tile of chunk.getTiles) {
-        if (!tile.isMouseCollide(mousePos)) continue;
-        tile.mouseEvent.onEvent[type]?.(mouseEventMod);
-        break;
-      }
-      break;
-    }
+  public static getMouseEvent() {
+    return { event: this.newMouseManifold, position: this.mousePosition };
   }
 
-  public static mouseToWorld({ x, y }: Position2D) {
+  private static mouseToWorld({ x, y }: Position2D) {
     const normalizedX = (x / this.canvas.width) * 2 - 1;
     const normalizedY = -(y / this.canvas.height) * 2 + 1;
     const inverseMatrix = Camera.getProjectionViewMatrix.invert();
@@ -71,6 +60,29 @@ export default class InputManager {
         number
       ]
     ).get;
+  }
+  private static mouseClickEvent(click: "up" | "down", e: MouseEvent) {
+    if (click === "down") {
+      this.newMouseManifold = {
+        alt: e.altKey,
+        ctrl: e.ctrlKey,
+        shift: e.shiftKey,
+        left: e.button === 0,
+        right: e.button === 2,
+      };
+    } else {
+      this.newMouseManifold = {
+        alt: false,
+        ctrl: false,
+        shift: false,
+        left: false,
+        right: false,
+      };
+    }
+  }
+  private static mouseMoveEvent(e: MouseEvent) {
+    const { x, y } = this.mouseToWorld({ x: e.offsetX, y: e.offsetY });
+    this.mousePosition = { x: x, y: y };
   }
   private static selectorEvents(key: "up" | "down", e: KeyboardEvent) {
     const setSelector = Link.set<Selectors>("activeSelector");

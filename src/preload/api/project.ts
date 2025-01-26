@@ -5,6 +5,7 @@ import { getAPI } from "@/preload/api/getAPI";
 
 import { joinPaths } from "@/utils/utils";
 import Link from "@/utils/link";
+import { createNewEmptyChunk } from "./world";
 
 const { createFolder, createFile, readFile, copyFile, deleteFile } =
   getAPI("fileSystem");
@@ -56,29 +57,12 @@ export async function createNewProject(
 
   await Engine.initialize(projectConfig);
 
-  const { chunkIndex, data, position } = EntityManager.createEmptyChunk(
-    "central",
-    { x: 0, y: 0 }
-  );
-  const chunk: ChunkTemplate = {
-    index: chunkIndex,
-    position: position,
-    tiles: data.map((tile) => {
-      return {
-        collider: 0,
-        index: tile.tileIndex,
-        layers: [{ color: tile.color, zIndex: 0, graphicID: 0 }],
-      };
-    }),
-  };
-  const ChunkFileStatus = await createFile({
-    data: JSON.stringify(chunk),
-    dirPath: joinPaths(folderPath, "chunks"),
-    fileName: `chunk-${chunkIndex}`,
-    allowOverride: false,
-    type: "json",
+  const createChunkStatus = await createNewEmptyChunk("central", {
+    x: 0,
+    y: 0,
   });
-  if (!ChunkFileStatus.success) return ChunkFileStatus;
+
+  if (!createChunkStatus.success) return createChunkStatus;
 
   return { error: "", success: true };
 }

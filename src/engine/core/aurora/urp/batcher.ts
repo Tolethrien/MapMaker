@@ -155,12 +155,14 @@ export default class Batcher {
   public static async reTextureBatcher() {
     const config = Link.get<ProjectConfig>("projectConfig")();
     const textures = await convertTextures(config.textureUsed);
-    await this.createTextureBatch(textures.length > 0 ? textures : undefined);
-    Engine.TexturesIDs.clear();
-    textures.forEach((texture, index) =>
-      Engine.TexturesIDs.set(texture.id, index)
+    await this.createTextureBatch(
+      textures.length > 0 ? [...textures] : undefined
     );
-    console.log(Engine.TexturesIDs);
+    Engine.TexturesIDs.clear();
+    Engine.TexturesIDs.set("dummy", 0);
+    textures.forEach((texture, index) =>
+      Engine.TexturesIDs.set(texture.id, index + 1)
+    );
     OffscreenPipeline.createPipeline();
     TresholdPipeline.createPipeline();
     BloomPipeline.createPipeline();
@@ -372,17 +374,16 @@ export default class Batcher {
   public static async createTextureBatch(
     textures?: BatcherOptions["loadTextures"]
   ) {
-    let texturesToUse = textures;
-    if (texturesToUse) {
-      texturesToUse.unshift({ name: "batcherColor", url: dummyTexture });
+    if (textures) {
+      textures.unshift({ name: "batcherColor", url: dummyTexture });
     } else {
-      texturesToUse = [
+      textures = [
         { name: "batcherColor", url: dummyTexture },
         { name: "batcherColor", url: dummyTexture },
       ];
     }
     await AuroraTexture.createTextureArray({
-      textures: texturesToUse,
+      textures: textures,
       label: "TextureBatchGame",
     } as GeneralTextureProps & {
       textures: BatcherOptions["loadTextures"];

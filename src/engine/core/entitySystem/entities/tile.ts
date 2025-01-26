@@ -2,19 +2,26 @@ import Draw from "@/engine/core/aurora/urp/draw";
 import InputManager from "@/engine/core/modules/inputManager";
 import Entity from "../core/entity";
 import Link from "@/utils/link";
-import { TextureViewSelected } from "@/preload/globalLinks";
+import { PassManifold } from "@/preload/globalLinks";
 import { randomColor } from "@/utils/utils";
 import Engine from "@/engine/engine";
+import GlobalStore from "../../modules/globalStore";
+import { getAPI } from "@/preload/api/getAPI";
+import { saveOnChange } from "@/preload/api/world";
 interface TileProps {
   pos: { x: number; y: number };
   color: HSLA;
   tileIndex: number;
   chunkIndex: number;
+  layers: TileLayer[];
 }
 export interface TileLayer {
   color: HSLA;
   zIndex: number;
-  graphicID: number;
+  textureID: string;
+  tileID: number;
+  crop: Position2D;
+  tileSize: Size2D;
 }
 export interface TileTemplate {
   index: number;
@@ -23,18 +30,16 @@ export interface TileTemplate {
 }
 
 export default class Tile extends Entity {
-  private static EMPTY_TILE_COLOR = new Uint8ClampedArray([255, 255, 255]);
+  private static EMPTY_TILE_COLOR = new Uint8ClampedArray(randomColor());
   transform: TypeOfComponent<"Transform">;
   mouseEvent: TypeOfComponent<"MouseEvents">;
-  color: HSLA;
   tileIndex: number;
   chunkIndex: number;
-  crop: TextureViewSelected | undefined;
-  constructor({ pos, color, chunkIndex, tileIndex }: TileProps) {
+  layers: TileLayer[];
+  constructor({ pos, chunkIndex, tileIndex, layers }: TileProps) {
     const config = Link.get<ProjectConfig>("projectConfig")();
 
     super();
-    this.crop = undefined;
     this.transform = this.addComponent("Transform", {
       position: {
         x: pos.x + config.tileSize.w * 0.5,
@@ -45,56 +50,41 @@ export default class Tile extends Entity {
         height: config.tileSize.h * 0.5,
       },
     });
+    this.layers = layers;
     this.tileIndex = tileIndex;
     this.chunkIndex = chunkIndex;
-    this.color = randomColor();
-    this.mouseEvent = this.addComponent("MouseEvents", {
-      leftClick: (e) => {
-        const selector = Link.get<TextureViewSelected>("textureViewSelected");
-        //todo: Pzebudowc to na manifold
-        this.crop = selector();
-        // if (e.shift) this.color = [0, 0, 0, 255];
-        // else this.color = [50, 50, 50, 255];
-        //TODO: to powinno sie tylko wykonywac z flaga z projektu autosave
-        // saveOnChange(chunkIndex);
-      },
-      rightClick: () => {
-        this.color = [255, 255, 255, 255];
-        // saveOnChange(chunkIndex);
-      },
-    });
   }
-  update() {}
+  update() {
+    this.mouseEvents();
+    this.debugMouse();
+  }
   render(): void {
-    if (!this.crop || !Engine.TexturesIDs.has(this.crop.textureID)) {
-      Draw.Quad({
-        alpha: 25,
-        bloom: 0,
-        crop: new Float32Array([0, 0, 1, 1]),
-        isTexture: 0,
-        position: {
-          x: this.transform.position.x,
-          y: this.transform.position.y,
-        },
-        size: {
-          w: this.transform.size.x,
-          h: this.transform.size.y,
-        },
-        textureToUse: 0,
-        tint: new Uint8ClampedArray(this.color),
-      });
-    } else {
+    if (this.layers.length > 0) this.drawLayers();
+    else this.drawEmpty();
+  }
+  private isMouseCollide(position: Position2D) {
+    return (
+      position.x >= this.transform.position.x - this.transform.size.x &&
+      position.x <= this.transform.position.x + this.transform.size.x &&
+      position.y >= this.transform.position.y - this.transform.size.y &&
+      position.y <= this.transform.position.y + this.transform.size.y
+    );
+  }
+  private drawLayers() {
+    this.layers.forEach((layer) => {
+      const textureID = Engine.TexturesIDs.get(layer.textureID);
+      if (!textureID) return;
       const size = Draw.getTextureMeta();
+      const crop = new Float32Array([
+        layer.crop.x / size.width,
+        layer.crop.y / size.height,
+        (layer.crop.x + layer.tileSize.w) / size.width,
+        (layer.crop.y + layer.tileSize.h) / size.height,
+      ]);
       Draw.Quad({
-        alpha: 255,
+        alpha: layer.color[3],
         bloom: 0,
-        //TODO: niech to sie dzieje w shaderze a nie tutaj
-        crop: new Float32Array([
-          this.crop.position.x / size.width,
-          this.crop.position.y / size.height,
-          (this.crop.position.x + this.crop.tileSize.w) / size.width,
-          (this.crop.position.y + this.crop.tileSize.h) / size.height,
-        ]),
+        crop: crop,
         isTexture: 1,
         position: {
           x: this.transform.position.x,
@@ -104,18 +94,57 @@ export default class Tile extends Entity {
           w: this.transform.size.x,
           h: this.transform.size.y,
         },
-        textureToUse: Engine.TexturesIDs.get(this.crop.textureID)!,
-        tint: new Uint8ClampedArray([255, 255, 255]),
+        textureToUse: textureID,
+        tint: new Uint8ClampedArray(layer.color),
       });
-    }
+    });
   }
-  public isMouseCollide(mousePos: Position2D) {
-    const normalizedMouse = InputManager.mouseToWorld(mousePos);
-    return (
-      normalizedMouse.x >= this.transform.position.x - this.transform.size.x &&
-      normalizedMouse.x <= this.transform.position.x + this.transform.size.x &&
-      normalizedMouse.y >= this.transform.position.y - this.transform.size.y &&
-      normalizedMouse.y <= this.transform.position.y + this.transform.size.y
-    );
+  private drawEmpty() {
+    Draw.Quad({
+      alpha: 255,
+      bloom: 0,
+      crop: new Float32Array([0, 0, 1, 1]),
+      isTexture: 0,
+      position: {
+        x: this.transform.position.x,
+        y: this.transform.position.y,
+      },
+      size: {
+        w: this.transform.size.x,
+        h: this.transform.size.y,
+      },
+      textureToUse: 0,
+      tint: Tile.EMPTY_TILE_COLOR,
+    });
+  }
+  private mouseEvents() {
+    const { event, position } = InputManager.getMouseEvent();
+    if (event.left && !event.alt && this.isMouseCollide(position)) {
+      const [getter] = GlobalStore.get<PassManifold>("passManifold");
+      const zIndex = Link.get<number>("z-index")();
+      const layer = {
+        color: [255, 255, 255, 255] as HSLA,
+        crop: { x: getter.gridPos.x, y: getter.gridPos.y },
+        textureID: getter.textureID,
+        tileID: getter.tileCropIndex,
+        zIndex: zIndex,
+        tileSize: getter.tileSize,
+      };
+      //TODO: zoptymalizowac to, jako ze layers to praktycznie zawsze posortowana lista numerow, jakis algo by wszedł
+      const index = this.layers.findIndex((layer) => layer.zIndex === zIndex);
+      if (index !== -1) this.layers[index] = layer;
+      else {
+        this.layers.push(layer);
+        this.layers.sort((a, b) => a.zIndex - b.zIndex);
+      }
+    }
+    // saveOnChange(this.chunkIndex);
+  }
+
+  private debugMouse() {
+    const { event, position } = InputManager.getMouseEvent();
+    if (event.left && event.alt && this.isMouseCollide(position)) {
+      console.log(this);
+    }
   }
 }

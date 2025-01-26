@@ -39,7 +39,7 @@ export default class Engine {
       backgroundColor: [0, 0, 0, 255],
       bloom: { active: false, str: 0 },
       customCamera: true,
-      loadTextures: textures.length > 1 ? textures : undefined,
+      loadTextures: textures.length > 0 ? textures : undefined,
       lighting: false,
       maxQuadPerSceen: 100000,
     });

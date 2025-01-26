@@ -83,6 +83,7 @@ export default class EntityManager {
         color: tileData.layers[0].color,
         chunkIndex: chunkData.index,
         tileIndex: index,
+        layers: tileData.layers,
       });
       chunk.addTile(tile);
     });
@@ -107,6 +108,7 @@ export default class EntityManager {
           color: randomColor(),
           chunkIndex: chunkIndex,
           tileIndex: index,
+          layers: [],
         });
         data.push(tile);
         chunk.addTile(tile);

@@ -45,7 +45,7 @@ export default function NewProject() {
   });
   createEffect(async () => {
     const { getAppPath } = getAPI("fileSystem");
-    const path = await getAppPath("app");
+    const path = await getAppPath("desktop");
     if (path === "") {
       sendNotification({
         type: "error",
@@ -77,10 +77,9 @@ export default function NewProject() {
     }
     const name = path().split("\\").at(-1)!;
     const recentStatus = await addToRecent({ name, path: path() });
-    if (!recentStatus.success) {
+    if (!recentStatus.success)
       sendNotification({ type: "error", value: status.error });
-      setIsLoading(false);
-    }
+
     batch(() => {
       setPath(defPath());
       setIsLoading(false);

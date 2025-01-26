@@ -1,5 +1,5 @@
-import { TextureViewSelected } from "@/preload/globalLinks";
-import Link from "@/utils/link";
+import GlobalStore from "@/engine/core/modules/globalStore";
+import { PassManifold } from "@/preload/globalLinks";
 
 export default class CanvasController {
   canvas: HTMLCanvasElement;
@@ -9,6 +9,7 @@ export default class CanvasController {
   selected: Position2D;
   canvasID: string;
   tileSize: Size2D;
+  gridSize: Size2D;
   constructor(
     canvas: HTMLCanvasElement,
     image: string,
@@ -62,19 +63,26 @@ export default class CanvasController {
     const mousePos = { x: event.offsetX, y: event.offsetY };
     const tile = this.getTileCoordinates(mousePos);
     this.drawBackground();
-    this.selected = tile;
-    Link.set<TextureViewSelected>("textureViewSelected")({
+    const [_, setter] = GlobalStore.get<PassManifold>("passManifold");
+    setter({
       textureID: this.canvasID,
-      position: { x: tile.x, y: tile.y },
+      tileCropIndex: this.getTileIndex(tile),
       tileSize: this.tileSize,
       textureSize: { w: this.texture.width, h: this.texture.height },
+      gridPos: { x: tile.x, y: tile.y },
     });
-
+    this.selected = tile;
     this.drawSelected(tile.x, tile.y);
   }
   private getTileCoordinates(mousePos: Position2D) {
     const x = Math.floor(mousePos.x / this.tileSize.w) * this.tileSize.w;
     const y = Math.floor(mousePos.y / this.tileSize.h) * this.tileSize.h;
     return { x, y };
+  }
+  private getTileIndex(tilePos: Position2D): number {
+    const tilesPerRow = Math.floor(this.texture.width / this.tileSize.w);
+    const row = Math.floor(tilePos.y / this.tileSize.h);
+    const col = Math.floor(tilePos.x / this.tileSize.w);
+    return row * tilesPerRow + col;
   }
 }

@@ -1,11 +1,13 @@
+import GlobalStore from "@/engine/core/modules/globalStore";
 import Link from "@/utils/link";
 export type Selectors = "tile" | "grid" | "layer";
-export type TextureViewSelected = {
+export interface PassManifold {
   textureID: string;
-  position: Position2D;
+  tileCropIndex: number;
   tileSize: Size2D;
   textureSize: Size2D;
-};
+  gridPos: Position2D;
+}
 export type Note = { type: "error" | "info" | "success"; value: string };
 export default function initLinks() {
   Link.add<boolean>("engineInit", false);
@@ -25,10 +27,11 @@ export default function initLinks() {
     { equals: false }
   );
   Link.add<Note[]>("notify", []);
-  Link.add<TextureViewSelected>("textureViewSelected", {
-    position: { x: -1, y: -1 },
-    tileSize: { w: -1, h: -1 },
-    textureSize: { w: -1, h: -1 },
+  GlobalStore.add<PassManifold>("passManifold", {
     textureID: "",
+    textureSize: { h: 0, w: 0 },
+    tileCropIndex: -1,
+    tileSize: { h: 0, w: 0 },
+    gridPos: { x: 0, y: 0 },
   });
 }

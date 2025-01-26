@@ -38,8 +38,13 @@ export type EditFile = { filePath: string; index: number } & (
   | (BinaryFile & { value: number[] })
   | (NonBinaryFile & { value: string })
 );
-export type GetPaths = "app" | "chunks" | "textures" | "userData";
 
+export type GetPaths =
+  | "current"
+  | "desktop"
+  | "documents"
+  | "userData"
+  | "temp";
 export function fileSystemIPC() {
   ipcMain.handle("createFolder", createFolder);
   ipcMain.handle("createFile", createFile);
@@ -90,10 +95,11 @@ async function createFile(
 }
 
 function getPathTo(_: Electron.IpcMainInvokeEvent, where: GetPaths): string {
-  if (where === "app") return __dirname;
-  if (where === "chunks") return `${__dirname}\\chunks`;
-  if (where === "textures") return `${__dirname}\\textures`;
+  if (where === "current") return app.getAppPath();
+  if (where === "desktop") return app.getPath("desktop");
+  if (where === "documents") return app.getPath("documents");
   if (where === "userData") return app.getPath("userData");
+  if (where === "temp") return app.getPath("temp");
   return "";
 }
 
