@@ -28,7 +28,7 @@ export default class EntityManager {
   private static chunksToAdd: Set<number> = new Set();
   private static cameraOnChunk: number = 0;
   private static focusedChunk: number | undefined = undefined;
-  private static RINGS = 2;
+  private static RINGS = 5;
 
   public static getAllChunks() {
     return this.loadedChunks;
@@ -70,6 +70,7 @@ export default class EntityManager {
   }
   public static async frameCleanUp() {
     if (this.chunksToRemove.size === 0 && this.chunksToAdd.size === 0) return;
+    this.hollowChunks.clear();
     this.chunksToRemove.forEach((index) => this.loadedChunks.delete(index));
     await loadChunks(this.chunksToAdd);
     this.chunksToRemove.clear();
@@ -92,7 +93,29 @@ export default class EntityManager {
     });
     this.loadedChunks.set(chunkData.index, chunk);
   }
+  public static crEmp(chunkIndex: number) {
+    const config = Link.get<ProjectConfig>("projectConfig")();
+    const numberOfTiles = config.chunkSizeInTiles.w * config.chunkSizeInTiles.h;
+    const { x, y } = this.getSpiralPositionFromIndex(chunkIndex);
+    const chunk = new Chunk({ index: chunkIndex, position: { x, y } });
+    Array(numberOfTiles)
+      .fill(null)
+      .forEach((_, tileIndex) => {
+        const tilePos = this.getTilePosition({ x, y }, tileIndex);
+        const tile = new Tile({
+          pos: tilePos,
+          chunkIndex: chunkIndex,
+          tileIndex: tileIndex,
+          layers: [],
+        });
+        chunk.addTile(tile);
+      });
+    this.hollowChunks.delete(chunkIndex);
+    this.loadedChunks.set(chunkIndex, chunk);
+    return { chunkIndex, position: { x, y }, data: Array.from(chunk.getTiles) };
+  }
   public static createEmptyChunk(side: ChunkPosition, position: Position2D) {
+    //TODO: powinienes po prstu odawac index i na jego bazie znajdywac pozycje i go generowac
     // jesli cos nie pojdzie w tworzeniu chunka to i tak go dodajesz do gry ale nie tworzysz pliku, jakas 2 stronna komunikacja?
     const config = Link.get<ProjectConfig>("projectConfig")();
     const numberOfTiles = config.chunkSizeInTiles.w * config.chunkSizeInTiles.h;
@@ -124,7 +147,6 @@ export default class EntityManager {
       const position = this.getSpiralPositionFromIndex(index);
       this.hollowChunks.set(index, new HollowChunk({ index, position }));
     });
-    console.log(this.hollowChunks);
   }
   public static getLastRingIndexes() {
     const lastIndex = Array.from(this.loadedChunks.keys()).reduce(

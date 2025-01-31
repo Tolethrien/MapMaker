@@ -10,10 +10,12 @@ import EntityManager, {
 import { TileTemplate } from "@/engine/core/entitySystem/entities/tile";
 const { createFile, readFile } = getAPI("fileSystem");
 
+//TODO: skoro masz umiejetnosc wyciagania i indexu i pozycji, nie musisz juz uzywac "side" w chunku
 export async function loadChunks(chunks: Set<number>) {
   const config = Link.get<ProjectConfig>("projectConfig")();
 
   //TODO: change this to own threat and delegating jobs
+  const hollows = new Set<number>();
   const chunkPromises = Array.from(chunks).map(async (index) => {
     const chunkDataStatus = await readFile({
       filePath: joinPaths(config.projectPath, "chunks", `chunk-${index}`),
@@ -21,8 +23,8 @@ export async function loadChunks(chunks: Set<number>) {
     });
 
     if (!chunkDataStatus.success) {
+      hollows.add(index);
       chunks.delete(index);
-
       return null;
     }
 
@@ -30,7 +32,8 @@ export async function loadChunks(chunks: Set<number>) {
     return data;
   });
   const results = await Promise.all(chunkPromises);
-  console.log(results);
+
+  EntityManager.generateHollows(Array.from(hollows));
   results
     .filter((data): data is ChunkTemplate => data !== null)
     .forEach((chunkData) => {
@@ -38,16 +41,10 @@ export async function loadChunks(chunks: Set<number>) {
       chunks.delete(chunkData.index);
     });
 }
-export async function createNewEmptyChunk(
-  side: ChunkPosition,
-  pos: Position2D
-) {
+export async function createNewEmptyChunk(index: number) {
   const config = Link.get<ProjectConfig>("projectConfig")();
 
-  const { data, position, chunkIndex } = EntityManager.createEmptyChunk(
-    side,
-    pos
-  );
+  const { data, position, chunkIndex } = EntityManager.crEmp(index);
   const saveData: ChunkTemplate = {
     index: chunkIndex,
     position: { x: position.x, y: position.y },

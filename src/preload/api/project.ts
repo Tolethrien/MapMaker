@@ -57,11 +57,10 @@ export async function createNewProject(
 
   await Engine.initialize(projectConfig);
 
-  const createChunkStatus = await createNewEmptyChunk("central", {
-    x: 0,
-    y: 0,
-  });
-
+  const createChunkStatus = await createNewEmptyChunk(0);
+  const chunkIndexes = EntityManager.findChunksInRange({ x: 0, y: 0 });
+  chunkIndexes.delete(0);
+  EntityManager.generateHollows(Array.from(chunkIndexes));
   if (!createChunkStatus.success) return createChunkStatus;
 
   return { error: "", success: true };
@@ -79,6 +78,7 @@ export async function openProject(folderPath: string): Promise<AsyncStatus> {
   ) as ProjectConfig;
 
   await Engine.initialize(config);
+  const hollows = new Set<number>();
 
   const chunks: ChunkTemplate[] = [];
   const chunkIndexes = EntityManager.findChunksInRange({ x: 0, y: 0 });
@@ -87,20 +87,16 @@ export async function openProject(folderPath: string): Promise<AsyncStatus> {
       filePath: joinPaths(folderPath, "chunks", `chunk-${index}`),
       type: "json",
     });
-    if (!chunkDataStatus.success) continue;
+    if (!chunkDataStatus.success) {
+      hollows.add(index);
+      continue;
+    }
     const data = JSON.parse(chunkDataStatus.data as string) as ChunkTemplate;
     chunks.push(data);
   }
 
   chunks.forEach((chunk) => EntityManager.populateChunk(chunk));
-  const hollowsToFind = EntityManager.getLastRingIndexes();
-  const hollows: number[] = [];
-  const promises = hollowsToFind.map(async (index) => {
-    const path = joinPaths(config.projectPath, "chunks", `chunk-${index}.json`);
-    if (!(await fileExists(path)).success) hollows.push(index);
-  });
-  await Promise.allSettled(promises);
-  EntityManager.generateHollows(hollows);
+  EntityManager.generateHollows(Array.from(hollows));
   return { error: "", success: true };
 }
 
