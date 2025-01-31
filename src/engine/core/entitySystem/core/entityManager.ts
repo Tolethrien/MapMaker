@@ -4,6 +4,7 @@ import EngineDebugger from "../../modules/debugger";
 import Chunk, { ChunkTemplate } from "../entities/chunk";
 import Link from "@/utils/link";
 import { loadChunks } from "@/preload/api/world";
+import HollowChunk from "../entities/chunkHollow";
 
 const SPIRAL_POSITION = {
   central: 0,
@@ -22,11 +23,12 @@ export type ChunkPosition = keyof typeof SPIRAL_POSITION;
 //TODO: przenies API wczytywania mapy tutaj bo w sumie tym jest
 export default class EntityManager {
   private static loadedChunks: Map<number, Chunk> = new Map();
+  private static hollowChunks: Map<number, HollowChunk> = new Map();
   private static chunksToRemove: Set<number> = new Set();
   private static chunksToAdd: Set<number> = new Set();
   private static cameraOnChunk: number = 0;
   private static focusedChunk: number | undefined = undefined;
-  private static RINGS = 1;
+  private static RINGS = 2;
 
   public static getAllChunks() {
     return this.loadedChunks;
@@ -57,9 +59,11 @@ export default class EntityManager {
       }
     );
     this.loadedChunks.forEach((chunk) => chunk.update());
+    this.hollowChunks.forEach((chunk) => chunk.update());
   }
   public static renderAll() {
     this.loadedChunks.forEach((chunk) => chunk.render());
+    this.hollowChunks.forEach((chunk) => chunk.render());
   }
   public static clearAll() {
     this.loadedChunks.clear();
@@ -80,7 +84,6 @@ export default class EntityManager {
       const tilePos = this.getTilePosition(chunkData.position, index);
       const tile = new Tile({
         pos: tilePos,
-        color: tileData.layers[0].color,
         chunkIndex: chunkData.index,
         tileIndex: index,
         layers: tileData.layers,
@@ -95,7 +98,7 @@ export default class EntityManager {
     const numberOfTiles = config.chunkSizeInTiles.w * config.chunkSizeInTiles.h;
     const { x, y } = this.getChunkNextToCenter(side, position);
 
-    const chunkIndex = this.getChunkSpiralIndex({ x, y });
+    const chunkIndex = this.getSpiralIndexFromPosition({ x, y });
     // mozesz np spawdzic czy taki jest juz wgrany
     const chunk = new Chunk({ index: chunkIndex, position: { x, y } });
     const data: Tile[] = [];
@@ -105,7 +108,6 @@ export default class EntityManager {
         const tilePos = this.getTilePosition({ x, y }, index);
         const tile = new Tile({
           pos: tilePos,
-          color: randomColor(),
           chunkIndex: chunkIndex,
           tileIndex: index,
           layers: [],
@@ -116,7 +118,35 @@ export default class EntityManager {
     this.loadedChunks.set(chunkIndex, chunk);
     return { chunkIndex, position: { x, y }, data };
   }
+  public static generateHollows(hollows: number[]) {
+    //TODO: nie rob tego dla wszystkich chunkow a jedynie ościennych
+    hollows.forEach((index) => {
+      const position = this.getSpiralPositionFromIndex(index);
+      this.hollowChunks.set(index, new HollowChunk({ index, position }));
+    });
+    console.log(this.hollowChunks);
+  }
+  public static getLastRingIndexes() {
+    const lastIndex = Array.from(this.loadedChunks.keys()).reduce(
+      (maxIndex, currIndex) => (currIndex > maxIndex ? currIndex : maxIndex)
+    );
+    const chunkPosition = this.loadedChunks.get(lastIndex)!.transform.position;
 
+    const config = Link.get<ProjectConfig>("projectConfig")();
+
+    const x = Math.floor(chunkPosition.x / config.chunkSizeInPixels.w);
+    const y = Math.floor(chunkPosition.y / config.chunkSizeInPixels.h);
+
+    if (x === 0 && y === 0) return [1, 2, 3, 4, 5, 6, 7, 8];
+
+    const ring = Math.max(Math.abs(x), Math.abs(y));
+    const ringStartIndex = (2 * (ring - 1) + 1) ** 2;
+    const numberOfIndexes = lastIndex - ringStartIndex;
+    return Array.from(
+      { length: numberOfIndexes },
+      (_, index) => ringStartIndex + index
+    );
+  }
   public static findChunksInRange(position: { x: number; y: number }) {
     const config = Link.get<ProjectConfig>("projectConfig")();
 
@@ -126,7 +156,9 @@ export default class EntityManager {
       config.chunkSizeInPixels,
       this.RINGS
     );
-    sides.forEach((position) => chunks.add(this.getChunkSpiralIndex(position)));
+    sides.forEach((position) =>
+      chunks.add(this.getSpiralIndexFromPosition(position))
+    );
     return chunks;
   }
 
@@ -170,7 +202,6 @@ export default class EntityManager {
     range: number
   ) {
     //TODO: do something better
-
     const result: Position2D[] = [];
     //loop through all spiral rings in range
     for (let ring = 0; ring <= range; ring++) {
@@ -186,7 +217,7 @@ export default class EntityManager {
     }
     return result;
   }
-  private static getChunkSpiralIndex(position: Position2D): number {
+  private static getSpiralIndexFromPosition(position: Position2D): number {
     const config = Link.get<ProjectConfig>("projectConfig")();
 
     const x = Math.floor(position.x / config.chunkSizeInPixels.w);
@@ -203,6 +234,33 @@ export default class EntityManager {
     if (y === ring) return ringStart + (2 * ring - 1) + Math.abs(x - ring);
     throw EngineDebugger.programBreak(
       `Spiral Index in entity manager not found, this should be impossible`
+    );
+  }
+  public static getSpiralPositionFromIndex(index: number): Position2D {
+    if (index === 0) return { x: 0, y: 0 };
+    const config = Link.get<ProjectConfig>("projectConfig")();
+    const x = config.chunkSizeInPixels.w;
+    const y = config.chunkSizeInPixels.h;
+
+    const ring = Math.ceil((Math.sqrt(index + 1) - 1) / 2);
+    const startIndex = (2 * ring - 1) ** 2;
+    const offset = index - startIndex;
+
+    const side = Math.floor(offset / (ring * 2));
+    const position = offset % (ring * 2);
+
+    switch (side) {
+      case 0:
+        return { x: ring * x, y: (-ring + 1 + position) * y };
+      case 1:
+        return { x: (ring - 1 - position) * x, y: ring * y };
+      case 2:
+        return { x: -ring * x, y: (ring - 1 - position) * y };
+      case 3:
+        return { x: (-ring + 1 + position) * x, y: -ring * y };
+    }
+    throw EngineDebugger.programBreak(
+      `Position from Spiral Index in entity manager not found, this should be impossible`
     );
   }
   private static getTilePosition(chunkPos: Position2D, tileIndex: number) {

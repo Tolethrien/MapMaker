@@ -22,6 +22,7 @@ export async function loadChunks(chunks: Set<number>) {
 
     if (!chunkDataStatus.success) {
       chunks.delete(index);
+
       return null;
     }
 
@@ -29,7 +30,7 @@ export async function loadChunks(chunks: Set<number>) {
     return data;
   });
   const results = await Promise.all(chunkPromises);
-
+  console.log(results);
   results
     .filter((data): data is ChunkTemplate => data !== null)
     .forEach((chunkData) => {

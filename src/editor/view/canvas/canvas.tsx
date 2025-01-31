@@ -1,5 +1,6 @@
 import { createSignal, onMount } from "solid-js";
 import Selector from "./components/selectorBar/selector";
+import EntityManager from "@/engine/core/entitySystem/core/entityManager";
 export default function Canvas() {
   let ref!: HTMLCanvasElement;
   const [size, setSize] = createSignal({ w: 600, h: 600 });

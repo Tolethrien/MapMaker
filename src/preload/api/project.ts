@@ -7,7 +7,7 @@ import { joinPaths } from "@/utils/utils";
 import Link from "@/utils/link";
 import { createNewEmptyChunk } from "./world";
 
-const { createFolder, createFile, readFile, copyFile, deleteFile } =
+const { createFolder, createFile, readFile, copyFile, deleteFile, fileExists } =
   getAPI("fileSystem");
 export interface NewProjectProps {
   dirPath: string;
@@ -93,7 +93,14 @@ export async function openProject(folderPath: string): Promise<AsyncStatus> {
   }
 
   chunks.forEach((chunk) => EntityManager.populateChunk(chunk));
-
+  const hollowsToFind = EntityManager.getLastRingIndexes();
+  const hollows: number[] = [];
+  const promises = hollowsToFind.map(async (index) => {
+    const path = joinPaths(config.projectPath, "chunks", `chunk-${index}.json`);
+    if (!(await fileExists(path)).success) hollows.push(index);
+  });
+  await Promise.allSettled(promises);
+  EntityManager.generateHollows(hollows);
   return { error: "", success: true };
 }
 

@@ -1,5 +1,13 @@
 import { app, ipcMain } from "electron";
-import { mkdir, readdir, readFile, writeFile, copyFile, rm } from "fs/promises";
+import {
+  mkdir,
+  readdir,
+  readFile,
+  writeFile,
+  copyFile,
+  rm,
+  access,
+} from "fs/promises";
 const TYPED_ARRAY_MAP = {
   Int8Array,
   Uint8Array,
@@ -50,6 +58,7 @@ export function fileSystemIPC() {
   ipcMain.handle("createFile", createFile);
   ipcMain.handle("getPathTo", getPathTo);
   ipcMain.handle("readFile", readFromFile);
+  ipcMain.handle("fileExists", accessFile);
   ipcMain.handle("readDir", readFromDir);
   ipcMain.handle("copyFile", cloneFile);
   ipcMain.handle("deleteFile", deleteFile);
@@ -181,6 +190,21 @@ async function deleteFile(
     };
   }
 }
+async function accessFile(
+  _: Electron.IpcMainInvokeEvent,
+  path: string
+): Promise<AsyncStatus> {
+  try {
+    await access(path);
+    return { success: true, error: "" };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message || `accessFile error`,
+    };
+  }
+}
+
 async function loadTexture(
   _: Electron.IpcMainInvokeEvent,
   path: string

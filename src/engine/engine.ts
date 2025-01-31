@@ -74,8 +74,8 @@ export default class Engine {
     RenderStatsConnector.start();
     Batcher.startBatch();
     EntityManager.frameCleanUp();
+    InputManager.update();
     Camera.update();
-
     Batcher.setCameraBuffer(Camera.getProjectionViewMatrix.getMatrix);
     EntityManager.updateAll();
     EntityManager.renderAll();

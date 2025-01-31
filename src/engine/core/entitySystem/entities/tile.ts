@@ -6,11 +6,9 @@ import { PassManifold } from "@/preload/globalLinks";
 import { randomColor } from "@/utils/utils";
 import Engine from "@/engine/engine";
 import GlobalStore from "../../modules/globalStore";
-import { getAPI } from "@/preload/api/getAPI";
 import { saveOnChange } from "@/preload/api/world";
 interface TileProps {
   pos: { x: number; y: number };
-  color: HSLA;
   tileIndex: number;
   chunkIndex: number;
   layers: TileLayer[];
@@ -36,6 +34,8 @@ export default class Tile extends Entity {
   tileIndex: number;
   chunkIndex: number;
   layers: TileLayer[];
+  changedFlag: boolean;
+
   constructor({ pos, chunkIndex, tileIndex, layers }: TileProps) {
     const config = Link.get<ProjectConfig>("projectConfig")();
 
@@ -53,23 +53,16 @@ export default class Tile extends Entity {
     this.layers = layers;
     this.tileIndex = tileIndex;
     this.chunkIndex = chunkIndex;
+    this.changedFlag = false;
   }
   update() {
     this.mouseEvents();
-    this.debugMouse();
   }
   render(): void {
     if (this.layers.length > 0) this.drawLayers();
     else this.drawEmpty();
   }
-  private isMouseCollide(position: Position2D) {
-    return (
-      position.x >= this.transform.position.x - this.transform.size.x &&
-      position.x <= this.transform.position.x + this.transform.size.x &&
-      position.y >= this.transform.position.y - this.transform.size.y &&
-      position.y <= this.transform.position.y + this.transform.size.y
-    );
-  }
+
   private drawLayers() {
     this.layers.forEach((layer) => {
       const textureID = Engine.TexturesIDs.get(layer.textureID);
@@ -118,8 +111,19 @@ export default class Tile extends Entity {
     });
   }
   private mouseEvents() {
-    const { event, position } = InputManager.getMouseEvent();
-    if (event.left && !event.alt && this.isMouseCollide(position)) {
+    const mousePos = InputManager.getMousePosition();
+
+    if (this.changedFlag === true && !this.isMouseCollide(mousePos)) {
+      this.changedFlag = false;
+      return;
+    }
+    if (this.changedFlag) return;
+
+    this.onMouseLeft(mousePos);
+    this.onMouseRight(mousePos);
+  }
+  private onMouseLeft(mousePos: Position2D) {
+    if (InputManager.onMouseDown("left") && this.isMouseCollide(mousePos)) {
       const [getter] = GlobalStore.get<PassManifold>("passManifold");
       const zIndex = Link.get<number>("z-index")();
       const layer = {
@@ -130,21 +134,35 @@ export default class Tile extends Entity {
         zIndex: zIndex,
         tileSize: getter.tileSize,
       };
-      //TODO: zoptymalizowac to, jako ze layers to praktycznie zawsze posortowana lista numerow, jakis algo by wszedł
+      // TODO: zoptymalizowac to, jako ze layers to praktycznie zawsze posortowana lista numerow, jakis algo by wszedł
       const index = this.layers.findIndex((layer) => layer.zIndex === zIndex);
       if (index !== -1) this.layers[index] = layer;
       else {
         this.layers.push(layer);
         this.layers.sort((a, b) => a.zIndex - b.zIndex);
       }
+      //TODO: zamiast zapisywac co kazda zmiana kafla moze lepiej co X ms?
+      //np tagowac ze chunk wymaga zmiany i za X sekund to zrobic jesli nie ma przy nim aktywnosci zadnej wiekszej
+      saveOnChange(this.chunkIndex);
+      this.changedFlag = true;
     }
-    // saveOnChange(this.chunkIndex);
   }
-
-  private debugMouse() {
-    const { event, position } = InputManager.getMouseEvent();
-    if (event.left && event.alt && this.isMouseCollide(position)) {
-      console.log(this);
+  private onMouseRight(mousePos: Position2D) {
+    if (InputManager.onMouseDown("right") && this.isMouseCollide(mousePos)) {
+      const zIndex = Link.get<number>("z-index")();
+      const index = this.layers.findIndex((layer) => layer.zIndex === zIndex);
+      if (index === -1) return;
+      this.layers.splice(index, 1);
+      saveOnChange(this.chunkIndex);
+      this.changedFlag = true;
     }
+  }
+  private isMouseCollide(position: Position2D) {
+    return (
+      position.x >= this.transform.position.x - this.transform.size.x &&
+      position.x <= this.transform.position.x + this.transform.size.x &&
+      position.y >= this.transform.position.y - this.transform.size.y &&
+      position.y <= this.transform.position.y + this.transform.size.y
+    );
   }
 }

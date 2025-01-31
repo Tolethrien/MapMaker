@@ -43,6 +43,9 @@ const API_FILE_SYSTEM = {
   deleteFile: async (path: string): Promise<AsyncStatus> => {
     return await ipcRenderer.invoke("deleteFile", path);
   },
+  fileExists: async (path: string): Promise<AsyncStatus> => {
+    return await ipcRenderer.invoke("fileExists", path);
+  },
   readDir: async (
     path: string
   ): Promise<AsyncStatus & { paths: string[] | undefined }> => {

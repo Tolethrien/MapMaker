@@ -5,6 +5,7 @@ import Entity from "../core/entity";
 import EntityManager from "../core/entityManager";
 import Tile, { TileTemplate } from "./tile";
 import Link from "@/utils/link";
+import { Selectors } from "@/preload/globalLinks";
 interface Props {
   index: number;
   position: Position2D;
@@ -15,6 +16,7 @@ export interface ChunkTemplate {
   tiles: TileTemplate[];
 }
 export default class Chunk extends Entity {
+  //TODO: pozbyc sie systemu addComponents
   private static SELECTION_COLOR = new Uint8ClampedArray([0, 0, 0]);
   private static SELECTION_TEXT_COLOR = new Uint8ClampedArray([255, 255, 255]);
   public transform: TypeOfComponent<"Transform">;
@@ -33,12 +35,6 @@ export default class Chunk extends Entity {
       size: { width: size.w, height: size.h },
     });
 
-    this.mouseEvent = this.addComponent("MouseEvents", {
-      leftClick: () => {
-        if (!this.isChunkSelected()) EntityManager.setFocusedChunk(this.index);
-        else EntityManager.setFocusedChunk(undefined);
-      },
-    });
     EventBus.on("cameraMove", {
       name: `chunk-${this.index} move check`,
       callback: (event: Position2D) => {
@@ -47,6 +43,7 @@ export default class Chunk extends Entity {
       },
     });
   }
+
   public get getTiles() {
     return this.tiles;
   }
@@ -54,7 +51,9 @@ export default class Chunk extends Entity {
     this.tiles.add(tile);
   }
   update(): void {
-    this.tiles.forEach((tile) => tile.update());
+    const isGrid = Link.get<Selectors>("activeSelector")() === "grid";
+    if (isGrid) this.chunkSelector();
+    else this.tiles.forEach((tile) => tile.update());
   }
   render(): void {
     this.tiles.forEach((tile) => tile.render());
@@ -62,13 +61,21 @@ export default class Chunk extends Entity {
     if (this.isChunkSelected()) this.drawSelectedChunk();
     else this.drawUnselectedChunk();
   }
-  public isMouseCollide(mousePos: Position2D) {
-    const normalizedMouse = InputManager.mouseToWorld(mousePos);
+  private chunkSelector() {
+    if (!InputManager.onMouseClick("left")) return;
+    if (this.isChunkSelected()) {
+      EntityManager.setFocusedChunk(undefined);
+      return;
+    }
+    if (this.isMouseCollide()) EntityManager.setFocusedChunk(this.index);
+  }
+  public isMouseCollide() {
+    const mousePos = InputManager.getMousePosition();
     return (
-      normalizedMouse.x >= this.transform.position.x &&
-      normalizedMouse.x <= this.transform.position.x + this.transform.size.x &&
-      normalizedMouse.y >= this.transform.position.y &&
-      normalizedMouse.y <= this.transform.position.y + this.transform.size.y
+      mousePos.x >= this.transform.position.x &&
+      mousePos.x <= this.transform.position.x + this.transform.size.x &&
+      mousePos.y >= this.transform.position.y &&
+      mousePos.y <= this.transform.position.y + this.transform.size.y
     );
   }
   private isCenterChunk(cameraPos: Position2D) {
