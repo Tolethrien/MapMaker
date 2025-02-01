@@ -1,5 +1,4 @@
-import { app, dialog, ipcMain } from "electron";
-import { mainWindow } from "../main";
+import { app, ipcMain } from "electron";
 import path from "path";
 import { readFile, writeFile } from "fs/promises";
 import { AppSettings, RecentProject } from "../settings/app";

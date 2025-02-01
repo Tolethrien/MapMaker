@@ -9,6 +9,8 @@ import { createNewEmptyChunk } from "./world";
 
 const { createFolder, createFile, readFile, copyFile, deleteFile, fileExists } =
   getAPI("fileSystem");
+const { createProjectBoilerplate, writeChunk, writeConfig } = getAPI("project");
+const { joinPath } = getAPI("utils");
 export interface NewProjectProps {
   dirPath: string;
   name: string;
@@ -22,19 +24,7 @@ export async function createNewProject(
 ): Promise<AsyncStatus> {
   if (props.dirPath.length === 0)
     return { error: "Error: dirPath length is 0", success: false };
-  const folderPath = joinPaths(props.dirPath, props.name);
-
-  const projectStatus = await createFolder(folderPath);
-  if (!projectStatus.success) return projectStatus;
-
-  const chunksStatus = await createFolder(joinPaths(folderPath, "chunks"));
-  if (!chunksStatus.success) return chunksStatus;
-
-  const textureFolderStatus = await createFolder(
-    joinPaths(folderPath, "textures")
-  );
-  if (!textureFolderStatus.success) return textureFolderStatus;
-
+  const projectPath = await joinPath(props.dirPath, props.name);
   const projectConfig: ProjectConfig = {
     name: props.name,
     tileSize: { w: props.tileSize.w, h: props.tileSize.h },
@@ -43,17 +33,17 @@ export async function createNewProject(
       w: props.chunkSize.w * props.tileSize.w,
       h: props.chunkSize.h * props.tileSize.h,
     },
-    projectPath: joinPaths(props.dirPath, props.name),
+    projectPath: projectPath,
     textureUsed: [],
   };
-  const configFileStatus = await createFile({
-    data: JSON.stringify(projectConfig),
-    dirPath: folderPath,
-    fileName: "config",
-    type: "json",
-    allowOverride: false,
+
+  const boilerplate = await createProjectBoilerplate(projectPath);
+  if (!boilerplate.success) return boilerplate;
+  const configStatus = await writeConfig({
+    config: projectConfig,
+    projectPath,
   });
-  if (!configFileStatus.success) return configFileStatus;
+  if (!configStatus.success) return configStatus;
 
   await Engine.initialize(projectConfig);
 

@@ -6,6 +6,8 @@ import { fileSystemIPC } from "./IPC/fileSystem";
 import { dialogIPC } from "./IPC/dialog";
 import { createAppSettings } from "./settings/app";
 import { settingsIPC } from "./IPC/settings";
+import { projectIPC } from "./IPC/project";
+import { utilsIPC } from "./IPC/utils";
 
 export let mainWindow: BrowserWindow;
 export default function createWindow() {
@@ -40,6 +42,8 @@ function IPCHandlers() {
   fileSystemIPC();
   appIPC();
   settingsIPC();
+  projectIPC();
+  utilsIPC();
 }
 function onDev() {
   mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
