@@ -6,7 +6,7 @@ import { PassManifold } from "@/preload/globalLinks";
 import { randomColor } from "@/utils/utils";
 import Engine from "@/engine/engine";
 import GlobalStore from "../../modules/globalStore";
-import { saveOnChange } from "@/preload/api/world";
+import EntityManager from "../core/entityManager";
 interface TileProps {
   pos: { x: number; y: number };
   tileIndex: number;
@@ -143,7 +143,7 @@ export default class Tile extends Entity {
       }
       //TODO: zamiast zapisywac co kazda zmiana kafla moze lepiej co X ms?
       //np tagowac ze chunk wymaga zmiany i za X sekund to zrobic jesli nie ma przy nim aktywnosci zadnej wiekszej
-      saveOnChange(this.chunkIndex);
+      EntityManager.saveOnChange(this.chunkIndex);
       this.changedFlag = true;
     }
   }
@@ -153,7 +153,7 @@ export default class Tile extends Entity {
       const index = this.layers.findIndex((layer) => layer.zIndex === zIndex);
       if (index === -1) return;
       this.layers.splice(index, 1);
-      saveOnChange(this.chunkIndex);
+      EntityManager.saveOnChange(this.chunkIndex);
       this.changedFlag = true;
     }
   }

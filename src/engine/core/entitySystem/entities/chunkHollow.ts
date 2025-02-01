@@ -2,7 +2,6 @@ import Link from "@/utils/link";
 import Entity from "../core/entity";
 import Draw from "../../aurora/urp/draw";
 import InputManager from "../../modules/inputManager";
-import { createNewEmptyChunk } from "@/preload/api/world";
 import EventBus from "@/utils/eventBus";
 import EntityManager from "../core/entityManager";
 interface Props {
@@ -31,7 +30,7 @@ export default class HollowChunk extends Entity {
   update() {
     if (InputManager.onMouseClick("left") && this.isMouseCollide()) {
       console.log("click", this.chunkIndex);
-      createNewEmptyChunk(this.chunkIndex);
+      EntityManager.createEmptyChunk(this.chunkIndex);
     }
   }
   private isCameraOnChunk() {

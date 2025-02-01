@@ -5,7 +5,6 @@ import { getAPI } from "@/preload/api/getAPI";
 
 import { joinPaths } from "@/utils/utils";
 import Link from "@/utils/link";
-import { createNewEmptyChunk } from "./world";
 
 const { createFolder, createFile, readFile, copyFile, deleteFile, fileExists } =
   getAPI("fileSystem");
@@ -36,9 +35,9 @@ export async function createNewProject(
     projectPath: projectPath,
     textureUsed: [],
   };
-
   const boilerplate = await createProjectBoilerplate(projectPath);
   if (!boilerplate.success) return boilerplate;
+
   const configStatus = await writeConfig({
     config: projectConfig,
     projectPath,
@@ -46,12 +45,11 @@ export async function createNewProject(
   if (!configStatus.success) return configStatus;
 
   await Engine.initialize(projectConfig);
-
-  const createChunkStatus = await createNewEmptyChunk(0);
+  const createChunkStatus = await EntityManager.createEmptyChunk(0);
+  if (!createChunkStatus.success) return createChunkStatus;
   const chunkIndexes = EntityManager.findChunksInRange({ x: 0, y: 0 });
   chunkIndexes.delete(0);
-  EntityManager.generateHollows(Array.from(chunkIndexes));
-  if (!createChunkStatus.success) return createChunkStatus;
+  EntityManager.generateHollows(chunkIndexes);
 
   return { error: "", success: true };
 }
@@ -86,7 +84,7 @@ export async function openProject(folderPath: string): Promise<AsyncStatus> {
   }
 
   chunks.forEach((chunk) => EntityManager.populateChunk(chunk));
-  EntityManager.generateHollows(Array.from(hollows));
+  EntityManager.generateHollows(hollows);
   return { error: "", success: true };
 }
 

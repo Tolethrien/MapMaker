@@ -91,7 +91,7 @@ async function addTextureFile(
       tileSize,
       id: crypto.randomUUID(),
     });
-    await writeJSON(configPath, config.data);
+    await writeJSON(configPath, config.data, false);
     return { success: true, error: "", data: config.data };
   } catch (error) {
     return { success: false, error: error, data: undefined };
@@ -142,7 +142,7 @@ async function readJSON<T>(
 async function writeJSON<T>(
   path: string,
   data: T,
-  allowOverride?: boolean
+  allowOverride = true
 ): Promise<AsyncStatus> {
   const over = allowOverride ? {} : { flag: "wx" };
   try {
