@@ -7,6 +7,7 @@ import { randomColor } from "@/utils/utils";
 import Engine from "@/engine/engine";
 import GlobalStore from "../../modules/globalStore";
 import EntityManager from "../core/entityManager";
+import Transform from "../components/transform";
 interface TileProps {
   pos: { x: number; y: number };
   tileIndex: number;
@@ -29,8 +30,7 @@ export interface TileTemplate {
 
 export default class Tile extends Entity {
   private static EMPTY_TILE_COLOR = new Uint8ClampedArray(randomColor());
-  transform: TypeOfComponent<"Transform">;
-  mouseEvent: TypeOfComponent<"MouseEvents">;
+  transform: Transform;
   tileIndex: number;
   chunkIndex: number;
   layers: TileLayer[];
@@ -124,6 +124,7 @@ export default class Tile extends Entity {
   }
   private onMouseLeft(mousePos: Position2D) {
     if (InputManager.onMouseDown("left") && this.isMouseCollide(mousePos)) {
+      console.log(this.chunkIndex, this.tileIndex);
       const [getter] = GlobalStore.get<PassManifold>("passManifold");
       const zIndex = Link.get<number>("z-index")();
       const layer = {

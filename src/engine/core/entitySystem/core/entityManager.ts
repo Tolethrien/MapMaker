@@ -16,7 +16,7 @@ export default class EntityManager {
   private static chunksToAdd: Set<number> = new Set();
   private static cameraOnChunk: number = 0;
   private static focusedChunk: number | undefined = undefined;
-  private static RINGS = 5;
+  private static RINGS = 8;
 
   public static getAllChunks() {
     return this.loadedChunks;
@@ -203,17 +203,22 @@ export default class EntityManager {
     return chunks;
   }
 
-  public static remap(chunkIndex: number, chunkPosition: Position2D) {
-    this.cameraOnChunk = chunkIndex;
+  public static remap(cameraOnChunkIndex: number, chunkPosition: Position2D) {
+    this.cameraOnChunk = cameraOnChunkIndex;
     const chunk = this.findChunksInRange(chunkPosition);
     chunk.forEach(
-      (index) => !this.loadedChunks.has(index) && this.chunksToAdd.add(index)
+      (chunkIndex) =>
+        !this.loadedChunks.has(chunkIndex) &&
+        !this.hollowChunks.has(chunkIndex) &&
+        this.chunksToAdd.add(chunkIndex)
     );
     this.loadedChunks.forEach(
-      (_, index) => !chunk.has(index) && this.chunksToRemove.add(index)
+      (_, chunkIndex) =>
+        !chunk.has(chunkIndex) && this.chunksToRemove.add(chunkIndex)
     );
     this.hollowChunks.forEach(
-      (_, index) => !chunk.has(index) && this.hollowsToRemove.add(index)
+      (_, chunkIndex) =>
+        !chunk.has(chunkIndex) && this.hollowsToRemove.add(chunkIndex)
     );
   }
 

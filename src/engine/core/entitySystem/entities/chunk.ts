@@ -6,6 +6,7 @@ import EntityManager from "../core/entityManager";
 import Tile, { TileTemplate } from "./tile";
 import Link from "@/utils/link";
 import { Selectors } from "@/preload/globalLinks";
+import Transform from "../components/transform";
 interface Props {
   index: number;
   position: Position2D;
@@ -19,8 +20,7 @@ export default class Chunk extends Entity {
   //TODO: pozbyc sie systemu addComponents
   private static SELECTION_COLOR = new Uint8ClampedArray([0, 0, 0]);
   private static SELECTION_TEXT_COLOR = new Uint8ClampedArray([255, 255, 255]);
-  public transform: TypeOfComponent<"Transform">;
-  public mouseEvent: TypeOfComponent<"MouseEvents">;
+  public transform: Transform;
 
   private tiles: Set<Tile>;
   public index: number;

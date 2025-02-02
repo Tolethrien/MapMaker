@@ -52,7 +52,7 @@ export default function TextureView() {
     });
   };
   return (
-    <ModuleFrame title="Texture View" allowBeforeInit={true}>
+    <ModuleFrame title="Texture View">
       <div class="border-b-4 border-app-acc-purp mt-4 flex items-end justify-between">
         <div class="flex overflow-x-auto gap-1 no-horizontal-scroll text-sm font-medium">
           <For each={config().textureUsed}>

@@ -74,7 +74,6 @@ export default function NewProject() {
       return;
     }
     const name = path().split("\\").at(-1)!;
-    console.log(name, path());
 
     const recentStatus = await addToRecent({ name, path: path() });
     if (!recentStatus.success)

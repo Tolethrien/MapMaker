@@ -4,12 +4,13 @@ import Draw from "../../aurora/urp/draw";
 import InputManager from "../../modules/inputManager";
 import EventBus from "@/utils/eventBus";
 import EntityManager from "../core/entityManager";
+import Transform from "../components/transform";
 interface Props {
   index: number;
   position: Position2D;
 }
 export default class HollowChunk extends Entity {
-  private transform: TypeOfComponent<"Transform">;
+  private transform: Transform;
   private chunkIndex: number;
   constructor({ index, position }: Props) {
     super();

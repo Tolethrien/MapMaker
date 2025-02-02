@@ -50,7 +50,10 @@ export default function NotificationWindow(props: Props) {
         <div class="flex flex-col overflow-y-auto flex-grow py-2 gap-2">
           <For each={notes().toReversed()}>
             {(note, index) => (
-              <div class="w-full border-1 border-app-acc-gray rounded-md px-1 py-2 flex items-center shadow-md hover:border-app-acc-ice">
+              <div
+                class="w-full border-1 border-app-acc-gray rounded-md px-1 py-2 flex items-center shadow-md hover:border-app-acc-ice"
+                onClick={() => console.log(note.value)}
+              >
                 <NotificationSVG
                   type={note.type}
                   style="h-5 w-5 flex-shrink-0 pl-1"
