@@ -3,6 +3,7 @@ import Mat4 from "@/math/mat4";
 import EventBus from "@/utils/eventBus";
 import Link from "@/utils/link";
 import { Setter } from "solid-js";
+import InputManager from "../../modules/inputManager";
 type CameraZoom = { current: number; max: number; min: number };
 const cameraData = {
   keyPressed: new Set(),
@@ -23,16 +24,6 @@ export default class Camera {
     this.zoom = { current: 1, max: 10, min: 0.1 };
     this.setUI = Link.set<Position2D>("cameraPos");
     this.setUI(this.position);
-
-    window.onkeydown = (event: KeyboardEvent) => {
-      const pressedKey = event.key === " " ? "space" : event.key;
-      !event.repeat && cameraData.keyPressed.add(pressedKey);
-    };
-    window.onkeyup = (event: KeyboardEvent) => {
-      const pressedKey = event.key === " " ? "space" : event.key;
-      cameraData.keyPressed.has(pressedKey) &&
-        cameraData.keyPressed.delete(pressedKey);
-    };
   }
   public static get getProjectionViewMatrix() {
     return this.projectionViewMatrix;
@@ -56,17 +47,18 @@ export default class Camera {
   }
 
   private static cameraMove() {
-    if (cameraData.keyPressed.size === 0) return;
-    if (cameraData.keyPressed.has("d")) this.position.x += this.speed;
-    else if (cameraData.keyPressed.has("a")) this.position.x -= this.speed;
-    if (cameraData.keyPressed.has("w")) this.position.y -= this.speed;
-    else if (cameraData.keyPressed.has("s")) this.position.y += this.speed;
-    if (cameraData.keyPressed.has("e"))
+    if (InputManager.noKeyEvent()) return;
+    if (InputManager.onKeyHold("d")) this.position.x += this.speed;
+    else if (InputManager.onKeyHold("a")) this.position.x -= this.speed;
+    if (InputManager.onKeyHold("w")) this.position.y -= this.speed;
+    else if (InputManager.onKeyHold("s")) this.position.y += this.speed;
+    if (InputManager.onKeyHold("e"))
       this.zoom.current > this.zoom.min &&
         (this.zoom.current -= 0.01 * Math.log(this.zoom.current + 1));
-    else if (cameraData.keyPressed.has("q"))
+    else if (InputManager.onKeyHold("q"))
       this.zoom.current < this.zoom.max &&
         (this.zoom.current += 0.01 * Math.log(this.zoom.current + 1));
+    if (InputManager.onKeyClick("m")) console.log("m");
     EventBus.emit<Position2D>("cameraMove", this.position);
     this.setUI(this.position);
   }

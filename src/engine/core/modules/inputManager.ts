@@ -2,13 +2,9 @@ import Vec2D from "@/math/vec2D";
 import Camera from "../entitySystem/entities/camera";
 import Link from "@/utils/link";
 import { Selectors } from "@/preload/globalLinks";
-import GlobalStore from "./globalStore";
 import Aurora from "../aurora/auroraCore";
-export type mouseEvents = (typeof MOUSE_EVENTS)[number];
 
-export const MOUSE_EVENTS = ["leftClick", "rightClick", "scrollClick"] as const;
 export type MouseManifold = typeof MOUSE_STATE;
-
 const MOUSE_STATE = {
   alt: false,
   shift: false,
@@ -16,11 +12,15 @@ const MOUSE_STATE = {
   left: false,
   right: false,
 };
+
 export default class InputManager {
   private static canvas: HTMLCanvasElement;
   private static internalState: MouseManifold = { ...MOUSE_STATE };
   private static prevMouseState: MouseManifold = { ...MOUSE_STATE };
   private static currMouseState: MouseManifold = { ...MOUSE_STATE };
+  private static keyCurrent = new Set<string>();
+  private static keyLast = new Set<string>();
+  private static internalKeys = new Set<string>();
 
   private static mousePosition: Position2D = { x: 0, y: 0 };
   public static init(canvas: HTMLCanvasElement) {
@@ -32,12 +32,30 @@ export default class InputManager {
       this.mouseClickEvent("up", e)
     );
     this.canvas.addEventListener("mousemove", (e) => this.mouseMoveEvent(e));
+    window.addEventListener("keydown", (e) => this.internalKeys.add(e.key));
+    window.addEventListener("keyup", (e) => {
+      this.internalKeys.delete(e.key);
+    });
   }
   public static update() {
     this.prevMouseState = this.currMouseState;
     this.currMouseState = this.internalState;
+    this.keyLast = new Set(this.keyCurrent.values());
+    this.keyCurrent = new Set(this.internalKeys.values());
   }
 
+  public static onKeyClick(key: KeyboardEvent["key"]) {
+    return !this.keyLast.has(key) && this.keyCurrent.has(key);
+  }
+  public static onKeyHold(key: KeyboardEvent["key"]) {
+    return this.keyCurrent.has(key);
+  }
+  public static onKeyRelease(key: KeyboardEvent["key"]) {
+    return !this.keyCurrent.has(key) && this.keyLast.has(key);
+  }
+  public static noKeyEvent() {
+    return this.keyCurrent.size === 0 && this.keyLast.size === 0;
+  }
   public static onMouseClick(key: "left" | "right") {
     if (key === "left" && this.currMouseState.left && !this.prevMouseState.left)
       return true;
