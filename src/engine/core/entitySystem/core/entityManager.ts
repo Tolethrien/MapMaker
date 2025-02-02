@@ -44,11 +44,11 @@ export default class EntityManager {
   }
   public static renderAll() {
     const sorted = Array.from(this.loadedChunks.values()).sort(
-      ({ transform: chunkA }, { transform: chunkB }) => {
-        if (chunkA.position.y === chunkB.position.y) {
-          return chunkA.position.x - chunkB.position.x;
+      ({ position: chunkA }, { position: chunkB }) => {
+        if (chunkA.y === chunkB.y) {
+          return chunkA.x - chunkB.x;
         }
-        return chunkA.position.y - chunkB.position.y;
+        return chunkA.y - chunkB.y;
       }
     );
     this.hollowChunks.forEach((chunk) => chunk.render());
@@ -167,7 +167,7 @@ export default class EntityManager {
     );
     const saveData: ChunkTemplate = {
       index: chunk.index,
-      position: chunk.transform.position.get,
+      position: chunk.position.get,
       tiles: tiles,
     };
     const ChunkFileStatus = await writeChunk({

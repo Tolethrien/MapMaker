@@ -6,7 +6,6 @@ import EntityManager from "../core/entityManager";
 import Tile, { TileTemplate } from "./tile";
 import Link from "@/utils/link";
 import { Selectors } from "@/preload/globalLinks";
-import Transform from "../components/transform";
 interface Props {
   index: number;
   position: Position2D;
@@ -17,29 +16,21 @@ export interface ChunkTemplate {
   tiles: TileTemplate[];
 }
 export default class Chunk extends Entity {
-  //TODO: pozbyc sie systemu addComponents
   private static SELECTION_COLOR = new Uint8ClampedArray([0, 0, 0]);
   private static SELECTION_TEXT_COLOR = new Uint8ClampedArray([255, 255, 255]);
-  public transform: Transform;
-
   private tiles: Set<Tile>;
   public index: number;
   constructor({ index, position }: Props) {
-    super();
+    const size = Link.get<ProjectConfig>("projectConfig")().chunkSizeInPixels;
+    super(position, { w: size.w, h: size.h });
     this.tiles = new Set();
     this.index = index;
-    const size = Link.get<ProjectConfig>("projectConfig")().chunkSizeInPixels;
-
-    this.transform = this.addComponent("Transform", {
-      position,
-      size: { width: size.w, height: size.h },
-    });
 
     EventBus.on("cameraMove", {
       name: `chunk-${this.index} move check`,
       callback: (event: Position2D) => {
-        if (this.isCenterChunk(event) && !this.isCameraOnChunk())
-          EntityManager.remap(this.index, this.transform.position.get);
+        if (this.isCameraCollide(event) && !this.isCameraOnChunk())
+          EntityManager.remap(this.index, this.position.get);
       },
     });
   }
@@ -69,23 +60,7 @@ export default class Chunk extends Entity {
     }
     if (this.isMouseCollide()) EntityManager.setFocusedChunk(this.index);
   }
-  public isMouseCollide() {
-    const mousePos = InputManager.getMousePosition();
-    return (
-      mousePos.x >= this.transform.position.x &&
-      mousePos.x <= this.transform.position.x + this.transform.size.x &&
-      mousePos.y >= this.transform.position.y &&
-      mousePos.y <= this.transform.position.y + this.transform.size.y
-    );
-  }
-  private isCenterChunk(cameraPos: Position2D) {
-    return (
-      cameraPos.x > this.transform.position.x &&
-      cameraPos.x < this.transform.position.x + this.transform.size.x &&
-      cameraPos.y > this.transform.position.y &&
-      cameraPos.y < this.transform.position.y + this.transform.size.y
-    );
-  }
+
   private isChunkSelected() {
     return EntityManager.getFocusedChunkIndex === this.index;
   }
@@ -99,8 +74,8 @@ export default class Chunk extends Entity {
       crop: new Float32Array([0, 0, 1, 1]),
       isTexture: 0,
       position: {
-        x: this.transform.position.x + 100,
-        y: this.transform.position.y + 30,
+        x: this.position.x + 100,
+        y: this.position.y + 30,
       },
       size: {
         w: 100,
@@ -112,7 +87,7 @@ export default class Chunk extends Entity {
     Draw.Text({
       alpha: 255,
       bloom: 0,
-      position: this.transform.position.add([10, 10]).get,
+      position: this.position.add([10, 10]).get,
       color: Chunk.SELECTION_TEXT_COLOR,
       fontFace: "roboto",
       fontSize: 40,
@@ -126,12 +101,12 @@ export default class Chunk extends Entity {
       crop: new Float32Array([0, 0, 1, 1]),
       isTexture: 0,
       position: {
-        x: this.transform.position.x + this.transform.size.x * 0.5,
-        y: this.transform.position.y + this.transform.size.y * 0.5,
+        x: this.position.x + this.size.x * 0.5,
+        y: this.position.y + this.size.y * 0.5,
       },
       size: {
-        w: this.transform.size.x * 0.5,
-        h: this.transform.size.y * 0.5,
+        w: this.size.x * 0.5,
+        h: this.size.y * 0.5,
       },
       textureToUse: 0,
       tint: Chunk.SELECTION_COLOR,
@@ -139,7 +114,7 @@ export default class Chunk extends Entity {
     Draw.Text({
       alpha: 255,
       bloom: 0,
-      position: this.transform.position.add([10, 10]).get,
+      position: this.position.add([10, 10]).get,
       color: Chunk.SELECTION_TEXT_COLOR,
       fontFace: "roboto",
       fontSize: 40,

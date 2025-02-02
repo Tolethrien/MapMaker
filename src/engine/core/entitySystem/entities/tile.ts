@@ -7,7 +7,6 @@ import { randomColor } from "@/utils/utils";
 import Engine from "@/engine/engine";
 import GlobalStore from "../../modules/globalStore";
 import EntityManager from "../core/entityManager";
-import Transform from "../components/transform";
 interface TileProps {
   pos: { x: number; y: number };
   tileIndex: number;
@@ -30,7 +29,6 @@ export interface TileTemplate {
 
 export default class Tile extends Entity {
   private static EMPTY_TILE_COLOR = new Uint8ClampedArray(randomColor());
-  transform: Transform;
   tileIndex: number;
   chunkIndex: number;
   layers: TileLayer[];
@@ -38,18 +36,16 @@ export default class Tile extends Entity {
 
   constructor({ pos, chunkIndex, tileIndex, layers }: TileProps) {
     const config = Link.get<ProjectConfig>("projectConfig")();
-
-    super();
-    this.transform = this.addComponent("Transform", {
-      position: {
+    super(
+      {
         x: pos.x + config.tileSize.w * 0.5,
         y: pos.y + config.tileSize.h * 0.5,
       },
-      size: {
-        width: config.tileSize.w * 0.5,
-        height: config.tileSize.h * 0.5,
-      },
-    });
+      {
+        w: config.tileSize.w * 0.5,
+        h: config.tileSize.h * 0.5,
+      }
+    );
     this.layers = layers;
     this.tileIndex = tileIndex;
     this.chunkIndex = chunkIndex;
@@ -60,7 +56,6 @@ export default class Tile extends Entity {
   }
   render(): void {
     if (this.layers.length > 0) this.drawLayers();
-    else this.drawEmpty();
   }
 
   private drawLayers() {
@@ -80,50 +75,31 @@ export default class Tile extends Entity {
         crop: crop,
         isTexture: 1,
         position: {
-          x: this.transform.position.x,
-          y: this.transform.position.y,
+          x: this.position.x,
+          y: this.position.y,
         },
         size: {
-          w: this.transform.size.x,
-          h: this.transform.size.y,
+          w: this.size.x,
+          h: this.size.y,
         },
         textureToUse: textureID,
         tint: new Uint8ClampedArray(layer.color),
       });
     });
   }
-  private drawEmpty() {
-    Draw.Quad({
-      alpha: 255,
-      bloom: 0,
-      crop: new Float32Array([0, 0, 1, 1]),
-      isTexture: 0,
-      position: {
-        x: this.transform.position.x,
-        y: this.transform.position.y,
-      },
-      size: {
-        w: this.transform.size.x,
-        h: this.transform.size.y,
-      },
-      textureToUse: 0,
-      tint: Tile.EMPTY_TILE_COLOR,
-    });
-  }
-  private mouseEvents() {
-    const mousePos = InputManager.getMousePosition();
 
-    if (this.changedFlag === true && !this.isMouseCollide(mousePos)) {
+  private mouseEvents() {
+    if (this.changedFlag === true && !this.isMouseCollide()) {
       this.changedFlag = false;
       return;
     }
     if (this.changedFlag) return;
 
-    this.onMouseLeft(mousePos);
-    this.onMouseRight(mousePos);
+    this.onMouseLeft();
+    this.onMouseRight();
   }
-  private onMouseLeft(mousePos: Position2D) {
-    if (InputManager.onMouseDown("left") && this.isMouseCollide(mousePos)) {
+  private onMouseLeft() {
+    if (InputManager.onMouseDown("left") && this.isMouseCollide()) {
       console.log(this.chunkIndex, this.tileIndex);
       const [getter] = GlobalStore.get<PassManifold>("passManifold");
       const zIndex = Link.get<number>("z-index")();
@@ -148,8 +124,8 @@ export default class Tile extends Entity {
       this.changedFlag = true;
     }
   }
-  private onMouseRight(mousePos: Position2D) {
-    if (InputManager.onMouseDown("right") && this.isMouseCollide(mousePos)) {
+  private onMouseRight() {
+    if (InputManager.onMouseDown("right") && this.isMouseCollide()) {
       const zIndex = Link.get<number>("z-index")();
       const index = this.layers.findIndex((layer) => layer.zIndex === zIndex);
       if (index === -1) return;
@@ -157,13 +133,5 @@ export default class Tile extends Entity {
       EntityManager.saveOnChange(this.chunkIndex);
       this.changedFlag = true;
     }
-  }
-  private isMouseCollide(position: Position2D) {
-    return (
-      position.x >= this.transform.position.x - this.transform.size.x &&
-      position.x <= this.transform.position.x + this.transform.size.x &&
-      position.y >= this.transform.position.y - this.transform.size.y &&
-      position.y <= this.transform.position.y + this.transform.size.y
-    );
   }
 }
