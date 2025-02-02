@@ -1,12 +1,12 @@
 import { useContext } from "solid-js";
 import { FrameContext } from "../../providers/frame";
-import { getAPI } from "@/preload/api/getAPI";
+import { getAPI } from "@/preload/getAPI";
 
 import Button from "@/editor/components/button";
 
+const { appTerminate } = getAPI("app");
 export default function CloseApp() {
   const context = useContext(FrameContext)!;
-  const { appTerminate } = getAPI("app");
 
   return (
     <div class="bg-app-main-2 p-12 flex flex-col gap-8">

@@ -27,6 +27,7 @@ export function projectIPC() {
   ipcMain.handle("createProjectBoilerplate", createProjectBoilerplate);
   ipcMain.handle("addTextureFile", addTextureFile);
   ipcMain.handle("deleteTextureFile", deleteTextureFile);
+  ipcMain.handle("loadTexture", loadTexture);
 }
 
 async function readChunk(
@@ -91,7 +92,7 @@ async function addTextureFile(
       tileSize,
       id: crypto.randomUUID(),
     });
-    await writeJSON(configPath, config.data, false);
+    await writeJSON(configPath, config.data);
     return { success: true, error: "", data: config.data };
   } catch (error) {
     return { success: false, error: error, data: undefined };
@@ -126,6 +127,22 @@ async function deleteTextureFile(
     return { success: true, error: "", data: config };
   } catch (error) {
     return { success: false, error: error, data: undefined };
+  }
+}
+async function loadTexture(
+  _: Electron.IpcMainInvokeEvent,
+  path: string
+): Promise<AsyncStatus & { src: string }> {
+  try {
+    const buffer = await readFile(path);
+    const base = buffer.toString("base64");
+    return { success: true, error: "", src: `data:image/png;base64,${base}` };
+  } catch (error) {
+    return {
+      success: false,
+      error: error,
+      src: "",
+    };
   }
 }
 async function readJSON<T>(

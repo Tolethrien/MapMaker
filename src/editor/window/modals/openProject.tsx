@@ -8,9 +8,8 @@ import {
 } from "solid-js";
 import Button from "@/editor/components/button";
 import { FrameContext } from "@/editor/providers/frame";
-import { getAPI } from "@/preload/api/getAPI";
-
-import { openProject } from "@/preload/api/project";
+import { getAPI } from "@/preload/getAPI";
+import { openProject } from "@/utils/projectUtils";
 import FolderSVG from "@/assets/icons/folder";
 import Input from "@/editor/components/input";
 import IconButton from "@/editor/components/buttonAsIcon";
@@ -21,6 +20,9 @@ import { sendNotification } from "@/utils/utils";
 import { RecentProject } from "@/backend/settings/app";
 import SpinnerSVG from "@/assets/icons/spinner";
 
+const { getAppSettings, addToRecent, deleteFromRecent } = getAPI("settings");
+const { openFolderPicker } = getAPI("dialog");
+const { getPathTo } = getAPI("utils");
 export default function NewProject() {
   const context = useContext(FrameContext)!;
 
@@ -32,7 +34,6 @@ export default function NewProject() {
   );
   createEffect(async () => {
     if (recent() !== undefined) return;
-    const { getAppSettings } = getAPI("settings");
     const projects = await getAppSettings();
     if (!projects.success) {
       sendNotification({
@@ -44,8 +45,7 @@ export default function NewProject() {
     setRecent(projects.appSettings.recentProjects);
   });
   createEffect(async () => {
-    const { getAppPath } = getAPI("fileSystem");
-    const path = await getAppPath("desktop");
+    const path = await getPathTo("desktop");
     if (path === "") {
       sendNotification({
         type: "error",
@@ -60,7 +60,6 @@ export default function NewProject() {
   });
 
   const setProjectPath = async () => {
-    const { openFolderPicker } = getAPI("dialog");
     const { canceled, filePaths } = await openFolderPicker();
     if (canceled) return;
     setPath(filePaths[0]);
@@ -68,7 +67,6 @@ export default function NewProject() {
 
   const onOpenProject = async () => {
     setIsLoading(true);
-    const { addToRecent } = getAPI("settings");
     const status = await openProject(path());
     if (!status.success) {
       sendNotification({ type: "error", value: status.error });
@@ -76,6 +74,8 @@ export default function NewProject() {
       return;
     }
     const name = path().split("\\").at(-1)!;
+    console.log(name, path());
+
     const recentStatus = await addToRecent({ name, path: path() });
     if (!recentStatus.success)
       sendNotification({ type: "error", value: status.error });
@@ -88,7 +88,6 @@ export default function NewProject() {
     });
   };
   const deleteRecent = async (path: string) => {
-    const { deleteFromRecent } = getAPI("settings");
     const deleteStatus = await deleteFromRecent(path);
     if (!deleteStatus.success) {
       sendNotification({

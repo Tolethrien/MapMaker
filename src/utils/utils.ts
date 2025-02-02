@@ -1,11 +1,10 @@
-import { getAPI } from "@/preload/api/getAPI";
+import { getAPI } from "@/preload/getAPI";
 
 import Link from "./link";
 import { Note } from "@/preload/globalLinks";
 
-const { loadTexture } = getAPI("fileSystem");
+const { loadTexture } = getAPI("project");
 
-export const joinPaths = (...paths: string[]) => paths.join("\\");
 export const randomColor = (): HSLA => [
   Math.round(Math.random() * 256),
   Math.round(Math.random() * 256),

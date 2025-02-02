@@ -7,17 +7,17 @@ import {
 } from "@/editor/providers/frame";
 import { batch, useContext } from "solid-js";
 import FrameModalList from "./modals";
-import { closeProject } from "@/preload/api/project";
-import { getAPI } from "@/preload/api/getAPI";
+import { closeProject } from "@/utils/projectUtils";
+import { getAPI } from "@/preload/getAPI";
 
 import Link from "@/utils/link";
 import FrameButton from "./components/frameButton";
 import SecondLogo from "./components/secondLogo";
 import StatusIcons from "./components/statusIcons";
 
+const { onAppCloseEvent, appClose } = getAPI("app");
 export default function Frame() {
   const frameContext = useContext(frameCtx)!;
-  const { onAppCloseEvent, appClose } = getAPI("app");
   const engineInit = Link.get<boolean>("engineInit");
   const isEngineInit = () => !engineInit();
 

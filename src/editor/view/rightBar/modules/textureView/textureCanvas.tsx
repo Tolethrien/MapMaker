@@ -1,11 +1,11 @@
 import { createEffect } from "solid-js";
 import CanvasController from "./canvasControl";
-import { getAPI } from "@/preload/api/getAPI";
+import { getAPI } from "@/preload/getAPI";
 
 interface Props {
   texture: ProjectTextureFile;
 }
-const { loadTexture } = getAPI("fileSystem");
+const { loadTexture } = getAPI("project");
 export default function TextureCanvas(props: Props) {
   let canvas!: HTMLCanvasElement;
   let controller!: CanvasController;

@@ -6,7 +6,7 @@ import ModuleFrame from "@/editor/components/module/moduleFrame";
 import IconButton from "@/editor/components/buttonAsIcon";
 import AddSVG from "@/assets/icons/add";
 import ModuleSection from "@/editor/components/module/ModuleSection";
-import { deleteTextureFile } from "@/preload/api/project";
+import { deleteTexture } from "@/utils/projectUtils";
 import Engine from "@/engine/engine";
 import TrashSVG from "@/assets/icons/trash";
 import { sendNotification } from "@/utils/utils";
@@ -32,7 +32,7 @@ export default function TextureView() {
   const removeTexture = async () => {
     const texture = textureView();
     if (!texture) return;
-    const status = await deleteTextureFile(texture.id);
+    const status = await deleteTexture(texture.id);
     if (!status.success) {
       sendNotification({
         type: "error",

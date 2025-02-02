@@ -5,4 +5,7 @@ declare global {
     API: typeof API;
   }
   type AsyncStatus = { success: boolean; error: string };
+  type Prettify<T> = {
+    [K in keyof T]: T[K];
+  } & {};
 }

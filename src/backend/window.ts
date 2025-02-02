@@ -2,7 +2,6 @@ import { BrowserWindow } from "electron";
 import path from "path";
 import installExtention from "electron-devtools-installer";
 import { appIPC } from "./IPC/app";
-import { fileSystemIPC } from "./IPC/fileSystem";
 import { dialogIPC } from "./IPC/dialog";
 import { createAppSettings } from "./settings/app";
 import { settingsIPC } from "./IPC/settings";
@@ -39,7 +38,6 @@ export default function createWindow() {
 }
 function IPCHandlers() {
   dialogIPC();
-  fileSystemIPC();
   appIPC();
   settingsIPC();
   projectIPC();

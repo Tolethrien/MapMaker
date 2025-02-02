@@ -2,9 +2,8 @@ import { batch, createEffect, createSignal, useContext } from "solid-js";
 import { createStore } from "solid-js/store";
 import Button from "@/editor/components/button";
 import { FrameContext } from "@/editor/providers/frame";
-import { getAPI } from "@/preload/api/getAPI";
-
-import { createNewProject, NewProjectProps } from "@/preload/api/project";
+import { getAPI } from "@/preload/getAPI";
+import { createNewProject, NewProjectProps } from "@/utils/projectUtils";
 import ArrowSVG from "@/assets/icons/sizeArrows";
 import Input from "@/editor/components/input";
 import NameSVG from "@/assets/icons/name";
@@ -13,6 +12,10 @@ import IconButton from "@/editor/components/buttonAsIcon";
 import PickerSVG from "@/assets/icons/picker";
 import CloseSVG from "@/assets/icons/close";
 import { sendNotification } from "@/utils/utils";
+
+const { getPathTo, joinPath } = getAPI("utils");
+const { openFolderPicker } = getAPI("dialog");
+const { addToRecent } = getAPI("settings");
 
 export default function NewProject() {
   const context = useContext(FrameContext)!;
@@ -26,8 +29,7 @@ export default function NewProject() {
   });
 
   createEffect(async () => {
-    const { getAppPath } = getAPI("fileSystem");
-    const path = await getAppPath("desktop");
+    const path = await getPathTo("desktop");
     if (path === "") {
       sendNotification({
         type: "error",
@@ -42,17 +44,15 @@ export default function NewProject() {
   });
 
   const setProjectPath = async () => {
-    const { openFolderPicker } = getAPI("dialog");
     const { canceled, filePaths } = await openFolderPicker();
     if (canceled) return;
     setState("dirPath", filePaths[0]);
   };
 
   const createProject = async () => {
-    const { addToRecent } = getAPI("settings");
-
     if (state.name.length === 0) return;
     setIsLoading(true);
+    const projectPath = await joinPath(state.dirPath, state.name);
     const status = await createNewProject(state);
     if (!status.success) {
       sendNotification({ type: "error", value: status.error });
@@ -61,7 +61,7 @@ export default function NewProject() {
     }
     const recentStatus = await addToRecent({
       name: state.name,
-      path: state.dirPath,
+      path: projectPath,
     });
     if (!recentStatus.success)
       sendNotification({ type: "error", value: status.error });

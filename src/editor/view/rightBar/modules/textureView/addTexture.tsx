@@ -1,8 +1,7 @@
 import { Accessor, batch, createSignal, Setter } from "solid-js";
 import Modal from "../../../../components/modal";
 import Button from "../../../../components/button";
-import { getAPI } from "@/preload/api/getAPI";
-import { addTextureFile } from "@/preload/api/project";
+import { getAPI } from "@/preload/getAPI";
 import { createStore } from "solid-js/store";
 import ArrowSVG from "@/assets/icons/sizeArrows";
 import Engine from "@/engine/engine";
@@ -12,6 +11,7 @@ import IconButton from "@/editor/components/buttonAsIcon";
 import PickerSVG from "@/assets/icons/picker";
 import CloseSVG from "@/assets/icons/close";
 import { sendNotification } from "@/utils/utils";
+import { addTexture } from "@/utils/projectUtils";
 interface Props {
   open: Accessor<boolean>;
   setOpen: Setter<boolean>;
@@ -49,19 +49,12 @@ export default function NewTextureModal(props: Props) {
   };
   const textureLoader = async () => {
     setLoading(true);
-    const name = state.file.slice(0, -4);
-    const saveStatus = await addTextureFile(
-      state.path,
-      state.file,
-      name,
-      state.tileSize
-    );
-    if (!saveStatus.success) {
+    const { error, success } = await addTexture(state.path, state.tileSize);
+    if (!success) {
       sendNotification({
         type: "error",
-        value: `Error compiling texture: "${name}"`,
+        value: `Error compiling texture: "${error}"`,
       });
-      console.log(saveStatus.error);
       setLoading(false);
     }
     await Engine.reTexture();

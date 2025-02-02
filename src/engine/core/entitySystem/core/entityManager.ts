@@ -3,11 +3,10 @@ import EngineDebugger from "../../modules/debugger";
 import Chunk, { ChunkTemplate } from "../entities/chunk";
 import Link from "@/utils/link";
 import HollowChunk from "../entities/chunkHollow";
-import { getAPI } from "@/preload/api/getAPI";
+import { getAPI } from "@/preload/getAPI";
 import { sendNotification } from "@/utils/utils";
 //TODO: po refactorze znowu notyfikacje trzeba poustawiac w odpowiednim miejscu
 //TODO: czegos nie czyścisz jak wczytujesz projekt z juz wczytanego
-//TODO: przenies API wczytywania mapy tutaj bo w sumie tym jest
 const { readChunk, writeChunk } = getAPI("project");
 export default class EntityManager {
   private static loadedChunks: Map<number, Chunk> = new Map();
