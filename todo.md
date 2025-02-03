@@ -9,6 +9,8 @@
 
 - zrobic w pelni dzialajacy input handler
 
+- pojebales z-index z layerami (layery to mialy byc warstwy jedna nad druga, ale z-index to mial byc offset od ziemi - "wysokosc" dodawane do Y layeru
+  )
 - module settings
 
 - module picker(ktore maja byc widoczne) plus module close

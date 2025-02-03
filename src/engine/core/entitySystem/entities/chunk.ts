@@ -20,9 +20,17 @@ export default class Chunk extends Entity {
   private static SELECTION_TEXT_COLOR = new Uint8ClampedArray([255, 255, 255]);
   private tiles: Set<Tile>;
   public index: number;
+  public gridPosition: Position2D;
   constructor({ index, position }: Props) {
     const size = Link.get<ProjectConfig>("projectConfig")().chunkSizeInPixels;
-    super(position, { w: size.w, h: size.h });
+    super(
+      {
+        x: position.x + size.w * 0.5,
+        y: position.y + size.h * 0.5,
+      },
+      { w: size.w * 0.5, h: size.h * 0.5 }
+    );
+    this.gridPosition = position;
     this.tiles = new Set();
     this.index = index;
 
@@ -96,20 +104,20 @@ export default class Chunk extends Entity {
   }
   private drawUnselectedChunk() {
     Draw.Quad({
-      alpha: 100,
+      alpha: 200,
       bloom: 0,
       crop: new Float32Array([0, 0, 1, 1]),
       isTexture: 0,
       position: {
-        x: this.position.x + this.size.x * 0.5,
-        y: this.position.y + this.size.y * 0.5,
+        x: this.position.x,
+        y: this.position.y,
       },
       size: {
-        w: this.size.x * 0.5,
-        h: this.size.y * 0.5,
+        w: this.size.x,
+        h: this.size.y,
       },
       textureToUse: 0,
-      tint: Chunk.SELECTION_COLOR,
+      tint: Chunk.SELECTION_TEXT_COLOR,
     });
     Draw.Text({
       alpha: 255,

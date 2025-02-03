@@ -2,8 +2,7 @@ import Draw from "@/engine/core/aurora/urp/draw";
 import InputManager from "@/engine/core/modules/inputManager";
 import Entity from "../core/entity";
 import Link from "@/utils/link";
-import { PassManifold } from "@/preload/globalLinks";
-import { randomColor } from "@/utils/utils";
+import { PassManifold, Selectors } from "@/preload/globalLinks";
 import Engine from "@/engine/engine";
 import GlobalStore from "../../modules/globalStore";
 import EntityManager from "../core/entityManager";
@@ -28,7 +27,7 @@ export interface TileTemplate {
 }
 
 export default class Tile extends Entity {
-  private static EMPTY_TILE_COLOR = new Uint8ClampedArray(randomColor());
+  // private static EMPTY_TILE_COLOR = new Uint8ClampedArray(());
   tileIndex: number;
   chunkIndex: number;
   layers: TileLayer[];
@@ -55,36 +54,48 @@ export default class Tile extends Entity {
     this.mouseEvents();
   }
   render(): void {
-    if (this.layers.length > 0) this.drawLayers();
+    if (this.layers.length === 0) return;
+    const isLayer = Link.get<Selectors>("activeSelector")() === "layer";
+    if (isLayer) this.drawIndexedLayer();
+    else this.drawLayers();
   }
 
   private drawLayers() {
     this.layers.forEach((layer) => {
-      const textureID = Engine.TexturesIDs.get(layer.textureID);
-      if (!textureID) return;
-      const size = Draw.getTextureMeta();
-      const crop = new Float32Array([
-        layer.crop.x / size.width,
-        layer.crop.y / size.height,
-        (layer.crop.x + layer.tileSize.w) / size.width,
-        (layer.crop.y + layer.tileSize.h) / size.height,
-      ]);
-      Draw.Quad({
-        alpha: layer.color[3],
-        bloom: 0,
-        crop: crop,
-        isTexture: 1,
-        position: {
-          x: this.position.x,
-          y: this.position.y,
-        },
-        size: {
-          w: this.size.x,
-          h: this.size.y,
-        },
-        textureToUse: textureID,
-        tint: new Uint8ClampedArray(layer.color),
-      });
+      this.drawLayer(layer);
+    });
+  }
+  private drawIndexedLayer() {
+    const zIndex = Link.get<number>("z-index")();
+    const layer = this.layers[zIndex];
+    if (layer === undefined) return;
+    this.drawLayer(layer);
+  }
+  private drawLayer(layer: TileLayer) {
+    const textureID = Engine.TexturesIDs.get(layer.textureID);
+    if (!textureID) return;
+    const size = Draw.getTextureMeta();
+    const crop = new Float32Array([
+      layer.crop.x / size.width,
+      layer.crop.y / size.height,
+      (layer.crop.x + layer.tileSize.w) / size.width,
+      (layer.crop.y + layer.tileSize.h) / size.height,
+    ]);
+    Draw.Quad({
+      alpha: layer.color[3],
+      bloom: 0,
+      crop: crop,
+      isTexture: 1,
+      position: {
+        x: this.position.x,
+        y: this.position.y,
+      },
+      size: {
+        w: this.size.x,
+        h: this.size.y,
+      },
+      textureToUse: textureID,
+      tint: new Uint8ClampedArray(layer.color),
     });
   }
 
@@ -100,7 +111,6 @@ export default class Tile extends Entity {
   }
   private onMouseLeft() {
     if (InputManager.onMouseDown("left") && this.isMouseCollide()) {
-      console.log(this.chunkIndex, this.tileIndex);
       const [getter] = GlobalStore.get<PassManifold>("passManifold");
       const zIndex = Link.get<number>("z-index")();
       const layer = {

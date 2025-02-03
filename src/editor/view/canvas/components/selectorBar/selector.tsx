@@ -6,11 +6,12 @@ import LayerSVG from "@/assets/icons/layer";
 import GridSelectSVG from "@/assets/icons/gridSelect";
 import TileSelectSVG from "@/assets/icons/tileSelect";
 import LayerSelectSVG from "@/assets/icons/layerSelect";
+import { changeSelector } from "@/utils/utils";
 
 export default function Selector() {
   const SVG_ACTIVE_STYLE = "w-6 h-6 stroke-app-acc-red";
   const SVG_INACTIVE_STYLE = "w-6 h-6 stroke-app-acc-ice";
-  const [selector, setSelector] = Link.getLink<Selectors>("activeSelector");
+  const selector = Link.get<Selectors>("activeSelector");
   const [zIndex, setZIndex] = Link.getLink<number>("z-index");
   const engineInit = Link.get<number>("engineInit");
   return (
@@ -42,7 +43,7 @@ export default function Selector() {
       </div>
       <div class="flex w-[2px] h-12 bg-app-acc-wheat" />
       <div class="flex flex-col items-center">
-        <IconButton onClick={() => setSelector("grid")}>
+        <IconButton onClick={() => changeSelector("grid")}>
           <GridSelectSVG
             style={`${
               selector() === "grid" ? SVG_ACTIVE_STYLE : SVG_INACTIVE_STYLE
@@ -52,7 +53,7 @@ export default function Selector() {
         <p>Grid</p>
       </div>
       <div class="flex flex-col items-center">
-        <IconButton onClick={() => setSelector("tile")}>
+        <IconButton onClick={() => changeSelector("tile")}>
           <TileSelectSVG
             style={`${
               selector() === "tile" ? SVG_ACTIVE_STYLE : SVG_INACTIVE_STYLE
@@ -62,7 +63,7 @@ export default function Selector() {
         <p>Tile</p>
       </div>
       <div class="flex flex-col items-center">
-        <IconButton onClick={() => setSelector("layer")}>
+        <IconButton onClick={() => changeSelector("layer")}>
           <LayerSelectSVG
             style={`${
               selector() === "layer" ? SVG_ACTIVE_STYLE : SVG_INACTIVE_STYLE

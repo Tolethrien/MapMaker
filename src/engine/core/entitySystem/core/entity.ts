@@ -17,18 +17,19 @@ export default abstract class Entity {
   public isMouseCollide() {
     const mousePos = InputManager.getMousePosition();
     return (
-      mousePos.x >= this.position.x &&
+      mousePos.x >= this.position.x - this.size.x &&
       mousePos.x <= this.position.x + this.size.x &&
-      mousePos.y >= this.position.y &&
+      mousePos.y >= this.position.y - this.size.y &&
       mousePos.y <= this.position.y + this.size.y
     );
   }
+
   public isCameraCollide(cameraPos: Position2D) {
     return (
-      cameraPos.x > this.position.x &&
-      cameraPos.x < this.position.x + this.size.x &&
-      cameraPos.y > this.position.y &&
-      cameraPos.y < this.position.y + this.size.y
+      cameraPos.x >= this.position.x - this.size.x &&
+      cameraPos.x <= this.position.x + this.size.x &&
+      cameraPos.y >= this.position.y - this.size.y &&
+      cameraPos.y <= this.position.y + this.size.y
     );
   }
 }

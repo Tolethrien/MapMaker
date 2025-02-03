@@ -1,7 +1,8 @@
 import { getAPI } from "@/preload/getAPI";
 
 import Link from "./link";
-import { Note } from "@/preload/globalLinks";
+import { Note, Selectors } from "@/preload/globalLinks";
+import EntityManager from "@/engine/core/entitySystem/core/entityManager";
 
 const { loadTexture } = getAPI("project");
 
@@ -49,4 +50,9 @@ export const convertTextures = async (
 
 export const sendNotification = (note: Note) => {
   Link.set<Note[]>("notify")((prev) => [...prev, note]);
+};
+export const changeSelector = (selector: Selectors) => {
+  const [get, set] = Link.getLink<Selectors>("activeSelector");
+  if (get() === "grid") EntityManager.setFocusedChunk(undefined);
+  set(selector);
 };

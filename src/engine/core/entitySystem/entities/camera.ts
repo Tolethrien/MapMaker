@@ -5,9 +5,6 @@ import Link from "@/utils/link";
 import { Setter } from "solid-js";
 import InputManager from "../../modules/inputManager";
 type CameraZoom = { current: number; max: number; min: number };
-const cameraData = {
-  keyPressed: new Set(),
-};
 
 export default class Camera {
   private static view: Mat4;
@@ -48,17 +45,20 @@ export default class Camera {
 
   private static cameraMove() {
     if (InputManager.noKeyEvent()) return;
+
     if (InputManager.onKeyHold("d")) this.position.x += this.speed;
     else if (InputManager.onKeyHold("a")) this.position.x -= this.speed;
+
     if (InputManager.onKeyHold("w")) this.position.y -= this.speed;
     else if (InputManager.onKeyHold("s")) this.position.y += this.speed;
+
     if (InputManager.onKeyHold("e"))
       this.zoom.current > this.zoom.min &&
         (this.zoom.current -= 0.01 * Math.log(this.zoom.current + 1));
     else if (InputManager.onKeyHold("q"))
       this.zoom.current < this.zoom.max &&
         (this.zoom.current += 0.01 * Math.log(this.zoom.current + 1));
-    if (InputManager.onKeyClick("m")) console.log("m");
+
     EventBus.emit<Position2D>("cameraMove", this.position);
     this.setUI(this.position);
   }

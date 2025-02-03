@@ -5,6 +5,7 @@ import Link from "@/utils/link";
 import HollowChunk from "../entities/chunkHollow";
 import { getAPI } from "@/preload/getAPI";
 import { sendNotification } from "@/utils/utils";
+import { Selectors } from "@/preload/globalLinks";
 //TODO: po refactorze znowu notyfikacje trzeba poustawiac w odpowiednim miejscu
 //TODO: czegos nie czyścisz jak wczytujesz projekt z juz wczytanego
 const { readChunk, writeChunk } = getAPI("project");
@@ -39,10 +40,16 @@ export default class EntityManager {
     this.focusedChunk = index;
   }
   public static updateAll() {
+    const selector = Link.get<Selectors>("activeSelector")();
+
     this.loadedChunks.forEach((chunk) => chunk.update());
-    this.hollowChunks.forEach((chunk) => chunk.update());
+
+    if (selector === "grid")
+      this.hollowChunks.forEach((chunk) => chunk.update());
   }
   public static renderAll() {
+    const selector = Link.get<Selectors>("activeSelector")();
+
     const sorted = Array.from(this.loadedChunks.values()).sort(
       ({ position: chunkA }, { position: chunkB }) => {
         if (chunkA.y === chunkB.y) {
@@ -51,7 +58,10 @@ export default class EntityManager {
         return chunkA.y - chunkB.y;
       }
     );
-    this.hollowChunks.forEach((chunk) => chunk.render());
+
+    if (selector === "grid")
+      this.hollowChunks.forEach((chunk) => chunk.render());
+
     sorted.forEach((chunk) => chunk.render());
   }
   public static clearAll() {
@@ -167,14 +177,13 @@ export default class EntityManager {
     );
     const saveData: ChunkTemplate = {
       index: chunk.index,
-      position: chunk.position.get,
+      position: chunk.gridPosition,
       tiles: tiles,
     };
     const ChunkFileStatus = await writeChunk({
       chunk: saveData,
       projectPath: config.projectPath,
     });
-    console.log(ChunkFileStatus);
     if (!ChunkFileStatus.success) return ChunkFileStatus;
     return { error: "", success: true };
   }

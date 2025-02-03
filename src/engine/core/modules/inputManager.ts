@@ -1,8 +1,8 @@
 import Vec2D from "@/math/vec2D";
 import Camera from "../entitySystem/entities/camera";
 import Link from "@/utils/link";
-import { Selectors } from "@/preload/globalLinks";
 import Aurora from "../aurora/auroraCore";
+import { changeSelector } from "@/utils/utils";
 
 export type MouseManifold = typeof MOUSE_STATE;
 const MOUSE_STATE = {
@@ -42,6 +42,8 @@ export default class InputManager {
     this.currMouseState = this.internalState;
     this.keyLast = new Set(this.keyCurrent.values());
     this.keyCurrent = new Set(this.internalKeys.values());
+    this.bakedKeyboardEvents();
+    // this.bakedMouseEvents();
   }
 
   public static onKeyClick(key: KeyboardEvent["key"]) {
@@ -85,6 +87,19 @@ export default class InputManager {
   }
   public static getMousePosition() {
     return this.mousePosition;
+  }
+  public static bakedKeyboardEvents() {
+    if (this.onKeyHold("Alt") && this.onKeyClick("1")) changeSelector("grid");
+    if (this.onKeyHold("Alt") && this.onKeyClick("2")) changeSelector("tile");
+    if (this.onKeyHold("Alt") && this.onKeyClick("3")) changeSelector("layer");
+    if (this.onKeyClick("c")) this.controlZIndex("up");
+    if (this.onKeyClick("z")) this.controlZIndex("down");
+  }
+
+  private static controlZIndex(index: "up" | "down") {
+    const [getter, setter] = Link.getLink<number>("z-index");
+    if (index === "up") setter((prev) => prev + 1);
+    if (index === "down") getter() > 0 && setter((prev) => prev - 1);
   }
 
   private static mouseToWorld({ x, y }: Position2D) {
@@ -132,11 +147,5 @@ export default class InputManager {
   private static mouseMoveEvent(e: MouseEvent) {
     const { x, y } = this.mouseToWorld({ x: e.offsetX, y: e.offsetY });
     this.mousePosition = { x: x, y: y };
-  }
-  private static selectorEvents(key: "up" | "down", e: KeyboardEvent) {
-    const setSelector = Link.set<Selectors>("activeSelector");
-
-    if (key === "down") e.key === "Shift" && !e.repeat && setSelector("grid");
-    else e.key === "Shift" && setSelector("tile");
   }
 }
