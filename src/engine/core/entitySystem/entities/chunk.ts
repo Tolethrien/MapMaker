@@ -15,7 +15,9 @@ export interface ChunkTemplate {
   index: number;
   tiles: TileTemplate[];
 }
+
 export default class Chunk extends Entity {
+  private static GRID_COLOR = new Uint8ClampedArray([255, 255, 255]);
   private static SELECTION_COLOR = new Uint8ClampedArray([0, 0, 0]);
   private static SELECTION_TEXT_COLOR = new Uint8ClampedArray([255, 255, 255]);
   private tiles: Set<Tile>;
@@ -55,6 +57,9 @@ export default class Chunk extends Entity {
     else this.tiles.forEach((tile) => tile.update());
   }
   render(): void {
+    const showGrid = Link.get<boolean>("showGrid")();
+
+    if (showGrid) this.drawGrid();
     this.tiles.forEach((tile) => tile.render());
     if (EntityManager.getFocusedChunkIndex === undefined) return;
     if (this.isChunkSelected()) this.drawSelectedChunk();
@@ -76,30 +81,40 @@ export default class Chunk extends Entity {
     return EntityManager.getCameraOnChunk === this.index;
   }
   private drawSelectedChunk() {
-    Draw.Quad({
-      alpha: 200,
-      bloom: 0,
-      crop: new Float32Array([0, 0, 1, 1]),
-      isTexture: 0,
-      position: {
-        x: this.position.x + 100,
-        y: this.position.y + 30,
-      },
-      size: {
-        w: 100,
-        h: 30,
-      },
-      textureToUse: 0,
-      tint: Chunk.SELECTION_COLOR,
-    });
     Draw.Text({
-      alpha: 255,
+      alpha: 100,
       bloom: 0,
-      position: this.position.add([10, 10]).get,
+      position: this.position.sub([80, 20]).get,
       color: Chunk.SELECTION_TEXT_COLOR,
       fontFace: "roboto",
       fontSize: 40,
       text: `chunk: ${this.index}`,
+    });
+  }
+  private drawGrid() {
+    const size = Draw.getTextureMeta();
+    const config = Link.get<ProjectConfig>("projectConfig")();
+    const crop = new Float32Array([
+      0,
+      0,
+      config.chunkSizeInPixels.w / size.width,
+      config.chunkSizeInPixels.h / size.height,
+    ]);
+    Draw.Quad({
+      alpha: 100,
+      bloom: 0,
+      crop: crop,
+      isTexture: 1,
+      position: {
+        x: this.position.x,
+        y: this.position.y,
+      },
+      size: {
+        w: this.size.x,
+        h: this.size.y,
+      },
+      textureToUse: 1,
+      tint: Chunk.GRID_COLOR,
     });
   }
   private drawUnselectedChunk() {
@@ -117,12 +132,13 @@ export default class Chunk extends Entity {
         h: this.size.y,
       },
       textureToUse: 0,
-      tint: Chunk.SELECTION_TEXT_COLOR,
+      tint: Chunk.SELECTION_COLOR,
     });
+
     Draw.Text({
       alpha: 255,
       bloom: 0,
-      position: this.position.add([10, 10]).get,
+      position: this.position.sub([80, 20]).get,
       color: Chunk.SELECTION_TEXT_COLOR,
       fontFace: "roboto",
       fontSize: 40,

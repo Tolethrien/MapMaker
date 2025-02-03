@@ -7,12 +7,15 @@ import GridSelectSVG from "@/assets/icons/gridSelect";
 import TileSelectSVG from "@/assets/icons/tileSelect";
 import LayerSelectSVG from "@/assets/icons/layerSelect";
 import { changeSelector } from "@/utils/utils";
+import GridSVG from "@/assets/icons/grid";
 
 export default function Selector() {
   const SVG_ACTIVE_STYLE = "w-6 h-6 stroke-app-acc-red";
   const SVG_INACTIVE_STYLE = "w-6 h-6 stroke-app-acc-ice";
   const selector = Link.get<Selectors>("activeSelector");
   const [zIndex, setZIndex] = Link.getLink<number>("z-index");
+  const [gridVisible, setGridVisible] = Link.getLink<boolean>("showGrid");
+
   const engineInit = Link.get<number>("engineInit");
   return (
     <div
@@ -20,6 +23,12 @@ export default function Selector() {
         !engineInit() && "pointer-events-none brightness-75"
       }`}
     >
+      <div class="flex flex-col items-center justify-center">
+        <IconButton onClick={() => setGridVisible((prev) => !prev)}>
+          <GridSVG style={`${!gridVisible() && "brightness-50"} w-6 h-6`} />
+        </IconButton>
+        <p class="w-12">{gridVisible() ? "Visible" : "Hidden"}</p>
+      </div>
       <div class="flex gap-2">
         <div class="flex flex-col items-center">
           <div class="p-1 relative">

@@ -13,6 +13,7 @@ export default function initLinks() {
   Link.add<boolean>("engineInit", false);
   Link.add<Selectors>("activeSelector", "tile");
   Link.add<number>("z-index", 0);
+  Link.add<boolean>("showGrid", false);
   Link.add<Position2D>("cameraPos", { x: 0, y: 0 }, { equals: false });
   Link.add<ProjectConfig>(
     "projectConfig",

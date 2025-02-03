@@ -160,8 +160,9 @@ export default class Batcher {
     );
     Engine.TexturesIDs.clear();
     Engine.TexturesIDs.set("dummy", 0);
+    Engine.TexturesIDs.set("grid", 1);
     textures.forEach((texture, index) =>
-      Engine.TexturesIDs.set(texture.id, index + 1)
+      Engine.TexturesIDs.set(texture.id, index + 2)
     );
     OffscreenPipeline.createPipeline();
     TresholdPipeline.createPipeline();
@@ -370,16 +371,46 @@ export default class Batcher {
     });
     this.recalculateUVS(meta);
   }
+  public static generateGridTexture() {
+    const config = Link.get<ProjectConfig>("projectConfig")();
 
+    const tileSize = config.tileSize;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = config.chunkSizeInPixels.w;
+    canvas.height = config.chunkSizeInPixels.h;
+
+    const ctx = canvas.getContext("2d")!;
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 2;
+    // vertical lines
+    for (let x = 0; x <= canvas.width; x += tileSize.w) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height);
+      ctx.stroke();
+    }
+    // horizontal lines
+    for (let y = 0; y <= canvas.height; y += tileSize.h) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width, y);
+      ctx.stroke();
+    }
+
+    return canvas.toDataURL();
+  }
   public static async createTextureBatch(
     textures?: BatcherOptions["loadTextures"]
   ) {
+    const grid = this.generateGridTexture();
     if (textures) {
+      textures.unshift({ name: "gridTexture", url: grid });
       textures.unshift({ name: "batcherColor", url: dummyTexture });
     } else {
       textures = [
         { name: "batcherColor", url: dummyTexture },
-        { name: "batcherColor", url: dummyTexture },
+        { name: "gridTexture", url: grid },
       ];
     }
     await AuroraTexture.createTextureArray({

@@ -32,8 +32,10 @@ export default class Engine {
 
     const textures = await convertTextures(config.textureUsed);
     Engine.TexturesIDs.set("dummy", 0);
+    Engine.TexturesIDs.set("grid", 1);
+
     textures.forEach((texture, index) =>
-      Engine.TexturesIDs.set(texture.id, index + 1)
+      Engine.TexturesIDs.set(texture.id, index + 2)
     );
     await Batcher.createBatcher({
       backgroundColor: [0, 0, 0, 255],
