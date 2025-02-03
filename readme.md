@@ -37,7 +37,11 @@ The project is in a prototype phase, Check out the current state of the applicat
 - [x] **Adding/removing textures**
 - [x] **Drawing with texture crop**
 
-![Current State of App on Windows](/public/currentState.png)
+![Current State of App on Windows: Tile](/public/tile.png)
+
+![Current State of App on Windows: Grid](/public/grid.png)
+
+![Current State of App on Windows: Layer](/public/layer.png)
 
 ## TODO:
 
