@@ -14,7 +14,7 @@ interface TileProps {
 }
 export interface TileLayer {
   color: HSLA;
-  zIndex: number;
+  index: number;
   textureID: string;
   tileID: number;
   crop: Position2D;
@@ -66,8 +66,9 @@ export default class Tile extends Entity {
     });
   }
   private drawIndexedLayer() {
-    const zIndex = Link.get<number>("z-index")();
-    const layer = this.layers[zIndex];
+    const indexLayer = Link.get<number>("layer")();
+
+    const layer = this.layers.find((layer) => layer.index === indexLayer);
     if (layer === undefined) return;
     this.drawLayer(layer);
   }
@@ -112,21 +113,23 @@ export default class Tile extends Entity {
   private onMouseLeft() {
     if (InputManager.onMouseDown("left") && this.isMouseCollide()) {
       const [getter] = GlobalStore.get<PassManifold>("passManifold");
-      const zIndex = Link.get<number>("z-index")();
+      const layerIndex = Link.get<number>("layer")();
       const layer = {
         color: [255, 255, 255, 255] as HSLA,
         crop: { x: getter.gridPos.x, y: getter.gridPos.y },
         textureID: getter.textureID,
         tileID: getter.tileCropIndex,
-        zIndex: zIndex,
+        index: layerIndex,
         tileSize: getter.tileSize,
       };
       // TODO: zoptymalizowac to, jako ze layers to praktycznie zawsze posortowana lista numerow, jakis algo by wszedł
-      const index = this.layers.findIndex((layer) => layer.zIndex === zIndex);
+      const index = this.layers.findIndex(
+        (layer) => layer.index === layerIndex
+      );
       if (index !== -1) this.layers[index] = layer;
       else {
         this.layers.push(layer);
-        this.layers.sort((a, b) => a.zIndex - b.zIndex);
+        this.layers.sort((a, b) => a.index - b.index);
       }
       //TODO: zamiast zapisywac co kazda zmiana kafla moze lepiej co X ms?
       //np tagowac ze chunk wymaga zmiany i za X sekund to zrobic jesli nie ma przy nim aktywnosci zadnej wiekszej
@@ -136,8 +139,10 @@ export default class Tile extends Entity {
   }
   private onMouseRight() {
     if (InputManager.onMouseDown("right") && this.isMouseCollide()) {
-      const zIndex = Link.get<number>("z-index")();
-      const index = this.layers.findIndex((layer) => layer.zIndex === zIndex);
+      const layerIndex = Link.get<number>("layer")();
+      const index = this.layers.findIndex(
+        (layer) => layer.index === layerIndex
+      );
       if (index === -1) return;
       this.layers.splice(index, 1);
       EntityManager.saveOnChange(this.chunkIndex);

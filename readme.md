@@ -36,6 +36,7 @@ The project is in a prototype phase, Check out the current state of the applicat
 - [x] **Tile layers based on Z-Index**
 - [x] **Adding/removing textures**
 - [x] **Drawing with texture crop**
+- [x] **Keyboard/mouse inputs**
 
 ![Current State of App on Windows: Tile](/public/tile.png)
 
@@ -46,7 +47,6 @@ The project is in a prototype phase, Check out the current state of the applicat
 ## TODO:
 
 - [ ] **User experience features like shortcuts, undo/redo, AABB targeting etc...**
-- [ ] **Keyboard inputs**
 - [ ] **Minimap module**
 - [ ] **Export to binary**
 - [ ] **Object Creator**

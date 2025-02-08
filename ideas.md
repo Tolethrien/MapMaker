@@ -18,7 +18,7 @@
 
 - [ ] Layer opacity
 
-- [ ]
+- [ ] input type: brush/select/delete
 
 - [ ]
 

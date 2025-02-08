@@ -22,6 +22,20 @@ textarea {
   .app-prevent-drag {
     -webkit-app-region: no-drag;
   }
+  .selectorVerticalRange[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: #3a4669;
+    border-radius: 4px;
+    outline: none;
+    &::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 100%;
+      background-color: #fffed2;
+    }
+  }
   .no-horizontal-scroll {
     &::-webkit-scrollbar {
       height: 0px;
@@ -44,6 +58,7 @@ input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

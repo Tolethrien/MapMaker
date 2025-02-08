@@ -28,7 +28,7 @@ export default class Engine {
     Link.set<ProjectConfig>("projectConfig")(config);
 
     await Aurora.initialize(canvas); // needs to be before preload
-    Camera.initialize();
+    Camera.initialize(config.chunkSizeInPixels.h, config.chunkSizeInPixels.w);
 
     const textures = await convertTextures(config.textureUsed);
     Engine.TexturesIDs.set("dummy", 0);

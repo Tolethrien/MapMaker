@@ -13,10 +13,10 @@ export default class Camera {
   private static speed: number;
   private static zoom: CameraZoom;
   private static setUI: Setter<Position2D>;
-  public static initialize() {
+  public static initialize(x: number, y: number) {
     this.projectionViewMatrix = Mat4.create();
     this.view = Mat4.create().lookAt([0, 0, 1], [0, 0, 0], [0, 1, 0]);
-    this.position = { x: Aurora.canvas.width / 2, y: Aurora.canvas.height / 2 };
+    this.position = { x: x / 2, y: y / 2 };
     this.speed = 15;
     this.zoom = { current: 1, max: 10, min: 0.1 };
     this.setUI = Link.set<Position2D>("cameraPos");

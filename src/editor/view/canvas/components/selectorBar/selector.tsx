@@ -8,15 +8,120 @@ import TileSelectSVG from "@/assets/icons/tileSelect";
 import LayerSelectSVG from "@/assets/icons/layerSelect";
 import { changeSelector } from "@/utils/utils";
 import GridSVG from "@/assets/icons/grid";
+import ZIndexSVG from "@/assets/icons/zIndex";
 
 export default function Selector() {
   const SVG_ACTIVE_STYLE = "w-6 h-6 stroke-app-acc-red";
   const SVG_INACTIVE_STYLE = "w-6 h-6 stroke-app-acc-ice";
   const selector = Link.get<Selectors>("activeSelector");
   const [zIndex, setZIndex] = Link.getLink<number>("z-index");
+  const [layer, setLayer] = Link.getLink<number>("layer");
   const [gridVisible, setGridVisible] = Link.getLink<boolean>("showGrid");
 
   const engineInit = Link.get<number>("engineInit");
+  return (
+    <div
+      class={`absolute bottom-12 left-1/2 -translate-x-1/2 bg-app-main-2 flex rounded-lg items-center shadow-lg border-1 border-app-acc-gray ${
+        !engineInit() && "pointer-events-none brightness-75"
+      }`}
+    >
+      {/* toggle section */}
+      <div class="border-r-2 border-app-acc-gray px-4 py-2">
+        <div class="flex flex-col items-center justify-center">
+          <IconButton onClick={() => setGridVisible((prev) => !prev)}>
+            <GridSVG style={`${!gridVisible() && "brightness-50"} w-6 h-6`} />
+          </IconButton>
+          <p class="w-12">{gridVisible() ? "Visible" : "Hidden"}</p>
+        </div>
+      </div>
+      {/* scrolls section */}
+      <div class="border-r-2 border-app-acc-gray px-4 py-2 flex gap-4">
+        <div class="flex gap-2">
+          <div class="flex flex-col items-center">
+            <div class="p-1 relative">
+              <LayerSVG style="w-6 h-6 stroke-app-acc-ice opacity-50" />
+              <p class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lg font-medium">
+                {layer()}
+              </p>
+            </div>
+            <p>Layer</p>
+          </div>
+          <div class="flex flex-col justify-center">
+            <IconButton onClick={() => setLayer((prev) => prev + 1)}>
+              <OpenArrowSVG style="w-4 h-4 stroke-app-acc-wheat stroke-[10px]"></OpenArrowSVG>
+            </IconButton>
+            <IconButton
+              onClick={() => layer() > 0 && setLayer((prev) => prev - 1)}
+            >
+              <OpenArrowSVG style="w-4 h-4 rotate-180 stroke-app-acc-wheat stroke-[10px]"></OpenArrowSVG>
+            </IconButton>
+          </div>
+          <div class="relative w-4">
+            <input
+              type="range"
+              min="0"
+              max="100"
+              class="selectorVerticalRange -rotate-90 w-14 h-[6px] absolute left-0 -translate-x-6 translate-y-6"
+              onInput={(e) => console.log(e.target.value)}
+            />
+          </div>
+        </div>
+        <div class="flex whitespace-nowrap">
+          <div class="flex flex-col items-center">
+            <div class="p-1 relative">
+              {/* //TODO: zmienic ta ikone bo gownianie wyglada */}
+              <ZIndexSVG style="w-6 h-6 stroke-app-acc-ice opacity-50" />
+              <p class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lg font-medium">
+                {zIndex()}
+              </p>
+            </div>
+            <p>Z-index</p>
+          </div>
+          <div class="flex flex-col justify-center">
+            <IconButton onClick={() => setZIndex((prev) => prev + 1)}>
+              <OpenArrowSVG style="w-4 h-4 stroke-app-acc-wheat stroke-[10px]"></OpenArrowSVG>
+            </IconButton>
+            <IconButton onClick={() => setZIndex((prev) => prev - 1)}>
+              <OpenArrowSVG style="w-4 h-4 rotate-180 stroke-app-acc-wheat stroke-[10px]"></OpenArrowSVG>
+            </IconButton>
+          </div>
+        </div>
+      </div>
+      {/* selector section */}
+      <div class="px-4 py-2 flex gap-4">
+        <div class="flex flex-col items-center">
+          <IconButton onClick={() => changeSelector("grid")}>
+            <GridSelectSVG
+              style={`${
+                selector() === "grid" ? SVG_ACTIVE_STYLE : SVG_INACTIVE_STYLE
+              }`}
+            />
+          </IconButton>
+          <p>Grid</p>
+        </div>
+        <div class="flex flex-col items-center">
+          <IconButton onClick={() => changeSelector("tile")}>
+            <TileSelectSVG
+              style={`${
+                selector() === "tile" ? SVG_ACTIVE_STYLE : SVG_INACTIVE_STYLE
+              }`}
+            />
+          </IconButton>
+          <p>Tile</p>
+        </div>
+        <div class="flex flex-col items-center">
+          <IconButton onClick={() => changeSelector("layer")}>
+            <LayerSelectSVG
+              style={`${
+                selector() === "layer" ? SVG_ACTIVE_STYLE : SVG_INACTIVE_STYLE
+              }`}
+            />
+          </IconButton>
+          <p>Layer</p>
+        </div>
+      </div>
+    </div>
+  );
   return (
     <div
       class={`absolute bottom-12 left-1/2 -translate-x-1/2 bg-app-main-2 flex gap-4 px-8 py-1 rounded-lg items-center shadow-lg border-1 border-app-acc-gray ${
