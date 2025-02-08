@@ -23,6 +23,7 @@ export default class Engine {
       this.closeEngine();
     }
     //TODO: jeden centralny punkt canvasu
+    //TODO: te wszystkie inity zrobic w eventBusie
     const canvas = document.getElementById("editorCanvas") as HTMLCanvasElement;
     // GlobalStore.add("projectConfig", config);
     Link.set<ProjectConfig>("projectConfig")(config);
@@ -45,7 +46,9 @@ export default class Engine {
       lighting: false,
       maxQuadPerSceen: 100000,
     });
-    //TODO: te wszystkie inity zrobic w eventBusie
+    config.layersVisibility.forEach((layer) =>
+      EntityManager.updateLayerVis(layer[0], layer[1])
+    );
     Link.set("engineInit")(true);
     sendNotification({
       type: "info",

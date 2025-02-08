@@ -37,6 +37,7 @@ export async function createNewProject(
     },
     projectPath: projectPath,
     textureUsed: [],
+    layersVisibility: [],
   };
   const boilerplate = await createProjectBoilerplate(projectPath);
   if (!boilerplate.success) return boilerplate;
@@ -108,5 +109,15 @@ export async function deleteTexture(id: string) {
   });
   if (!success) return { error, success };
   setConfig(data!);
+  return { error: "", success: true };
+}
+export async function writeVisibilityConfig() {
+  const config = Link.get<ProjectConfig>("projectConfig")();
+  config.layersVisibility = Array.from(EntityManager.getVisibilityList());
+  const { error, success } = await writeConfig({
+    config: config,
+    projectPath: config.projectPath,
+  });
+  if (!success) return { error, success };
   return { error: "", success: true };
 }

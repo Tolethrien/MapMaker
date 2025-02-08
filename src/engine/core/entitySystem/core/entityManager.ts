@@ -18,7 +18,17 @@ export default class EntityManager {
   private static cameraOnChunk: number = 0;
   private static focusedChunk: number | undefined = undefined;
   private static RINGS = 8;
+  private static LayerVisibility: Map<number, number> = new Map();
 
+  public static updateLayerVis(index: number, value: number) {
+    this.LayerVisibility.set(index, value);
+  }
+  public static getLayerVis(index: number) {
+    return this.LayerVisibility.get(index) ?? 100;
+  }
+  public static getVisibilityList() {
+    return this.LayerVisibility;
+  }
   public static getAllChunks() {
     return this.loadedChunks;
   }

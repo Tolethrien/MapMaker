@@ -25,6 +25,7 @@ export default function initLinks() {
       projectPath: "",
       tileSize: { h: 0, w: 0 },
       textureUsed: [],
+      layersVisibility: [[0, 75]],
     },
     { equals: false }
   );

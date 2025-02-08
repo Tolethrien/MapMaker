@@ -24,5 +24,6 @@ declare global {
     chunkSizeInTiles: Size2D;
     chunkSizeInPixels: Size2D;
     textureUsed: ProjectTextureFile[];
+    layersVisibility: [number, number][];
   }
 }

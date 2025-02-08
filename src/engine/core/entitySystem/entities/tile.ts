@@ -14,7 +14,8 @@ interface TileProps {
 }
 export interface TileLayer {
   color: HSLA;
-  index: number;
+  layerIndex: number;
+  zIndex: number;
   textureID: string;
   tileID: number;
   crop: Position2D;
@@ -68,7 +69,7 @@ export default class Tile extends Entity {
   private drawIndexedLayer() {
     const indexLayer = Link.get<number>("layer")();
 
-    const layer = this.layers.find((layer) => layer.index === indexLayer);
+    const layer = this.layers.find((layer) => layer.layerIndex === indexLayer);
     if (layer === undefined) return;
     this.drawLayer(layer);
   }
@@ -76,6 +77,8 @@ export default class Tile extends Entity {
     const textureID = Engine.TexturesIDs.get(layer.textureID);
     if (!textureID) return;
     const size = Draw.getTextureMeta();
+    const opacity = this.getOpacity(layer);
+    if (opacity <= 0) return;
     const crop = new Float32Array([
       layer.crop.x / size.width,
       layer.crop.y / size.height,
@@ -83,13 +86,13 @@ export default class Tile extends Entity {
       (layer.crop.y + layer.tileSize.h) / size.height,
     ]);
     Draw.Quad({
-      alpha: layer.color[3],
+      alpha: opacity,
       bloom: 0,
       crop: crop,
       isTexture: 1,
       position: {
         x: this.position.x,
-        y: this.position.y,
+        y: this.position.y - layer.zIndex,
       },
       size: {
         w: this.size.x,
@@ -110,26 +113,32 @@ export default class Tile extends Entity {
     this.onMouseLeft();
     this.onMouseRight();
   }
+  private getOpacity(layer: TileLayer) {
+    const globalOpacity = EntityManager.getLayerVis(layer.layerIndex);
+    return (globalOpacity * layer.color[3] + 127) >> 8;
+  }
   private onMouseLeft() {
     if (InputManager.onMouseDown("left") && this.isMouseCollide()) {
       const [getter] = GlobalStore.get<PassManifold>("passManifold");
       const layerIndex = Link.get<number>("layer")();
-      const layer = {
+      const zIndex = Link.get<number>("z-index")();
+      const layer: TileLayer = {
         color: [255, 255, 255, 255] as HSLA,
         crop: { x: getter.gridPos.x, y: getter.gridPos.y },
         textureID: getter.textureID,
         tileID: getter.tileCropIndex,
-        index: layerIndex,
+        layerIndex: layerIndex,
+        zIndex: zIndex,
         tileSize: getter.tileSize,
       };
       // TODO: zoptymalizowac to, jako ze layers to praktycznie zawsze posortowana lista numerow, jakis algo by wszedł
       const index = this.layers.findIndex(
-        (layer) => layer.index === layerIndex
+        (layer) => layer.layerIndex === layerIndex
       );
       if (index !== -1) this.layers[index] = layer;
       else {
         this.layers.push(layer);
-        this.layers.sort((a, b) => a.index - b.index);
+        this.layers.sort((a, b) => a.layerIndex - b.layerIndex);
       }
       //TODO: zamiast zapisywac co kazda zmiana kafla moze lepiej co X ms?
       //np tagowac ze chunk wymaga zmiany i za X sekund to zrobic jesli nie ma przy nim aktywnosci zadnej wiekszej
@@ -141,7 +150,7 @@ export default class Tile extends Entity {
     if (InputManager.onMouseDown("right") && this.isMouseCollide()) {
       const layerIndex = Link.get<number>("layer")();
       const index = this.layers.findIndex(
-        (layer) => layer.index === layerIndex
+        (layer) => layer.layerIndex === layerIndex
       );
       if (index === -1) return;
       this.layers.splice(index, 1);
