@@ -51,16 +51,19 @@ export default class Chunk extends Entity {
   public addTile(tile: Tile) {
     this.tiles.add(tile);
   }
-  update(): void {
+  onUpdate(): void {
     const isGrid = Link.get<Selectors>("activeSelector")() === "grid";
     if (isGrid) this.chunkSelector();
-    else this.tiles.forEach((tile) => tile.update());
+    else this.tiles.forEach((tile) => tile.onUpdate());
   }
-  render(): void {
+  onEvent(): void {
+    if (this.isMouseCollide()) this.tiles.forEach((tile) => tile.onEvent());
+  }
+  onRender(): void {
     const showGrid = Link.get<boolean>("showGrid")();
 
     if (showGrid) this.drawGrid();
-    this.tiles.forEach((tile) => tile.render());
+    this.tiles.forEach((tile) => tile.onRender());
     if (EntityManager.getFocusedChunkIndex === undefined) return;
     if (this.isChunkSelected()) this.drawSelectedChunk();
     else this.drawUnselectedChunk();

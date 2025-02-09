@@ -35,17 +35,14 @@ export default class HollowChunk extends Entity {
       },
     });
   }
-  update() {
+  onEvent(): void {
     if (InputManager.onMouseClick("left") && this.isMouseCollide()) {
-      console.log("click", this.chunkIndex);
       EntityManager.createEmptyChunk(this.chunkIndex);
     }
   }
-  private isCameraOnChunk() {
-    return EntityManager.getCameraOnChunk === this.chunkIndex;
-  }
+  onUpdate() {}
 
-  render() {
+  onRender() {
     Draw.Quad({
       alpha: 25,
       bloom: 0,
@@ -71,5 +68,8 @@ export default class HollowChunk extends Entity {
       fontSize: 40,
       text: `chunk: ${this.chunkIndex}`,
     });
+  }
+  private isCameraOnChunk() {
+    return EntityManager.getCameraOnChunk === this.chunkIndex;
   }
 }

@@ -1,6 +1,6 @@
 import GlobalStore from "@/engine/core/modules/globalStore";
 import Link from "@/utils/link";
-export type Selectors = "tile" | "grid" | "layer";
+export type Selectors = "tile" | "grid" | "layer" | "brush";
 export interface PassManifold {
   textureID: string;
   tileCropIndex: number;
@@ -11,10 +11,11 @@ export interface PassManifold {
 export type Note = { type: "error" | "info" | "success"; value: string };
 export default function initLinks() {
   Link.add<boolean>("engineInit", false);
-  Link.add<Selectors>("activeSelector", "tile");
+  Link.add<Selectors>("activeSelector", "brush");
   Link.add<number>("z-index", 0);
   Link.add<number>("layer", 0);
   Link.add<boolean>("showGrid", true);
+  Link.add<boolean>("singleLayerMode", false);
   Link.add<Position2D>("cameraPos", { x: 0, y: 0 }, { equals: false });
   Link.add<ProjectConfig>(
     "projectConfig",

@@ -12,14 +12,18 @@ import ZIndexSVG from "@/assets/icons/zIndex";
 import EntityManager from "@/engine/core/entitySystem/core/entityManager";
 import { batch, createEffect, createSignal } from "solid-js";
 import { writeVisibilityConfig } from "@/utils/projectUtils";
+import BrushSVG from "@/assets/icons/brush";
+import EyeSVG from "@/assets/icons/eye";
 
+const SVG_ACTIVE_STYLE = "w-6 h-6 stroke-app-acc-red";
+const SVG_INACTIVE_STYLE = "w-6 h-6 stroke-app-acc-ice";
 export default function Selector() {
-  const SVG_ACTIVE_STYLE = "w-6 h-6 stroke-app-acc-red";
-  const SVG_INACTIVE_STYLE = "w-6 h-6 stroke-app-acc-ice";
   const selector = Link.get<Selectors>("activeSelector");
   const [zIndex, setZIndex] = Link.getLink<number>("z-index");
   const [layer, setLayer] = Link.getLink<number>("layer");
   const [gridVisible, setGridVisible] = Link.getLink<boolean>("showGrid");
+  const [singleLayer, setSingleLayer] =
+    Link.getLink<boolean>("singleLayerMode");
   const engineInit = Link.get<number>("engineInit");
   const [visibility, setVisibility] = createSignal(200);
 
@@ -61,6 +65,7 @@ export default function Selector() {
           <p class="w-12">{gridVisible() ? "Visible" : "Hidden"}</p>
         </div>
       </div>
+
       {/* scrolls section */}
       <div class="border-r-2 border-app-acc-gray px-4 py-2 flex gap-4">
         <div class="flex gap-2">
@@ -70,6 +75,15 @@ export default function Selector() {
               <p class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lg font-medium">
                 {layer()}
               </p>
+              <IconButton
+                onClick={() => setSingleLayer((prev) => !prev)}
+                style="absolute top-[-0.5rem] left-[-1rem]"
+              >
+                <EyeSVG
+                  style={`w-4 h-4 ${singleLayer() && "fill-app-acc-wheat"}`}
+                  open={singleLayer()}
+                />
+              </IconButton>
             </div>
             <p>Layer</p>
           </div>
@@ -119,6 +133,16 @@ export default function Selector() {
       </div>
       {/* selector section */}
       <div class="px-4 py-2 flex gap-4">
+        <div class="flex flex-col items-center">
+          <IconButton onClick={() => changeSelector("brush")}>
+            <BrushSVG
+              style={`${
+                selector() === "brush" ? SVG_ACTIVE_STYLE : SVG_INACTIVE_STYLE
+              }`}
+            />
+          </IconButton>
+          <p>Brush</p>
+        </div>
         <div class="flex flex-col items-center">
           <IconButton onClick={() => changeSelector("grid")}>
             <GridSelectSVG

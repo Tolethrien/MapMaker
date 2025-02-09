@@ -28,7 +28,6 @@ export interface TileTemplate {
 }
 
 export default class Tile extends Entity {
-  // private static EMPTY_TILE_COLOR = new Uint8ClampedArray(());
   tileIndex: number;
   chunkIndex: number;
   layers: TileLayer[];
@@ -51,12 +50,17 @@ export default class Tile extends Entity {
     this.chunkIndex = chunkIndex;
     this.changedFlag = false;
   }
-  update() {
-    this.mouseEvents();
+  onEvent(): void {
+    const selector = Link.get<Selectors>("activeSelector")();
+    if (selector === "tile") this.tileEvents();
+    if (selector === "layer") this.layerEvent();
+    else if (selector === "brush") this.brushEvents();
   }
-  render(): void {
+  onUpdate() {}
+
+  onRender(): void {
     if (this.layers.length === 0) return;
-    const isLayer = Link.get<Selectors>("activeSelector")() === "layer";
+    const isLayer = Link.get<boolean>("singleLayerMode")();
     if (isLayer) this.drawIndexedLayer();
     else this.drawLayers();
   }
@@ -102,60 +106,80 @@ export default class Tile extends Entity {
       tint: new Uint8ClampedArray(layer.color),
     });
   }
+  private tileEvents() {
+    if (InputManager.onMouseClick("left") && this.isMouseCollide()) {
+      console.log(this);
+    }
+  }
+  private brushEvents() {
+    const mouseCollider = this.isMouseCollide();
 
-  private mouseEvents() {
-    if (this.changedFlag === true && !this.isMouseCollide()) {
+    if (this.changedFlag === true && !mouseCollider) {
       this.changedFlag = false;
       return;
     }
     if (this.changedFlag) return;
+    if (!mouseCollider) return;
 
-    this.onMouseLeft();
-    this.onMouseRight();
+    if (InputManager.onMouseDown("left")) this.mouseBrushLeft();
+    else if (InputManager.onMouseDown("right")) this.mouseBrushRight();
   }
+  private layerEvent() {
+    const layerIndex = Link.get<number>("layer")();
+    let event: "left" | "right" | undefined = undefined;
+
+    if (InputManager.onMouseClick("left")) event = "left";
+    else if (InputManager.onMouseClick("right")) event = "right";
+
+    if (event === undefined) return;
+
+    const layer = this.layers.find((layer) => layer.layerIndex === layerIndex);
+    if (!layer) return;
+
+    event === "left" ? layer.zIndex++ : layer.zIndex--;
+
+    EntityManager.saveOnChange(this.chunkIndex);
+  }
+  private mouseBrushLeft() {
+    const [getter] = GlobalStore.get<PassManifold>("passManifold");
+    const layerIndex = Link.get<number>("layer")();
+    const zIndex = Link.get<number>("z-index")();
+    const layer: TileLayer = {
+      color: [255, 255, 255, 255] as HSLA,
+      crop: { x: getter.gridPos.x, y: getter.gridPos.y },
+      textureID: getter.textureID,
+      tileID: getter.tileCropIndex,
+      layerIndex: layerIndex,
+      zIndex: zIndex,
+      tileSize: getter.tileSize,
+    };
+    // TODO: zoptymalizowac to, jako ze layers to praktycznie zawsze posortowana lista numerow, jakis algo by wszedł
+    const index = this.layers.findIndex(
+      (layer) => layer.layerIndex === layerIndex
+    );
+    if (index !== -1) this.layers[index] = layer;
+    else {
+      this.layers.push(layer);
+      this.layers.sort((a, b) => a.layerIndex - b.layerIndex);
+    }
+    //TODO: zamiast zapisywac co kazda zmiana kafla moze lepiej co X ms?
+    //np tagowac ze chunk wymaga zmiany i za X sekund to zrobic jesli nie ma przy nim aktywnosci zadnej wiekszej
+    EntityManager.saveOnChange(this.chunkIndex);
+    this.changedFlag = true;
+  }
+  private mouseBrushRight() {
+    const layerIndex = Link.get<number>("layer")();
+    const index = this.layers.findIndex(
+      (layer) => layer.layerIndex === layerIndex
+    );
+    if (index === -1) return;
+    this.layers.splice(index, 1);
+    EntityManager.saveOnChange(this.chunkIndex);
+    this.changedFlag = true;
+  }
+
   private getOpacity(layer: TileLayer) {
     const globalOpacity = EntityManager.getLayerVis(layer.layerIndex);
     return (globalOpacity * layer.color[3] + 127) >> 8;
-  }
-  private onMouseLeft() {
-    if (InputManager.onMouseDown("left") && this.isMouseCollide()) {
-      const [getter] = GlobalStore.get<PassManifold>("passManifold");
-      const layerIndex = Link.get<number>("layer")();
-      const zIndex = Link.get<number>("z-index")();
-      const layer: TileLayer = {
-        color: [255, 255, 255, 255] as HSLA,
-        crop: { x: getter.gridPos.x, y: getter.gridPos.y },
-        textureID: getter.textureID,
-        tileID: getter.tileCropIndex,
-        layerIndex: layerIndex,
-        zIndex: zIndex,
-        tileSize: getter.tileSize,
-      };
-      // TODO: zoptymalizowac to, jako ze layers to praktycznie zawsze posortowana lista numerow, jakis algo by wszedł
-      const index = this.layers.findIndex(
-        (layer) => layer.layerIndex === layerIndex
-      );
-      if (index !== -1) this.layers[index] = layer;
-      else {
-        this.layers.push(layer);
-        this.layers.sort((a, b) => a.layerIndex - b.layerIndex);
-      }
-      //TODO: zamiast zapisywac co kazda zmiana kafla moze lepiej co X ms?
-      //np tagowac ze chunk wymaga zmiany i za X sekund to zrobic jesli nie ma przy nim aktywnosci zadnej wiekszej
-      EntityManager.saveOnChange(this.chunkIndex);
-      this.changedFlag = true;
-    }
-  }
-  private onMouseRight() {
-    if (InputManager.onMouseDown("right") && this.isMouseCollide()) {
-      const layerIndex = Link.get<number>("layer")();
-      const index = this.layers.findIndex(
-        (layer) => layer.layerIndex === layerIndex
-      );
-      if (index === -1) return;
-      this.layers.splice(index, 1);
-      EntityManager.saveOnChange(this.chunkIndex);
-      this.changedFlag = true;
-    }
   }
 }

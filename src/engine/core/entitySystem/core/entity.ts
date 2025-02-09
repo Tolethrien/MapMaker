@@ -6,8 +6,9 @@ export default abstract class Entity {
   size: Vec2D;
   // rotation: number;
   // anchorPoint: Vec2D;
-  abstract update(): void;
-  abstract render(): void;
+  abstract onUpdate(): void;
+  abstract onEvent(): void;
+  abstract onRender(): void;
   constructor(position: Position2D, size: Size2D) {
     this.position = Vec2D.create([position.x, position.y]);
     this.size = Vec2D.create([size.w, size.h]);

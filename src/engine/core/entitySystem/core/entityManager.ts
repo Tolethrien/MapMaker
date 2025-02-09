@@ -24,7 +24,7 @@ export default class EntityManager {
     this.LayerVisibility.set(index, value);
   }
   public static getLayerVis(index: number) {
-    return this.LayerVisibility.get(index) ?? 100;
+    return this.LayerVisibility.get(index) ?? 255;
   }
   public static getVisibilityList() {
     return this.LayerVisibility;
@@ -52,10 +52,16 @@ export default class EntityManager {
   public static updateAll() {
     const selector = Link.get<Selectors>("activeSelector")();
 
-    this.loadedChunks.forEach((chunk) => chunk.update());
+    this.loadedChunks.forEach((chunk) => {
+      chunk.onEvent();
+      chunk.onUpdate();
+    });
 
     if (selector === "grid")
-      this.hollowChunks.forEach((chunk) => chunk.update());
+      this.hollowChunks.forEach((chunk) => {
+        chunk.onEvent();
+        chunk.onUpdate();
+      });
   }
   public static renderAll() {
     const selector = Link.get<Selectors>("activeSelector")();
@@ -70,9 +76,9 @@ export default class EntityManager {
     );
 
     if (selector === "grid")
-      this.hollowChunks.forEach((chunk) => chunk.render());
+      this.hollowChunks.forEach((chunk) => chunk.onRender());
 
-    sorted.forEach((chunk) => chunk.render());
+    sorted.forEach((chunk) => chunk.onRender());
   }
   public static clearAll() {
     this.loadedChunks.clear();

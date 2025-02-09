@@ -8,7 +8,7 @@
 
 - [ ] tworzenie obiektów
 
-- [ ] textura quada na myszce bys wiedzial gdzie klikasz, w ktory tile
+- [ ] textura quada na myszce bys wiedzial gdzie klikasz, w ktory tile i co klikasz(np. beczka) bys widzial na jaki z-index chcesz to ustawic
 
 - [ ] textura chunka skalowalna do chunka
 
@@ -16,13 +16,13 @@
 
 - [ ] AABB zaznaczanie i wklejanie
 
-- [ ] Layer opacity
+- [x] Layer opacity
 
 - [ ] input type: brush/select/delete
 
-- [ ]
+- [ ] klkniecie w tile selector otworzy mi okno gdzie moge zobaczyc wszystko o danym tilu, jakie sa warstwy, na jakim z-indexie i takie tam, bedzie mozna tez tam zmieniac to wszystko
 
-- [ ]
+- [ ] error object
 
 - [ ]
 
