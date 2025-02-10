@@ -8,12 +8,12 @@ import RenderStatsConnector from "@/editor/view/rightBar/modules/renderStats/con
 import GlobalStore from "./core/modules/globalStore";
 import Link from "@/utils/link";
 
-import { convertTextures, sendNotification } from "@/utils/utils";
+import { sendNotification } from "@/utils/utils";
+import AssetsManager from "@/utils/assetsManger";
 //TODO: masz 3 load texture a mozesz wczytywac raz
 export default class Engine {
   private static isInit = false;
   private static loopID: number = 0;
-  public static TexturesIDs: Map<string, number> = new Map();
   public static async initialize(config: ProjectConfig) {
     if (this.isInit) {
       EngineDebugger.showInfo(
@@ -25,24 +25,21 @@ export default class Engine {
     //TODO: jeden centralny punkt canvasu
     //TODO: te wszystkie inity zrobic w eventBusie
     const canvas = document.getElementById("editorCanvas") as HTMLCanvasElement;
-    // GlobalStore.add("projectConfig", config);
     Link.set<ProjectConfig>("projectConfig")(config);
 
     await Aurora.initialize(canvas); // needs to be before preload
     Camera.initialize(config.chunkSizeInPixels.h, config.chunkSizeInPixels.w);
 
-    const textures = await convertTextures(config.textureUsed);
-    Engine.TexturesIDs.set("dummy", 0);
-    Engine.TexturesIDs.set("grid", 1);
+    AssetsManager.loadTexturesFromConfig();
+    AssetsManager.reindexTextures();
 
-    textures.forEach((texture, index) =>
-      Engine.TexturesIDs.set(texture.id, index + 2)
-    );
     await Batcher.createBatcher({
       backgroundColor: [0, 0, 0, 255],
       bloom: { active: false, str: 0 },
       customCamera: true,
-      loadTextures: textures.length > 0 ? textures : undefined,
+      loadTextures: AssetsManager.getTexturesArray().map((item) => {
+        return { name: item.name, url: item.path };
+      }),
       lighting: false,
       maxQuadPerSceen: 100000,
     });
@@ -66,8 +63,8 @@ export default class Engine {
     );
     cancelAnimationFrame(this.loopID);
     Batcher.closeBatcher();
+    AssetsManager.clearAssets();
     EntityManager.clearAll();
-    GlobalStore.remove("projectConfig");
     Link.set("engineInit")(false);
     Aurora.setFirstAuroraFrame();
     this.isInit = false;
@@ -78,6 +75,7 @@ export default class Engine {
   private static loop() {
     RenderStatsConnector.start();
     Batcher.startBatch();
+    // Batcher.setScreenShader("noice", 0.6);
     EntityManager.frameCleanUp();
     InputManager.update();
     Camera.update();

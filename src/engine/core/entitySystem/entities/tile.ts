@@ -6,6 +6,7 @@ import { PassManifold, Selectors } from "@/preload/globalLinks";
 import Engine from "@/engine/engine";
 import GlobalStore from "../../modules/globalStore";
 import EntityManager from "../core/entityManager";
+import AssetsManager from "@/utils/assetsManger";
 interface TileProps {
   pos: { x: number; y: number };
   tileIndex: number;
@@ -78,7 +79,7 @@ export default class Tile extends Entity {
     this.drawLayer(layer);
   }
   private drawLayer(layer: TileLayer) {
-    const textureID = Engine.TexturesIDs.get(layer.textureID);
+    const textureID = AssetsManager.getTextureIndexFromID(layer.textureID);
     if (!textureID) return;
     const size = Draw.getTextureMeta();
     const opacity = this.getOpacity(layer);
@@ -132,6 +133,7 @@ export default class Tile extends Entity {
     else if (InputManager.onMouseClick("right")) event = "right";
 
     if (event === undefined) return;
+    if (!this.isMouseCollide()) return;
 
     const layer = this.layers.find((layer) => layer.layerIndex === layerIndex);
     if (!layer) return;

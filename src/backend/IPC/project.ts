@@ -17,6 +17,7 @@ export type AddTextureFile = {
   projectPath: string;
   filePath: string;
   tileSize: Size2D;
+  id: string;
 };
 export type DeleteTextureFile = { projectPath: string; fileID: string };
 export function projectIPC() {
@@ -27,7 +28,6 @@ export function projectIPC() {
   ipcMain.handle("createProjectBoilerplate", createProjectBoilerplate);
   ipcMain.handle("addTextureFile", addTextureFile);
   ipcMain.handle("deleteTextureFile", deleteTextureFile);
-  ipcMain.handle("loadTexture", loadTexture);
 }
 
 async function readChunk(
@@ -78,22 +78,21 @@ async function createProjectBoilerplate(
 }
 async function addTextureFile(
   _: Electron.IpcMainInvokeEvent,
-  { filePath, projectPath, tileSize }: AddTextureFile
+  { filePath, projectPath, tileSize, id }: AddTextureFile
 ): Promise<AsyncStatus & { data: ProjectConfig | undefined }> {
   const fileName = path.basename(filePath);
   const to = path.join(projectPath, "textures", fileName);
   const configPath = path.join(projectPath, "config.json");
   try {
     await copy(filePath, to);
-    const config = await readJSON<ProjectConfig>(configPath);
-    config.data!.textureUsed.push({
-      name: fileName,
+    const { data } = await readJSON<ProjectConfig>(configPath);
+    data!.textureUsed.push({
       path: to,
       tileSize,
-      id: crypto.randomUUID(),
+      id,
     });
-    await writeJSON(configPath, config.data);
-    return { success: true, error: "", data: config.data };
+    await writeJSON(configPath, data);
+    return { success: true, error: "", data };
   } catch (error) {
     return { success: false, error: error, data: undefined };
   }
@@ -129,22 +128,7 @@ async function deleteTextureFile(
     return { success: false, error: error, data: undefined };
   }
 }
-async function loadTexture(
-  _: Electron.IpcMainInvokeEvent,
-  path: string
-): Promise<AsyncStatus & { src: string }> {
-  try {
-    const buffer = await readFile(path);
-    const base = buffer.toString("base64");
-    return { success: true, error: "", src: `data:image/png;base64,${base}` };
-  } catch (error) {
-    return {
-      success: false,
-      error: error,
-      src: "",
-    };
-  }
-}
+
 async function readJSON<T>(
   path: string
 ): Promise<AsyncStatus & { data: T | undefined }> {

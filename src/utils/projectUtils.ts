@@ -88,29 +88,6 @@ export function closeProject() {
   Engine.closeEngine();
 }
 
-export async function addTexture(filePath: string, tileSize: Size2D) {
-  const [getConfig, setConfig] = Link.getLink<ProjectConfig>("projectConfig");
-  const config = getConfig();
-  const { data, error, success } = await addTextureFile({
-    filePath,
-    projectPath: config.projectPath,
-    tileSize: { w: tileSize.w, h: tileSize.h },
-  });
-  if (!success) return { error: `error to: ${error}`, success };
-  setConfig(data!);
-  return { error: "", success: true };
-}
-export async function deleteTexture(id: string) {
-  const [getConfig, setConfig] = Link.getLink<ProjectConfig>("projectConfig");
-  const config = getConfig();
-  const { error, success, data } = await deleteTextureFile({
-    fileID: id,
-    projectPath: config.projectPath,
-  });
-  if (!success) return { error, success };
-  setConfig(data!);
-  return { error: "", success: true };
-}
 export async function writeVisibilityConfig() {
   const config = Link.get<ProjectConfig>("projectConfig")();
   config.layersVisibility = Array.from(EntityManager.getVisibilityList());

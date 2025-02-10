@@ -1,4 +1,4 @@
-import { Accessor, batch, createSignal, Setter } from "solid-js";
+import { Accessor, batch, createSignal, Setter, Show } from "solid-js";
 import Modal from "../../../../components/modal";
 import Button from "../../../../components/button";
 import { getAPI } from "@/preload/getAPI";
@@ -11,7 +11,8 @@ import IconButton from "@/editor/components/buttonAsIcon";
 import PickerSVG from "@/assets/icons/picker";
 import CloseSVG from "@/assets/icons/close";
 import { sendNotification } from "@/utils/utils";
-import { addTexture } from "@/utils/projectUtils";
+// import { addTexture } from "@/utils/projectUtils";
+import AssetsManager from "@/utils/assetsManger";
 interface Props {
   open: Accessor<boolean>;
   setOpen: Setter<boolean>;
@@ -49,7 +50,11 @@ export default function NewTextureModal(props: Props) {
   };
   const textureLoader = async () => {
     setLoading(true);
-    const { error, success } = await addTexture(state.path, state.tileSize);
+    const { error, success } = await AssetsManager.uploadTexture(
+      state.path,
+      state.tileSize
+    );
+    // const { error, success } = await addTexture(state.path, state.tileSize);
     if (!success) {
       sendNotification({
         type: "error",
@@ -60,7 +65,7 @@ export default function NewTextureModal(props: Props) {
     await Engine.reTexture();
     sendNotification({
       type: "success",
-      value: `Texture: "${name}" successfully added`,
+      value: `Texture: "${state.path}" successfully added`,
     });
     batch(() => {
       setLoading(false);
@@ -76,6 +81,7 @@ export default function NewTextureModal(props: Props) {
         >
           <CloseSVG style="h-3 w-3 my-2 mx-3" />
         </button>
+
         <p class="text-3xl">Load Tile Set</p>
         <div class="flex items-center">
           <FolderSVG style="w-5 h-5" />

@@ -1,10 +1,6 @@
-import { getAPI } from "@/preload/getAPI";
-
 import Link from "./link";
 import { Note, Selectors } from "@/preload/globalLinks";
 import EntityManager from "@/engine/core/entitySystem/core/entityManager";
-
-const { loadTexture } = getAPI("project");
 
 export const randomColor = (): HSLA => [
   Math.round(Math.random() * 256),
@@ -31,21 +27,6 @@ export const clamp = (value: number, min: number, max: number) => {
   else if (value <= min) return min;
   else if (value >= max) return max;
   return value;
-};
-export const convertTextures = async (
-  textures: ProjectConfig["textureUsed"]
-) => {
-  const promises = textures.map(async (texture) => {
-    const textureStatus = await loadTexture(texture.path);
-    if (!textureStatus.success) {
-      throw new Error(`error loading texture ${texture.path}`);
-    }
-    return textureStatus.src;
-  });
-  const results = await Promise.all(promises);
-  return results.map((texture, index) => {
-    return { name: textures[index].name, url: texture, id: textures[index].id };
-  });
 };
 
 export const sendNotification = (note: Note) => {

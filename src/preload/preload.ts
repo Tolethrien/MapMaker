@@ -62,9 +62,6 @@ const API_PROJECT = {
   ): Promise<AsyncStatus & { data: ProjectConfig | undefined }> => {
     return await ipcRenderer.invoke("deleteTextureFile", props);
   },
-  loadTexture: async (path: string): Promise<AsyncStatus & { src: string }> => {
-    return await ipcRenderer.invoke("loadTexture", path);
-  },
 };
 const API_APP = {
   appClose: () => ipcRenderer.send("appClose"),

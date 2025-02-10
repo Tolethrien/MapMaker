@@ -1,26 +1,16 @@
 import { createEffect } from "solid-js";
 import CanvasController from "./canvasControl";
-import { getAPI } from "@/preload/getAPI";
+import { TextureMeta } from "@/utils/assetsManger";
 
 interface Props {
-  texture: ProjectTextureFile;
+  texture: TextureMeta;
 }
-const { loadTexture } = getAPI("project");
 export default function TextureCanvas(props: Props) {
   let canvas!: HTMLCanvasElement;
   let controller!: CanvasController;
-  //TODO: usuwanie tekstur
-  createEffect(async () => {
+  createEffect(() => {
     if (canvas) {
-      //TODO: robisz to tutaj i w silniku wiec moze jakos razem?
-      const textureStatus = await loadTexture(props.texture.path);
-      if (!textureStatus.success) console.error(textureStatus.error);
-      controller = new CanvasController(
-        canvas,
-        textureStatus.src,
-        props.texture.id,
-        props.texture.tileSize
-      );
+      controller = new CanvasController(canvas, props.texture);
     }
   });
   return <canvas ref={canvas} class="bg-app-bg-3 border-1 border-white" />;

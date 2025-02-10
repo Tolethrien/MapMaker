@@ -1,7 +1,13 @@
 import { Accessor, JSX, Show } from "solid-js";
 import SpinnerSVG from "@/assets/icons/spinner";
+import { DOMElement } from "solid-js/jsx-runtime";
 interface Props {
-  onClick: () => void;
+  onClick: (
+    e: MouseEvent & {
+      currentTarget: HTMLButtonElement;
+      target: DOMElement;
+    }
+  ) => void;
   disabled?: Accessor<boolean>;
   loading?: Accessor<boolean>;
   active?: Accessor<boolean>;
@@ -16,7 +22,7 @@ export default function IconButton(props: Props) {
   const isScalable = props.scale ?? true;
   return (
     <button
-      onClick={() => props.onClick()}
+      onClick={(e) => props.onClick(e)}
       disabled={isDisable() || isLoading()}
       class={`p-1 w-fit h-fit ${isScalable && "hover:scale-110"} ${
         props.style

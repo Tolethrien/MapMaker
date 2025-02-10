@@ -1,3 +1,4 @@
+import { TextureMeta } from "@/utils/assetsManger";
 import { API } from "../preload/preload";
 
 declare global {
@@ -23,7 +24,7 @@ declare global {
     tileSize: Size2D;
     chunkSizeInTiles: Size2D;
     chunkSizeInPixels: Size2D;
-    textureUsed: ProjectTextureFile[];
+    textureUsed: { path: string; tileSize: Size2D; id: string }[];
     layersVisibility: [number, number][];
   }
 }

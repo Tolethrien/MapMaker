@@ -16,3 +16,5 @@
 - module picker(ktore maja byc widoczne) plus module close
 
 - exportowanie gotowego projektu
+
+- texture view powienien miec zoom textury bo nie widac wiekszych niz 16x16 za bardzo

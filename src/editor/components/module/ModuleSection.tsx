@@ -14,7 +14,7 @@ export default function ModuleSection(props: Props) {
   return (
     <div class="border-b-1 border-app-acc-purp">
       <IconButton
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={(e) => setIsOpen((prev) => !prev)}
         scale={false}
         style="bg-app-acc-purp text-center flex w-full justify-center items-center relative !p-0"
       >

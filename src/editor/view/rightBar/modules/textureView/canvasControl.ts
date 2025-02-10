@@ -1,5 +1,6 @@
 import GlobalStore from "@/engine/core/modules/globalStore";
 import { PassManifold } from "@/preload/globalLinks";
+import { TextureMeta } from "@/utils/assetsManger";
 
 export default class CanvasController {
   canvas: HTMLCanvasElement;
@@ -10,21 +11,16 @@ export default class CanvasController {
   canvasID: string;
   tileSize: Size2D;
   gridSize: Size2D;
-  constructor(
-    canvas: HTMLCanvasElement,
-    image: string,
-    canvasID: string,
-    tileSize: Size2D
-  ) {
+  constructor(canvas: HTMLCanvasElement, texture: TextureMeta) {
     //TODO: to moze byc jeden kontroler i po prostu zmienia co jest na canvasie i jaki jest crop podczas zmiany tekstury
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
-    this.loadImage(image);
+    this.loadImage(texture.path);
     this.canvas.addEventListener("click", (e) => this.inputs(e));
     this.scalar = 1;
     this.selected = { x: -1, y: -1 };
-    this.canvasID = canvasID;
-    this.tileSize = tileSize;
+    this.canvasID = texture.id;
+    this.tileSize = texture.tileSize;
   }
   public scaleCanvas(scalar: number) {
     this.scalar = scalar;

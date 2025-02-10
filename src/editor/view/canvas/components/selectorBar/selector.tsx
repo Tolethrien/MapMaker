@@ -57,7 +57,7 @@ export default function Selector() {
       }`}
     >
       {/* toggle section */}
-      <div class="border-r-2 border-app-acc-gray px-4 py-2">
+      <div class="border-r-2 border-app-acc-gray px-4 py-2 flex">
         <div class="flex flex-col items-center justify-center">
           <IconButton onClick={() => setGridVisible((prev) => !prev)}>
             <GridSVG style={`${!gridVisible() && "brightness-50"} w-6 h-6`} />

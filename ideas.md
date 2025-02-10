@@ -10,7 +10,7 @@
 
 - [ ] textura quada na myszce bys wiedzial gdzie klikasz, w ktory tile i co klikasz(np. beczka) bys widzial na jaki z-index chcesz to ustawic
 
-- [ ] textura chunka skalowalna do chunka
+- [x] textura gridu skalowalna do chunka
 
 - [ ] textura chunka moze przybierac lekko inny kolor na chunku na ktorym obecnie znajduje sie myszka bys znal jego granice
 
@@ -24,6 +24,6 @@
 
 - [ ] error object
 
-- [ ]
+- [ ] brush vs select - np jesli masz brush i zarazem selector="grid" to pomalujesz caly grid naraz, a jesli masz select i grid to wtedy po prostu zaznaczysz ten grid(cos z nim zrobisz)
 
 - [ ]
