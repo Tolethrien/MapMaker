@@ -1,5 +1,6 @@
 import { getAPI } from "@/preload/getAPI";
 import Link from "./link";
+import EventBus from "./eventBus";
 
 export interface TextureMeta {
   id: string;
@@ -8,9 +9,26 @@ export interface TextureMeta {
   tileSize: Size2D;
   name: string;
 }
+const ob1: TextureMeta = {
+  id: "dc044dee-c48c-4d79-bcee-1241df4790fd",
+  absolutePath: "C:\\Users\\Tolet\\Desktop\\32523523\\textures\\world.png",
+  name: "world.png",
+  path: "media:C:\\Users\\Tolet\\Desktop\\32523523\\textures\\world.png",
+  tileSize: { h: 16, w: 16 },
+};
+const ob2: TextureMeta = {
+  id: "2334a840-d610-459e-8716-956a5811e0b2",
+  absolutePath: "C:\\Users\\Tolet\\Desktop\\32523523\\textures\\postapo.png",
+  name: "postapo.png",
+  path: "media:C:\\Users\\Tolet\\Desktop\\32523523\\textures\\postapo.png",
+  tileSize: { h: 16, w: 16 },
+};
 const { addTextureFile, deleteTextureFile } = getAPI("project");
 export default class AssetsManager {
-  private static textures: Map<string, TextureMeta> = new Map([]);
+  private static textures: Map<string, TextureMeta> = new Map([
+    [ob1.id, ob1],
+    [ob2.id, ob2],
+  ]);
   //TODO: remove this after aurora rework
   private static textureIndexes: Map<string, number> = new Map([
     ["dummy", 0],
@@ -37,6 +55,11 @@ export default class AssetsManager {
     this.textureIndexes.set("dummy", 0);
     this.textureIndexes.set("grid", 1);
   }
+  public static verifyPresentByPath(path: string) {
+    const textures = Array.from(this.textures.values());
+    const found = textures.find((texture) => texture.path === path);
+    return found === undefined ? false : true;
+  }
   public static async uploadTexture(path: string, tileSize: Size2D) {
     const [getConfig, setConfig] = Link.getLink<ProjectConfig>("projectConfig");
     const config = getConfig();
@@ -59,7 +82,7 @@ export default class AssetsManager {
       name: name,
     });
     setConfig(data!);
-
+    EventBus.emit("reTexture");
     return { error: "", success: true };
   }
   public static async removeTexture(id: string) {
@@ -72,6 +95,7 @@ export default class AssetsManager {
     if (!success) return { error, success };
     this.textures.delete(id);
     setConfig(data!);
+    EventBus.emit("reTexture");
 
     return { error: "", success: true };
   }
@@ -93,6 +117,7 @@ export default class AssetsManager {
         name: name,
         id: texture.id,
       });
+      if (config.textureUsed.length !== 0) EventBus.emit("reTexture");
     });
   }
 }

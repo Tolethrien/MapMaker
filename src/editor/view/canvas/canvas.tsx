@@ -1,6 +1,5 @@
 import { createSignal, onMount } from "solid-js";
 import Selector from "./components/selectorBar/selector";
-import AssetsManager from "@/utils/assetsManger";
 export default function Canvas() {
   let ref!: HTMLCanvasElement;
   const [size, setSize] = createSignal({ w: 600, h: 600 });
@@ -20,7 +19,6 @@ export default function Canvas() {
         id="canvaFrame"
         class="relative bg-black w-[97%] h-[96%] rounded-lg border-1 shadow-lg border-app-acc-gray flex items-center justify-center"
       >
-        {/* <img src="media:C:\Users\Tolet\Desktop\textures\postapo.png"></img> */}
         <canvas
           ref={ref}
           id="editorCanvas"

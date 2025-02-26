@@ -31,6 +31,7 @@ import Vec4D from "@/math/vec4D";
 import Link from "@/utils/link";
 import Engine from "@/engine/engine";
 import AssetsManager from "@/utils/assetsManger";
+import EventBus from "@/utils/eventBus";
 
 interface RenderData {
   numberOfQuads: {
@@ -140,6 +141,12 @@ export default class Batcher {
       PresentationPipeline.createPipeline();
       PresentGuiPipeline.createPipeline();
     }
+    EventBus.on("reTexture", {
+      name: "batcher",
+      callback: async () => {
+        await this.reTextureBatcher();
+      },
+    });
   }
 
   public static closeBatcher() {

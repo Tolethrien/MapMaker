@@ -5,12 +5,11 @@ import EngineDebugger from "./core/modules/debugger";
 import EntityManager from "./core/entitySystem/core/entityManager";
 import Camera from "./core/entitySystem/entities/camera";
 import RenderStatsConnector from "@/editor/view/rightBar/modules/renderStats/connector";
-import GlobalStore from "./core/modules/globalStore";
 import Link from "@/utils/link";
 
 import { sendNotification } from "@/utils/utils";
 import AssetsManager from "@/utils/assetsManger";
-//TODO: masz 3 load texture a mozesz wczytywac raz
+import EventBus from "@/utils/eventBus";
 export default class Engine {
   private static isInit = false;
   private static loopID: number = 0;
@@ -63,15 +62,14 @@ export default class Engine {
     );
     cancelAnimationFrame(this.loopID);
     Batcher.closeBatcher();
+    EventBus.removeEvent("reTexture");
     AssetsManager.clearAssets();
     EntityManager.clearAll();
     Link.set("engineInit")(false);
     Aurora.setFirstAuroraFrame();
     this.isInit = false;
   }
-  public static async reTexture() {
-    await Batcher.reTextureBatcher();
-  }
+
   private static loop() {
     RenderStatsConnector.start();
     Batcher.startBatch();

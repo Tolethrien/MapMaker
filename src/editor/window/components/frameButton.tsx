@@ -7,9 +7,9 @@ interface Props {
   name: FrameButtonTypes;
 }
 export default function FrameButton(props: Props) {
-  const context = useContext(FrameContext);
+  const context = useContext(FrameContext)!;
 
-  const changeOnActiveAndENter = () => {
+  const changeOnActiveAndEnter = () => {
     if (
       context.getActiveButton() !== "none" &&
       context.getActiveButton() !== props.name
@@ -22,7 +22,7 @@ export default function FrameButton(props: Props) {
       class={`px-4 text-app-acc-wheat app-prevent-drag outline-none text-sm  relative hover:bg-app-bg-4 ${
         context.getActiveButton() === props.name && "bg-app-bg-4"
       }`}
-      onMouseEnter={changeOnActiveAndENter}
+      onMouseEnter={changeOnActiveAndEnter}
       onClick={() => context.setActiveButton(props.name)}
       onBlur={() => context.setActiveButton("none")}
     >

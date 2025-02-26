@@ -8,6 +8,12 @@ interface Props {
       target: DOMElement;
     }
   ) => void;
+  onBlur?: (
+    e: FocusEvent & {
+      currentTarget: HTMLButtonElement;
+      target: DOMElement;
+    }
+  ) => void;
   disabled?: Accessor<boolean>;
   loading?: Accessor<boolean>;
   active?: Accessor<boolean>;
@@ -23,6 +29,7 @@ export default function IconButton(props: Props) {
   return (
     <button
       onClick={(e) => props.onClick(e)}
+      onBlur={(e) => () => props.onBlur ? props.onBlur(e) : {}}
       disabled={isDisable() || isLoading()}
       class={`p-1 w-fit h-fit ${isScalable && "hover:scale-110"} ${
         props.style

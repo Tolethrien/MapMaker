@@ -1,4 +1,5 @@
 import GlobalStore from "@/engine/core/modules/globalStore";
+import EventBus from "@/utils/eventBus";
 import Link from "@/utils/link";
 export type Selectors = "tile" | "grid" | "layer" | "brush";
 export interface PassManifold {

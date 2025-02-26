@@ -1,16 +1,19 @@
 import { batch, createEffect, createSignal, For, Show } from "solid-js";
 import TextureCanvas from "./textureCanvas";
 import Link from "@/utils/link";
-import NewTextureModal from "./addTexture";
 import ModuleFrame from "@/editor/components/module/moduleFrame";
 import IconButton from "@/editor/components/buttonAsIcon";
 import AddSVG from "@/assets/icons/add";
 import ModuleSection from "@/editor/components/module/ModuleSection";
-import Engine from "@/engine/engine";
 import TrashSVG from "@/assets/icons/trash";
 import { sendNotification } from "@/utils/utils";
 import AssetsManager, { TextureMeta } from "@/utils/assetsManger";
-
+import ContextMenu from "@/editor/components/contextMenu/contextMenu";
+import ContextButton from "@/editor/components/contextMenu/contextButton";
+import TileSetViewModal from "./add/tilesetView";
+import ObjectSetViewModal from "./add/objectSetView";
+//TODO: ustawiam sporo modali wszedzie, moze by tak po prostu miec globalne isOpen by nie ptrzeba bylo drillowac propsami wszedzie,
+//  i tak tylko jeden modal naraz masz otwarty
 const BUTTON_ACTIVE =
   "px-5 py-2 bg-app-acc-purp w-fit rounded-t-md shadow-inner text-app-acc-wheat";
 const BUTTON_INACTIVE =
@@ -20,8 +23,10 @@ export default function TextureView() {
     undefined
   );
   const [textureList, setTextureList] = createSignal<TextureMeta[]>([]);
-
-  const [isOpenModal, setIsOpenModal] = createSignal(false);
+  //TODO: poprawic to
+  const [isOpenModal, setIsOpenModal] = createSignal(true);
+  const [pickedModal, setPickedModal] = createSignal<"tile" | "object">("tile");
+  const [pickTextureModal, setPickTextureModal] = createSignal(false);
   const config = Link.get<ProjectConfig>("projectConfig");
   const engineInit = Link.get<boolean>("engineInit");
 
@@ -50,7 +55,6 @@ export default function TextureView() {
       });
       return;
     }
-    await Engine.reTexture();
     if (config().textureUsed.length === 0) {
       setTextureView(undefined);
       setTextureList([]);
@@ -80,13 +84,47 @@ export default function TextureView() {
           </For>
         </div>
         <IconButton
-          onClick={() => setIsOpenModal(true)}
+          onClick={() => setPickTextureModal(true)}
+          onBlur={() => setPickTextureModal(false)}
           scale={false}
-          style="bg-app-acc-purp p-3 justify-self-end"
+          style="bg-app-acc-purp p-3 justify-self-end relative"
         >
           <AddSVG style="w-5 h-5" />
+          <Show when={pickTextureModal()}>
+            <div>
+              <ContextMenu bound="right">
+                <ContextButton
+                  name="TileSet"
+                  onClick={() => {
+                    batch(() => {
+                      setPickedModal("tile");
+                      setIsOpenModal(true);
+                      setPickTextureModal(false);
+                    });
+                  }}
+                />
+                <ContextButton
+                  name="ObjectSet"
+                  onClick={() => {
+                    batch(() => {
+                      setPickedModal("object");
+                      setIsOpenModal(true);
+                      setPickTextureModal(false);
+                    });
+                  }}
+                />
+              </ContextMenu>
+            </div>
+          </Show>
         </IconButton>
-        <NewTextureModal open={isOpenModal} setOpen={setIsOpenModal} />
+        <TileSetViewModal
+          onOpen={() => isOpenModal() && pickedModal() === "tile"}
+          onClose={() => setIsOpenModal(false)}
+        />
+        <ObjectSetViewModal
+          onOpen={() => isOpenModal() && pickedModal() === "object"}
+          onClose={() => setIsOpenModal(false)}
+        />
       </div>
       <ModuleSection
         title="Detail"

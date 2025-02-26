@@ -21,6 +21,14 @@ export const mapRange = (
   );
 };
 
+export const loadImage = (src: string) => {
+  return new Promise<HTMLImageElement>((res, err) => {
+    const img = new Image();
+    img.src = src;
+    img.onload = () => res(img);
+    img.onerror = (error) => err(error);
+  });
+};
 export const clamp = (value: number, min: number, max: number) => {
   if (min === max) return min;
   else if (min > max) throw new Error("min is greater then max");

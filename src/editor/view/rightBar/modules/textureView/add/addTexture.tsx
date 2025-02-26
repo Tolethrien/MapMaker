@@ -1,17 +1,15 @@
 import { Accessor, batch, createSignal, Setter, Show } from "solid-js";
-import Modal from "../../../../components/modal";
-import Button from "../../../../components/button";
+import Modal from "../../../../../components/modal";
+import Button from "../../../../../components/button";
 import { getAPI } from "@/preload/getAPI";
 import { createStore } from "solid-js/store";
 import ArrowSVG from "@/assets/icons/sizeArrows";
-import Engine from "@/engine/engine";
 import FolderSVG from "@/assets/icons/folder";
 import Input from "@/editor/components/input";
 import IconButton from "@/editor/components/buttonAsIcon";
 import PickerSVG from "@/assets/icons/picker";
 import CloseSVG from "@/assets/icons/close";
 import { sendNotification } from "@/utils/utils";
-// import { addTexture } from "@/utils/projectUtils";
 import AssetsManager from "@/utils/assetsManger";
 interface Props {
   open: Accessor<boolean>;
@@ -62,7 +60,6 @@ export default function NewTextureModal(props: Props) {
       });
       setLoading(false);
     }
-    await Engine.reTexture();
     sendNotification({
       type: "success",
       value: `Texture: "${state.path}" successfully added`,

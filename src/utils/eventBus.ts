@@ -30,13 +30,6 @@ export default class EventBus {
     this.eventBus.get(event)!.set(listener.name, (e) => listener.callback(e));
   }
 
-  public static off(event: string, listenerName: eventListener["name"]) {
-    this.eventBus.get(event)?.delete(listenerName) ??
-      EngineDebugger.showError(
-        `No event callback with name ${listenerName} in event: "${event}"`
-      );
-  }
-
   public static emit<T extends unknown>(event: string, options?: T) {
     this.eventBus.get(event)?.forEach((listener) => listener(options as never));
   }

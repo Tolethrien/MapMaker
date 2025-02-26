@@ -1,4 +1,4 @@
-import { app, protocol, BrowserWindow } from "electron";
+import { app, BrowserWindow } from "electron";
 import starter from "electron-squirrel-startup";
 import createWindow from "./window";
 import { registerProtocols, registerSchemes } from "./protocols/protocols";
