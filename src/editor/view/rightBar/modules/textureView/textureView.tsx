@@ -25,7 +25,9 @@ export default function TextureView() {
   const [textureList, setTextureList] = createSignal<TextureMeta[]>([]);
   //TODO: poprawic to
   const [isOpenModal, setIsOpenModal] = createSignal(true);
-  const [pickedModal, setPickedModal] = createSignal<"tile" | "object">("tile");
+  const [pickedModal, setPickedModal] = createSignal<"tile" | "object">(
+    "object"
+  );
   const [pickTextureModal, setPickTextureModal] = createSignal(false);
   const config = Link.get<ProjectConfig>("projectConfig");
   const engineInit = Link.get<boolean>("engineInit");

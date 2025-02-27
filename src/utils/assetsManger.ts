@@ -1,6 +1,7 @@
 import { getAPI } from "@/preload/getAPI";
 import Link from "./link";
 import EventBus from "./eventBus";
+import { Tile } from "@/editor/view/rightBar/modules/textureView/add/temp";
 
 export interface TextureMeta {
   id: string;
@@ -9,6 +10,12 @@ export interface TextureMeta {
   tileSize: Size2D;
   name: string;
 }
+type TileItem = {
+  id: string;
+  crop: Position2D;
+  textureID: string;
+  collider: boolean;
+};
 const ob1: TextureMeta = {
   id: "dc044dee-c48c-4d79-bcee-1241df4790fd",
   absolutePath: "C:\\Users\\Tolet\\Desktop\\32523523\\textures\\world.png",
@@ -23,6 +30,7 @@ const ob2: TextureMeta = {
   path: "media:C:\\Users\\Tolet\\Desktop\\32523523\\textures\\postapo.png",
   tileSize: { h: 16, w: 16 },
 };
+
 const { addTextureFile, deleteTextureFile } = getAPI("project");
 export default class AssetsManager {
   private static textures: Map<string, TextureMeta> = new Map([
@@ -34,7 +42,7 @@ export default class AssetsManager {
     ["dummy", 0],
     ["grid", 1],
   ]);
-  private static texturesLUT = {};
+  private static tileLUT: Map<string, TileItem> = new Map();
 
   public static reindexTextures() {
     this.textureIndexes.clear();
@@ -60,6 +68,20 @@ export default class AssetsManager {
     const found = textures.find((texture) => texture.path === path);
     return found === undefined ? false : true;
   }
+  public static addToTileLUT(LUT: Map<number, Tile>, textureID: string) {
+    LUT.forEach((tile) => {
+      if (!tile.included) return;
+      const id = crypto.randomUUID();
+      this.tileLUT.set(id, {
+        collider: tile.collider,
+        crop: tile.position,
+        id: id,
+        textureID: textureID,
+      });
+    });
+    console.log(this.tileLUT);
+  }
+
   public static async uploadTexture(path: string, tileSize: Size2D) {
     const [getConfig, setConfig] = Link.getLink<ProjectConfig>("projectConfig");
     const config = getConfig();
@@ -71,7 +93,8 @@ export default class AssetsManager {
       tileSize: { w: tileSize.w, h: tileSize.h },
       id: id,
     });
-    if (!success) return { error: `error to: ${error}`, success };
+    if (!success)
+      return { error: `error to: ${error}`, success, textureID: "" };
     const texture = data?.textureUsed.at(-1)!;
     const name = texture.path.split("\\").at(-1)!;
     this.textures.set(id, {
@@ -83,7 +106,7 @@ export default class AssetsManager {
     });
     setConfig(data!);
     EventBus.emit("reTexture");
-    return { error: "", success: true };
+    return { error: "", success: true, textureID: id };
   }
   public static async removeTexture(id: string) {
     const [getConfig, setConfig] = Link.getLink<ProjectConfig>("projectConfig");
