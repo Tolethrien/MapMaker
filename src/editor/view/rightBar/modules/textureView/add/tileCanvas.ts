@@ -5,7 +5,7 @@ export type Tile = {
   collider: boolean;
   included: boolean;
 };
-export default class Can {
+export default class TileCanvas {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   img!: HTMLImageElement;
@@ -64,8 +64,8 @@ export default class Can {
 
     this.drawCanvas();
   }
-  private getColor(mode: keyof typeof Can.COLORS) {
-    const color = Can.COLORS[mode];
+  private getColor(mode: keyof typeof TileCanvas.COLORS) {
+    const color = TileCanvas.COLORS[mode];
     return `rgba(${color[0]},${color[1]},${color[2]},${this.gridAlpha})`;
   }
   private processMouseInput(event: MouseEvent) {

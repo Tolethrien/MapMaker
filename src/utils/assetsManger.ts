@@ -1,7 +1,7 @@
 import { getAPI } from "@/preload/getAPI";
 import Link from "./link";
 import EventBus from "./eventBus";
-import { Tile } from "@/editor/view/rightBar/modules/textureView/add/temp";
+import { Tile } from "@/editor/view/rightBar/modules/textureView/add/tileCanvas";
 
 export interface TextureMeta {
   id: string;

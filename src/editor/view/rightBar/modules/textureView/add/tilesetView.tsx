@@ -11,7 +11,7 @@ import AssetsManager from "@/utils/assetsManger";
 import { sendNotification } from "@/utils/utils";
 import { batch, createSignal, onMount, Show } from "solid-js";
 import { createStore } from "solid-js/store";
-import Can, { Selector } from "./temp";
+import TileCanvas, { Selector } from "./tileCanvas";
 
 interface Props {
   onOpen: () => boolean;
@@ -22,7 +22,7 @@ const { openFilePicker } = getAPI("dialog");
 //TODO: mouse wheel moves canvas AND create AABB
 export default function TileSetViewModal(props: Props) {
   let canvas!: HTMLCanvasElement;
-  let controller!: Can;
+  let controller!: TileCanvas;
   const [loading, setLoading] = createSignal(false);
   const [restoring, setRestoring] = createSignal(false);
   const [currentSelector, setCurrentSelector] =
@@ -35,7 +35,7 @@ export default function TileSetViewModal(props: Props) {
   });
   onMount(async () => {
     if (canvas) {
-      controller = new Can(canvas);
+      controller = new TileCanvas(canvas);
       await controller.generateImage(state.path);
       controller.changeDims(state.tileSize);
     }
