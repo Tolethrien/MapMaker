@@ -16,17 +16,18 @@ import {
   Show,
 } from "solid-js";
 import { createStore } from "solid-js/store";
-import ObjectCanvas, { Selector, Structure } from "./objectCanvas";
+import ObjectCanvas, { ObjectSelector } from "./objectCanvas";
 import { getAPI } from "@/preload/getAPI";
 import AddSVG from "@/assets/icons/add";
 import Button from "@/editor/components/button";
+import { Structure } from "./objectStructure";
 
 interface Props {
   onOpen: () => boolean;
   onClose: () => void;
 }
 const { openFilePicker } = getAPI("dialog");
-
+//TODO: add warning of clarence on change texture or dims
 export default function ObjectSetViewModal(props: Props) {
   let canvas!: HTMLCanvasElement;
   let selectRef!: HTMLSelectElement;
@@ -36,8 +37,8 @@ export default function ObjectSetViewModal(props: Props) {
   );
   const [objects, setObjects] = createSignal<Structure[]>([]);
   const [loading, setLoading] = createSignal(false);
-  const [restoring, setRestoring] = createSignal(false);
-  const [currentSelector, setCurrentSelector] = createSignal<Selector>("path");
+  const [currentSelector, setCurrentSelector] =
+    createSignal<ObjectSelector>("path");
 
   onMount(async () => {
     if (canvas) {
@@ -119,7 +120,7 @@ export default function ObjectSetViewModal(props: Props) {
     //   props.onClose();
     // });
   };
-  const setSelector = (selector: Selector) => {
+  const setSelector = (selector: ObjectSelector) => {
     setCurrentSelector(selector);
     controller.setSelector(selector);
   };
@@ -141,15 +142,19 @@ export default function ObjectSetViewModal(props: Props) {
             <div class="overflow-y-auto h-full py-2 min-w-72">
               <For each={objects().toReversed()}>
                 {(item) => {
-                  const points = item.getPoints();
+                  //TODO: add highlight on hover/click
+                  const points = item.pointsPath;
                   return (
-                    <div class="relative bg-app-main-2 shadow-xl px-2 w-72 border-2 border-app-acc-gray text-sm">
+                    <div
+                      class="relative bg-app-main-2 shadow-xl px-2 w-72 border-2 border-app-acc-gray text-sm"
+                      data-id={item.getID}
+                    >
                       <p class="text-sm">Path</p>
                       <p>
-                        X:{points[0]} Y:{points[1]}
+                        X:{points.A.x} Y:{points.A.y}
                       </p>
                       <p>
-                        W:{points[2]} H:{points[3]}
+                        W:{points.B.x} H:{points.B.y}
                       </p>
                       <IconButton
                         onClick={() => controller.deleteStructure(item.getID)}
@@ -159,8 +164,12 @@ export default function ObjectSetViewModal(props: Props) {
                         <TrashSVG style="w-5 h-5" />
                       </IconButton>
                       <div class="flex gap-4 absolute bottom-2 right-2">
-                        <TrashSVG style="w-3 h-3" />
-                        <TrashSVG style="w-3 h-3" />
+                        <Show when={item.colliderTiles.size > 0}>
+                          <TrashSVG style="w-3 h-3" />
+                        </Show>
+                        <Show when={item.anchorTile !== undefined}>
+                          <TrashSVG style="w-3 h-3" />
+                        </Show>
                       </div>
                     </div>
                   );
@@ -207,10 +216,7 @@ export default function ObjectSetViewModal(props: Props) {
               <canvas ref={canvas} width={0} height={0} />
             </div>
             <div class="flex justify-between w-full">
-              <div class=" relative flex bg-app-main-3 shadow-lg rounded-b-lg ml-3 border-1 border-app-acc-gray">
-                <Show when={restoring()}>
-                  <div class="absolute left-0 top-0 w-full h-full bg-black opacity-50 rounded-b-lg" />
-                </Show>
+              <div class="flex bg-app-main-3 shadow-lg rounded-b-lg ml-3 border-1 border-app-acc-gray">
                 {/* dimensions */}
                 <div class="flex gap-4 py-2 px-6 relative pr-10">
                   <div>
@@ -270,28 +276,33 @@ export default function ObjectSetViewModal(props: Props) {
                     />
                     <p>Collider</p>
                   </IconButton>
-                </div>
-                {/* other */}
-                <div class="flex p-2 relative">
                   <IconButton
-                    onClick={() => setRestoring(true)}
+                    onClick={() => setSelector("anchor")}
                     scale={false}
                     style="flex flex-col items-center"
                   >
-                    <AddSVG style="w-5 h-5" />
-                    <p>Restore</p>
+                    <AddSVG
+                      style={`w-5 h-5 ${
+                        currentSelector() === "anchor" && "stroke-app-acc-red"
+                      }`}
+                    />
+                    <p>Anchor</p>
                   </IconButton>
-                  <Show when={restoring()}>
-                    <div class="absolute -right-4 bottom-full bg-app-main-2 border-1 border-app-acc-gray rounded-md flex flex-col py-2 px-4">
-                      <p class="whitespace-nowrap">
-                        restore {currentSelector()} to default?
-                      </p>
-                      <div class="flex gap-4">
-                        <button onClick={onRestore}>Yes!</button>
-                        <button onClick={() => setRestoring(false)}>No!</button>
-                      </div>
-                    </div>
-                  </Show>
+                </div>
+                {/* other */}
+                <div class="flex p-2 relative">
+                  {/* <IconButton
+                    onClick={() => setSelector("select")}
+                    scale={false}
+                    style="flex flex-col items-center"
+                  >
+                    <AddSVG
+                      style={`w-5 h-5 ${
+                        currentSelector() === "select" && "stroke-app-acc-red"
+                      }`}
+                    />
+                    <p>Select</p>
+                  </IconButton> */}
                 </div>
               </div>
               <Button
