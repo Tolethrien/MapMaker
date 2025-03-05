@@ -87,38 +87,44 @@ export default function ObjectSetViewModal(props: Props) {
     setState("tileSize", side, size);
     controller.changeDims(state.tileSize);
   };
-  const onRestore = () => {
-    // controller.restoreState(currentSelector());
-    // setRestoring(false);
-  };
+
   const pickExistedTexture = async (index: number) => {
     await controller.generateImage(textures()[index].absolutePath);
     setState("path", "C:\\\\");
   };
   const textureLoader = async () => {
-    // setLoading(true);
+    setLoading(true);
     // //TODO: why do i need success when i can just check is error undefined?
-    // const { error, success, textureID } = await AssetsManager.uploadTexture(
-    //   state.path,
-    //   state.tileSize
-    // );
-    // const LUTData = controller.getLUT();
-    // AssetsManager.addToTileLUT(LUTData, textureID);
-    // if (!success) {
-    //   sendNotification({
-    //     type: "error",
-    //     value: `Error compiling texture: "${error}"`,
-    //   });
-    //   setLoading(false);
-    // }
-    // sendNotification({
-    //   type: "success",
-    //   value: `Texture: "${state.path}" successfully added`,
-    // });
-    // batch(() => {
-    //   setLoading(false);
-    //   props.onClose();
-    // });
+    const isNewTexture = selectRef.selectedIndex === 0;
+    console.log(selectRef.selectedIndex);
+    console.log(textures()[selectRef.selectedIndex - 1]);
+    let imgID: string;
+    if (!isNewTexture) imgID = textures()[selectRef.selectedIndex - 1].id;
+    else {
+      const { error, success, textureID } = await AssetsManager.uploadTexture(
+        state.path,
+        state.tileSize
+      );
+      if (!success) {
+        sendNotification({
+          type: "error",
+          value: `Error compiling texture: "${error}"`,
+        });
+        setLoading(false);
+      }
+      imgID = textureID;
+      sendNotification({
+        type: "success",
+        value: `Texture: "${state.path}" successfully added`,
+      });
+    }
+
+    const LUTData = controller.getLUT();
+    AssetsManager.addToObjectLUT(LUTData, imgID);
+    batch(() => {
+      setLoading(false);
+      props.onClose();
+    });
   };
   const setSelector = (selector: ObjectSelector) => {
     setCurrentSelector(selector);

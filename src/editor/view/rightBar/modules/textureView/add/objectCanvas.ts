@@ -56,7 +56,7 @@ export default class ObjectCanvas {
     this.updateUI = undefined;
     this.gridWidth = 1;
     this.canvas.addEventListener("mousedown", (event) =>
-      this.pathSavePosition(this.selector, event)
+      this.pathSavePosition(event)
     );
     this.canvas.addEventListener("mouseup", (e) => this.processMouseInput(e));
     this.canvas.addEventListener("mousemove", (e) => this.drawMouseAABB(e));
@@ -98,31 +98,38 @@ export default class ObjectCanvas {
     this.updateUI = func;
   }
 
-  private pathSavePosition(selector: ObjectSelector, e: MouseEvent) {
-    //zrob by nie dalo sie przeciagac jesli collider nie jest w obiekcie
+  private pathSavePosition(event: MouseEvent) {
     if (this.mouseManifest.mode !== undefined) return;
     if (this.selector === "collider" || this.selector === "anchor") {
+      const tile = this.getTileIndexFromPosition({
+        x: event.offsetX,
+        y: event.offsetY,
+      });
+      const struct = Array.from(this.LUT.values()).find((struct) =>
+        struct.includedTiles.has(tile)
+      );
+      if (!struct) return;
       this.mouseManifest = {
-        position: { x: e.offsetX, y: e.offsetY },
-        buttonPressed: e.button,
+        position: { x: event.offsetX, y: event.offsetY },
+        buttonPressed: event.button,
         mode: "creator",
         structure: undefined,
       };
     } else {
       const draggedStruct = Array.from(this.LUT.values()).find((struct) =>
-        struct.isDragged({ x: e.offsetX, y: e.offsetY }, 6)
+        struct.isDragged({ x: event.offsetX, y: event.offsetY }, 6)
       );
       if (draggedStruct) {
         this.mouseManifest = {
-          position: { x: e.offsetX, y: e.offsetY },
-          buttonPressed: e.button,
+          position: { x: event.offsetX, y: event.offsetY },
+          buttonPressed: event.button,
           mode: "editor",
           structure: draggedStruct,
         };
       } else
         this.mouseManifest = {
-          position: { x: e.offsetX, y: e.offsetY },
-          buttonPressed: e.button,
+          position: { x: event.offsetX, y: event.offsetY },
+          buttonPressed: event.button,
           mode: "creator",
           structure: undefined,
         };
@@ -322,54 +329,6 @@ export default class ObjectCanvas {
     this.drawGrid();
     this.drawStructures();
   }
-  // private redraw() {
-  //   if (!this.img) return;
-  //   const sizeX = this.tileSize.w > 4 ? this.tileSize.w : 4;
-  //   const sizeY = this.tileSize.h > 4 ? this.tileSize.h : 4;
-  //   this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-  //   this.ctx.drawImage(this.img, 0, 0);
-  //   this.ctx.lineWidth = 2;
-  //   this.ctx.strokeStyle = "rgb(255,255,255)";
-
-  //   for (let x = 0; x < this.canvas.width; x += sizeX) {
-  //     for (let y = 0; y < this.canvas.height; y += sizeY) {
-  //       this.ctx.strokeRect(x, y, sizeX, sizeY);
-  //     }
-  //   }
-  //   this.ctx.strokeStyle = "rgb(255,0,0)";
-  //   this.LUT.forEach((structure) => {
-  //     const path = structure.pointsPath;
-  //     this.ctx.strokeRect(
-  //       path.A.x,
-  //       path.A.y,
-  //       path.B.x - path.A.x,
-  //       path.B.y - path.A.y
-  //     );
-  //     this.ctx.beginPath();
-  //     this.ctx.ellipse(path.A.x, path.A.y, 6, 6, Math.PI / 4, 0, 2 * Math.PI);
-  //     this.ctx.stroke();
-  //     this.ctx.beginPath();
-  //     this.ctx.ellipse(path.B.x, path.B.y, 6, 6, Math.PI / 4, 0, 2 * Math.PI);
-  //     this.ctx.stroke();
-  //     this.ctx.strokeStyle = "rgb(255,0,255)";
-  //     const collider = structure.pointsCollider;
-  //     this.ctx.strokeRect(
-  //       collider.A.x,
-  //       collider.A.y,
-  //       collider.B.x - collider.A.x,
-  //       collider.B.y - collider.A.y
-  //     );
-  //     if (structure.anchorTile === undefined) return;
-  //     this.ctx.strokeStyle = "rgb(100,200,255)";
-  //     const anchor = structure.pointsAnchor;
-  //     this.ctx.strokeRect(anchor.x, anchor.y, this.tileSize.w, this.tileSize.h);
-  //   });
-  // }
-  private getTileCoordinates(mousePos: Position2D) {
-    const x = Math.floor(mousePos.x / this.tileSize.w) * this.tileSize.w;
-    const y = Math.floor(mousePos.y / this.tileSize.h) * this.tileSize.h;
-    return { x, y };
-  }
 
   private getTilesInBox(box: Structure["pointsPath"]): number[] {
     const tiles = [];
@@ -404,6 +363,16 @@ export default class ObjectCanvas {
     const col = Math.floor(tilePos.x / this.tileSize.w);
     return row * this.gridWidth + col;
   }
+  private getTileCoordinates(mousePos: Position2D) {
+    const x = Math.floor(mousePos.x / this.tileSize.w) * this.tileSize.w;
+    const y = Math.floor(mousePos.y / this.tileSize.h) * this.tileSize.h;
+    return { x, y };
+  }
+  private getTileIndexFromPosition(position: Position2D) {
+    const pos = this.getTileCoordinates(position);
+    return this.getTileIndex(pos);
+  }
+
   private getColor(type: keyof typeof COLORS, useAlpha: boolean = false) {
     const color = COLORS[type];
     if (useAlpha)
