@@ -36,7 +36,7 @@ export default class TileCanvas {
     this.selector = selector;
   }
   public getLUT() {
-    return this.LUT;
+    return Array.from(this.LUT.values());
   }
   public setGridAlpha(value: number) {
     this.gridAlpha = value / 255;

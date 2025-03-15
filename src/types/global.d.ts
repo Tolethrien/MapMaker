@@ -1,4 +1,9 @@
-import { TextureMeta } from "@/utils/assetsManger";
+import {
+  StructureItem,
+  TextureMeta,
+  TileItem,
+  View,
+} from "@/utils/assetsManger";
 import { API } from "../preload/preload";
 
 declare global {
@@ -18,13 +23,18 @@ declare global {
     tileSize: Size2D;
     id: string;
   };
-  export interface ProjectConfig {
+  interface ProjectConfig {
     projectPath: string;
     name: string;
     tileSize: Size2D;
     chunkSizeInTiles: Size2D;
     chunkSizeInPixels: Size2D;
-    textureUsed: { path: string; tileSize: Size2D; id: string }[];
     layersVisibility: [number, number][];
+  }
+  interface TextureConfig {
+    textures: TextureMeta[];
+    views: Omit<View, "img">[];
+    tiles: TileItem[];
+    objects: StructureItem[];
   }
 }

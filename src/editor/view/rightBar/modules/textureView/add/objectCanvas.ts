@@ -33,6 +33,7 @@ const COLORS = {
 } as const;
 //TODO: maybe a static class? your using it only once anyway
 //TODO: alpha on all selectors not one general
+//TODO: when changed path collider and anchor should be deleted, cause you can make bigger coll then path
 export default class ObjectCanvas {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;

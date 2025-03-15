@@ -74,12 +74,14 @@ export default function TileSetViewModal(props: Props) {
   const textureLoader = async () => {
     setLoading(true);
     //TODO: why do i need success when i can just check is error undefined?
-    const { error, success, textureID } = await AssetsManager.uploadTexture(
-      state.path,
-      state.tileSize
+
+    const { error, success } = await AssetsManager.updateTileLUT(
+      controller.getLUT(),
+      {
+        path: state.path,
+        tileSize: state.tileSize,
+      }
     );
-    const LUTData = controller.getLUT();
-    AssetsManager.addToTileLUT(LUTData, textureID);
     if (!success) {
       sendNotification({
         type: "error",

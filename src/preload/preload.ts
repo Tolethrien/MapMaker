@@ -6,6 +6,7 @@ import {
   ReadChunk,
   WriteChunk,
   WriteConfig,
+  WriteTextureLUT,
 } from "@/backend/IPC/project";
 import { GetPaths } from "@/backend/IPC/utils";
 import { AppSettings, RecentProject } from "@/backend/settings/app";
@@ -47,6 +48,14 @@ const API_PROJECT = {
   writeConfig: async (props: WriteConfig): Promise<AsyncStatus> => {
     return await ipcRenderer.invoke("writeConfig", props);
   },
+  readTextureLUT: async (
+    projectPath: string
+  ): Promise<AsyncStatus & { data: TextureConfig | undefined }> => {
+    return await ipcRenderer.invoke("readTextureLUT", projectPath);
+  },
+  writeTextureLUT: async (props: WriteTextureLUT): Promise<AsyncStatus> => {
+    return await ipcRenderer.invoke("writeTextureLUT", props);
+  },
   createProjectBoilerplate: async (
     projectPath: string
   ): Promise<AsyncStatus> => {
@@ -54,7 +63,7 @@ const API_PROJECT = {
   },
   addTextureFile: async (
     props: AddTextureFile
-  ): Promise<AsyncStatus & { data: ProjectConfig | undefined }> => {
+  ): Promise<AsyncStatus & { data: TextureConfig | undefined }> => {
     return await ipcRenderer.invoke("addTextureFile", props);
   },
   deleteTextureFile: async (

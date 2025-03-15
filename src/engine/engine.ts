@@ -21,6 +21,7 @@ export default class Engine {
       );
       this.closeEngine();
     }
+
     //TODO: jeden centralny punkt canvasu
     //TODO: te wszystkie inity zrobic w eventBusie
     const canvas = document.getElementById("editorCanvas") as HTMLCanvasElement;
@@ -29,9 +30,8 @@ export default class Engine {
     await Aurora.initialize(canvas); // needs to be before preload
     Camera.initialize(config.chunkSizeInPixels.h, config.chunkSizeInPixels.w);
 
-    AssetsManager.loadTexturesFromConfig();
-    AssetsManager.reindexTextures();
-
+    await AssetsManager.loadDataFromConfig();
+    AssetsManager.DEBUG();
     await Batcher.createBatcher({
       backgroundColor: [0, 0, 0, 255],
       bloom: { active: false, str: 0 },

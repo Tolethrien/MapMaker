@@ -39,7 +39,11 @@ export default function ObjectSetViewModal(props: Props) {
   const [loading, setLoading] = createSignal(false);
   const [currentSelector, setCurrentSelector] =
     createSignal<ObjectSelector>("path");
-
+  const [state, setState] = createStore({
+    path: "C:\\Users\\Tolet\\Desktop\\textures\\postapo.png",
+    file: "",
+    tileSize: { w: 32, h: 32 },
+  });
   onMount(async () => {
     if (canvas) {
       controller = new ObjectCanvas(canvas);
@@ -51,11 +55,6 @@ export default function ObjectSetViewModal(props: Props) {
       await controller.generateImage(state.path);
       controller.changeDims(state.tileSize);
     }
-  });
-  const [state, setState] = createStore({
-    path: "C:\\Users\\Tolet\\Desktop\\textures\\postapo.png",
-    file: "",
-    tileSize: { w: 32, h: 32 },
   });
   createEffect(
     () => props.onOpen() && setTextures(AssetsManager.getTexturesArray())
@@ -96,31 +95,29 @@ export default function ObjectSetViewModal(props: Props) {
     setLoading(true);
     // //TODO: why do i need success when i can just check is error undefined?
     const isNewTexture = selectRef.selectedIndex === 0;
-    console.log(selectRef.selectedIndex);
-    console.log(textures()[selectRef.selectedIndex - 1]);
-    let imgID: string;
-    if (!isNewTexture) imgID = textures()[selectRef.selectedIndex - 1].id;
-    else {
-      const { error, success, textureID } = await AssetsManager.uploadTexture(
-        state.path,
-        state.tileSize
-      );
-      if (!success) {
-        sendNotification({
-          type: "error",
-          value: `Error compiling texture: "${error}"`,
-        });
-        setLoading(false);
+    const path = isNewTexture
+      ? state.path
+      : textures()[selectRef.selectedIndex - 1].path;
+    const { error, success } = await AssetsManager.updateObjectLUT(
+      controller.getLUT(),
+      {
+        path: path,
+        tileSize: state.tileSize,
       }
-      imgID = textureID;
+    );
+
+    if (!success) {
+      sendNotification({
+        type: "error",
+        value: `Error compiling texture: "${error}"`,
+      });
+      setLoading(false);
+    } else {
       sendNotification({
         type: "success",
         value: `Texture: "${state.path}" successfully added`,
       });
     }
-
-    const LUTData = controller.getLUT();
-    AssetsManager.addToObjectLUT(LUTData, imgID);
     batch(() => {
       setLoading(false);
       props.onClose();
