@@ -10,7 +10,7 @@ import {
 } from "@/backend/IPC/project";
 import { GetPaths } from "@/backend/IPC/utils";
 import { AppSettings, RecentProject } from "@/backend/settings/app";
-import { ChunkTemplate } from "@/engine/core/entitySystem/entities/chunk";
+import { ExportedChunk } from "@/engine/core/entitySystem/core/entityManager";
 import { contextBridge, ipcRenderer } from "electron";
 export type AvailableAPIs = keyof typeof API;
 
@@ -29,12 +29,14 @@ const API_UTILS = {
     await ipcRenderer.invoke("joinPath", segments),
   getPathTo: async (where: GetPaths): Promise<string> =>
     await ipcRenderer.invoke("getPathTo", where),
+  getFileName: async (path: string): Promise<string> =>
+    await ipcRenderer.invoke("getFileName", path),
 };
 
 const API_PROJECT = {
   readChunk: async (
     props: ReadChunk
-  ): Promise<AsyncStatus & { data: ChunkTemplate | undefined }> => {
+  ): Promise<AsyncStatus & { data: ExportedChunk | undefined }> => {
     return await ipcRenderer.invoke("readChunk", props);
   },
   writeChunk: async (props: WriteChunk): Promise<AsyncStatus> => {
@@ -68,7 +70,7 @@ const API_PROJECT = {
   },
   deleteTextureFile: async (
     props: DeleteTextureFile
-  ): Promise<AsyncStatus & { data: ProjectConfig | undefined }> => {
+  ): Promise<AsyncStatus & { data: TextureConfig | undefined }> => {
     return await ipcRenderer.invoke("deleteTextureFile", props);
   },
 };

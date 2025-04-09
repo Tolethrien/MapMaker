@@ -2,7 +2,10 @@ import Vec2D from "@/math/vec2D";
 import Camera from "../entitySystem/entities/camera";
 import Link from "@/utils/link";
 import Aurora from "../aurora/auroraCore";
-import { changeSelector } from "@/utils/utils";
+import { getConfig } from "@/utils/utils";
+import EntityManager from "../entitySystem/core/entityManager";
+import MathU from "@/math/math";
+import GlobalStore from "./globalStore";
 
 export type MouseManifold = typeof MOUSE_STATE;
 const MOUSE_STATE = {
@@ -21,9 +24,11 @@ export default class InputManager {
   private static keyCurrent = new Set<string>();
   private static keyLast = new Set<string>();
   private static internalKeys = new Set<string>();
-
   private static mousePosition: Position2D = { x: 0, y: 0 };
-  public static init(canvas: HTMLCanvasElement) {
+  private static currentMouseHover = { chunk: -1, tile: -1 };
+
+  public static init() {
+    const [canvas] = GlobalStore.get<HTMLCanvasElement>("globalCanvas");
     this.canvas = canvas;
     this.canvas.addEventListener("mousedown", (e) =>
       this.mouseClickEvent("down", e)
@@ -37,12 +42,16 @@ export default class InputManager {
       this.internalKeys.delete(e.key);
     });
   }
+  public static get getMouseHover() {
+    return this.currentMouseHover;
+  }
   public static update() {
     this.prevMouseState = this.currMouseState;
     this.currMouseState = this.internalState;
     this.keyLast = new Set(this.keyCurrent.values());
     this.keyCurrent = new Set(this.internalKeys.values());
     this.bakedKeyboardEvents();
+    this.mouseWorldHover(this.getMousePosition());
     // this.bakedMouseEvents();
   }
 
@@ -100,6 +109,20 @@ export default class InputManager {
     const [getter, setter] = Link.getLink<number>("z-index");
     if (index === "up") setter((prev) => prev + 1);
     if (index === "down") getter() > 0 && setter((prev) => prev - 1);
+  }
+  private static mouseWorldHover(mouse: Position2D) {
+    const { chunkSizeInTiles, tileSize } = getConfig();
+    const chunks = EntityManager.getAllChunks().values();
+    for (const chunk of chunks) {
+      if (!MathU.pointCollide(mouse, chunk.getBox)) continue;
+      const tile =
+        Math.floor((mouse.y - chunk.position.y) / tileSize.h) *
+          chunkSizeInTiles.h +
+        Math.floor((mouse.x - chunk.position.x) / tileSize.w);
+      this.currentMouseHover = { chunk: chunk.index, tile };
+      return;
+    }
+    this.currentMouseHover = { chunk: -1, tile: -1 };
   }
 
   private static mouseToWorld({ x, y }: Position2D) {

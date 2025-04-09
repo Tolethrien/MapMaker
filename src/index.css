@@ -22,7 +22,7 @@ textarea {
   .app-prevent-drag {
     -webkit-app-region: no-drag;
   }
-  .selectorVerticalRange[type="range"] {
+  .selectorRange[type="range"] {
     -webkit-appearance: none;
     appearance: none;
     background-color: #3a4669;
@@ -30,8 +30,8 @@ textarea {
     outline: none;
     &::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 12px;
-      height: 12px;
+      width: 10px;
+      height: 10px;
       border-radius: 100%;
       background-color: #fffed2;
     }

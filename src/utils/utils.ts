@@ -8,6 +8,10 @@ export const randomColor = (): HSLA => [
   Math.round(Math.random() * 256),
   255,
 ];
+export const randomColorToString = () =>
+  `rgba(${Math.round(Math.random() * 256)},${Math.round(
+    Math.random() * 256
+  )},${Math.round(Math.random() * 256)},1)`;
 export const mapRange = (
   value: number,
   inputMin: number,
@@ -47,8 +51,5 @@ export const clamp = (value: number, min: number, max: number) => {
 export const sendNotification = (note: Note) => {
   Link.set<Note[]>("notify")((prev) => [...prev, note]);
 };
-export const changeSelector = (selector: Selectors) => {
-  const [get, set] = Link.getLink<Selectors>("activeSelector");
-  if (get() === "grid") EntityManager.setFocusedChunk(undefined);
-  set(selector);
-};
+
+export const getConfig = () => Link.get<ProjectConfig>("projectConfig")();

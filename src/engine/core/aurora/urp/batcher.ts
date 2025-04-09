@@ -25,13 +25,16 @@ import roboto from "./assets/roboto.ttf";
 import PresentGuiPipeline from "./pipelines/presentGuiPipeline";
 import Vec2D from "@/math/vec2D";
 import dummyTexture from "./assets/dummy.png";
-import MathUtils from "@/math/math";
+import MathU from "@/math/math";
 import AuroraShader from "../auroraShader";
 import Vec4D from "@/math/vec4D";
 import Link from "@/utils/link";
 import Engine from "@/engine/engine";
-import AssetsManager from "@/utils/assetsManger";
+import AssetsManager, {
+  ReTextureEmitter,
+} from "@/engine/core/modules/assetsManager";
 import EventBus from "@/utils/eventBus";
+import { getConfig } from "@/utils/utils";
 
 interface RenderData {
   numberOfQuads: {
@@ -141,9 +144,11 @@ export default class Batcher {
       PresentationPipeline.createPipeline();
       PresentGuiPipeline.createPipeline();
     }
-    EventBus.on("reTexture", {
+    EventBus.on<ReTextureEmitter>("reTexture", {
       name: "batcher",
-      callback: async () => {
+      callback: async ({ reload }) => {
+        if (!reload) return;
+        AssetsManager.reindexTextures();
         await this.reTextureBatcher();
       },
     });
@@ -160,15 +165,15 @@ export default class Batcher {
     this.renderData = structuredClone(INIT_DATA);
   }
   public static async reTextureBatcher() {
-    const config = Link.get<ProjectConfig>("projectConfig")();
+    const textures = AssetsManager.getTexturesArray();
     await this.createTextureBatch(
-      config.textureUsed.length > 0
-        ? AssetsManager.getTexturesArray().map((item) => {
+      textures.length > 0
+        ? textures.map((item) => {
             return { name: item.name, url: item.path };
           })
         : undefined
     );
-    AssetsManager.reindexTextures();
+    console.log("reindex");
 
     OffscreenPipeline.createPipeline();
     TresholdPipeline.createPipeline();
@@ -202,7 +207,7 @@ export default class Batcher {
     //TODO: zmienic to na nie takie łopatologiczne
     if (!options) return;
     if (options.backgroundColor)
-      this.renderData.backgroundColor = MathUtils.normalizeColor(
+      this.renderData.backgroundColor = MathU.normalizeColor(
         options.backgroundColor
       );
     if (options.customCamera) this.renderData.customCamera = true;
@@ -325,19 +330,21 @@ export default class Batcher {
     //TODO: for now font will be generated on game start, later, will be genrated on final game export and stored
 
     const atlases: { name: string; bitmap: ImageBitmap }[] = [];
-    const fontFile = await fetch(roboto).then((result) => result.arrayBuffer());
-    const ttf = parseTTF(fontFile);
-    const lookups = createGlyphLUT(ttf);
-    const fontAtlas = await createGlyphAtlas(lookups, fontFile, {
-      useSDF: true,
-    });
-    Fonter.addFont({
-      fontName: "roboto",
-      LUT: lookups,
-      textureIndex: atlases.length,
-      atlasSize: Vec2D.create([fontAtlas.width, fontAtlas.height]),
-    });
-    atlases.push({ name: "roboto", bitmap: fontAtlas });
+    //brak fontowania - od tego miejsca
+    // const fontFile = await fetch(roboto).then((result) => result.arrayBuffer());
+    // const ttf = parseTTF(fontFile);
+    // const lookups = createGlyphLUT(ttf);
+    // const fontAtlas = await createGlyphAtlas(lookups, fontFile, {
+    //   useSDF: true,
+    // });
+    // Fonter.addFont({
+    //   fontName: "roboto",
+    //   LUT: lookups,
+    //   textureIndex: atlases.length,
+    //   atlasSize: Vec2D.create([fontAtlas.width, fontAtlas.height]),
+    // });
+    // atlases.push({ name: "roboto", bitmap: fontAtlas });
+    //do tego
     if (fonts) {
       if (fonts.length == 0)
         throw new Error(
@@ -378,13 +385,11 @@ export default class Batcher {
     this.recalculateUVS(meta);
   }
   public static generateGridTexture() {
-    const config = Link.get<ProjectConfig>("projectConfig")();
-
-    const tileSize = config.tileSize;
+    const { tileSize, chunkSizeInPixels } = getConfig();
 
     const canvas = document.createElement("canvas");
-    canvas.width = config.chunkSizeInPixels.w;
-    canvas.height = config.chunkSizeInPixels.h;
+    canvas.width = chunkSizeInPixels.w;
+    canvas.height = chunkSizeInPixels.h;
 
     const ctx = canvas.getContext("2d")!;
     ctx.strokeStyle = "white";
@@ -419,6 +424,7 @@ export default class Batcher {
         { name: "gridTexture", url: grid },
       ];
     }
+
     await AuroraTexture.createTextureArray({
       textures: textures,
       label: "TextureBatchGame",
@@ -468,7 +474,7 @@ export default class Batcher {
       data[0] = effectList[effect];
       this.renderData.screenShader.type = effect;
       if (intesity) {
-        data[1] = MathUtils.clamp(intesity, 0, 1);
+        data[1] = MathU.clamp(intesity, 0, 1);
         this.renderData.screenShader.str = intesity;
       }
     } else {
@@ -477,7 +483,7 @@ export default class Batcher {
       data[0] = effectList[effect];
       this.renderData.screenShader.type = effect;
       if (intesity) {
-        data[1] = MathUtils.clamp(intesity, 0, 1);
+        data[1] = MathU.clamp(intesity, 0, 1);
         this.renderData.screenShader.str = intesity;
       }
     }
@@ -489,7 +495,7 @@ export default class Batcher {
 
   public static setBloom(active: boolean, strength?: number) {
     this.renderData.bloom.active = active;
-    strength && (this.renderData.bloom.str = MathUtils.clamp(strength, 0, 50));
+    strength && (this.renderData.bloom.str = MathU.clamp(strength, 0, 50));
     CompositePipeline.getCompositeData[1] = active ? 1 : 0;
   }
 

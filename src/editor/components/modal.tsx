@@ -17,7 +17,6 @@ export default function Modal(props: Props) {
   });
 
   createEffect(() => (props.open() ? ref.showModal() : ref.close()));
-  //TODO: change dialog to just div as an "opened new window" and not actual modal
   return (
     <dialog
       class="backdrop:bg-black backdrop:opacity-80 focus:outline-none"

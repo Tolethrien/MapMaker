@@ -1,17 +1,15 @@
+import { TileCanvasExport } from "@/engine/core/modules/assetsManager";
+import MathU from "@/math/math";
 import { loadImage } from "@/utils/utils";
-export type Selector = "path" | "collider" | "anchor" | "included";
-export type Tile = {
-  position: Position2D;
-  collider: boolean;
-  included: boolean;
-};
+export type TileSelector = "path" | "collider" | "anchor" | "included";
+
 export default class TileCanvas {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   img!: HTMLImageElement;
   tileSize: Size2D;
-  selector: Selector;
-  LUT: Map<number, Tile>;
+  selector: TileSelector;
+  LUT: Map<number, TileCanvasExport>;
   gridAlpha: number;
   mouseSnap: Position2D & { dragged: undefined | number };
   static COLORS = {
@@ -19,6 +17,7 @@ export default class TileCanvas {
     grid: [255, 255, 255],
     collider: [0, 255, 0],
   };
+  static BASE_ALPHA = 150;
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
@@ -30,12 +29,13 @@ export default class TileCanvas {
     this.canvas.addEventListener("mousedown", (e) => this.saveMousePosition(e));
     this.canvas.addEventListener("mouseup", (e) => this.processMouseInput(e));
     this.canvas.addEventListener("mousemove", (e) => this.drawMouseAABB(e));
+    this.setGridAlpha(TileCanvas.BASE_ALPHA);
   }
 
-  public setSelector(selector: Selector) {
+  public setSelector(selector: TileSelector) {
     this.selector = selector;
   }
-  public getLUT() {
+  public exportLUT() {
     return Array.from(this.LUT.values());
   }
   public setGridAlpha(value: number) {
@@ -56,7 +56,7 @@ export default class TileCanvas {
     this.generateLUT();
     this.drawCanvas();
   }
-  public restoreState(selector: Selector) {
+  public restoreState(selector: TileSelector) {
     if (selector === "included")
       this.LUT.forEach((tile) => (tile.included = true));
     else if (selector === "collider")
@@ -71,8 +71,17 @@ export default class TileCanvas {
   private processMouseInput(event: MouseEvent) {
     if (event.button !== this.mouseSnap.dragged) return;
 
-    const tiles = this.getTilesInBox({ x: event.offsetX, y: event.offsetY });
-
+    const gridWidth = Math.floor(this.img.width / this.tileSize.w);
+    const tiles = MathU.getTilesInBox(
+      {
+        x: this.mouseSnap.x,
+        y: this.mouseSnap.y,
+        w: event.offsetX,
+        h: event.offsetY,
+      },
+      gridWidth,
+      this.tileSize
+    );
     if (event.button === 0)
       tiles.forEach((tile) => this.changeState("left", tile));
     if (event.button === 2)
@@ -87,7 +96,8 @@ export default class TileCanvas {
     else if (this.selector === "collider") tile.collider = action === "left";
   }
   private saveMousePosition(e: MouseEvent) {
-    if (this.mouseSnap.dragged !== undefined) return;
+    if (this.mouseSnap.dragged !== undefined || e.button !== 0) return;
+    console.log(e);
     this.mouseSnap = { x: e.offsetX, y: e.offsetY, dragged: e.button };
   }
   private drawMouseAABB(event: MouseEvent) {
@@ -111,10 +121,17 @@ export default class TileCanvas {
     let index = 0;
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
+        const cropX = x * sizeX;
+        const cropY = y * sizeY;
         this.LUT.set(index, {
           collider: false,
           included: true,
-          position: { x: x * sizeX, y: y * sizeY },
+          crop: {
+            x: cropX,
+            y: cropY,
+            w: cropX + this.tileSize.w,
+            h: cropY + this.tileSize.h,
+          },
         });
         index++;
       }
@@ -133,51 +150,15 @@ export default class TileCanvas {
       .forEach((tile) => {
         if (tile.included) this.ctx.strokeStyle = this.getColor("grid");
         else this.ctx.strokeStyle = this.getColor("included");
-        this.ctx.strokeRect(tile.position.x, tile.position.y, sizeX, sizeY);
+        this.ctx.strokeRect(tile.crop.x, tile.crop.y, sizeX, sizeY);
         if (!tile.collider) return;
         this.ctx.strokeStyle = this.getColor("collider");
         this.ctx.strokeRect(
-          tile.position.x + sizeX / 2 - 1,
-          tile.position.y + sizeY / 2 - 1,
+          tile.crop.x + sizeX / 2 - 1,
+          tile.crop.y + sizeY / 2 - 1,
           2,
           2
         );
       });
-  }
-  // private getTileCoordinates(mousePos: Position2D) {
-  //   const x = Math.floor(mousePos.x / this.tileSize.w) * this.tileSize.w;
-  //   const y = Math.floor(mousePos.y / this.tileSize.h) * this.tileSize.h;
-  //   return { x, y };
-  // }
-
-  private getTilesInBox(snapPos: Position2D): number[] {
-    const tiles = [];
-    const gridWidth = Math.floor(this.img.width / this.tileSize.w);
-
-    const startIndex = this.getTileIndex(this.mouseSnap, gridWidth);
-    const endIndex = this.getTileIndex(snapPos, gridWidth);
-
-    const startX = Math.min(startIndex % gridWidth, endIndex % gridWidth);
-    const endX = Math.max(startIndex % gridWidth, endIndex % gridWidth);
-    const startY = Math.min(
-      Math.floor(startIndex / gridWidth),
-      Math.floor(endIndex / gridWidth)
-    );
-    const endY = Math.max(
-      Math.floor(startIndex / gridWidth),
-      Math.floor(endIndex / gridWidth)
-    );
-
-    for (let y = startY; y <= endY; y++) {
-      for (let x = startX; x <= endX; x++) {
-        tiles.push(y * gridWidth + x);
-      }
-    }
-    return tiles;
-  }
-  private getTileIndex(tilePos: Position2D, gridWidth: number): number {
-    const row = Math.floor(tilePos.y / this.tileSize.h);
-    const col = Math.floor(tilePos.x / this.tileSize.w);
-    return row * gridWidth + col;
   }
 }

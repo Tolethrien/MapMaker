@@ -13,6 +13,7 @@ interface Assert {
   module?: Module;
 }
 
+//TODO: dodaj opcje obserwowania zmiennej, ze np consol.loguj cos za kazdym razem jak wartosc zmiennej sie zmieni
 export default class EngineDebugger {
   private static timers: Map<string, number> = new Map();
   private static states: Map<string, unknown> = new Map();

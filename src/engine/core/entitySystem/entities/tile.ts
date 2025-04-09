@@ -1,187 +1,279 @@
 import Draw from "@/engine/core/aurora/urp/draw";
-import InputManager from "@/engine/core/modules/inputManager";
 import Entity from "../core/entity";
-import Link from "@/utils/link";
-import { PassManifold, Selectors } from "@/preload/globalLinks";
-import Engine from "@/engine/engine";
-import GlobalStore from "../../modules/globalStore";
+import AssetsManager, {
+  LutType,
+  StructureLUTItem,
+  TileLUTItem,
+} from "@/engine/core/modules/assetsManager";
+
+import EngineDebugger from "../../modules/debugger";
+import { getConfig } from "@/utils/utils";
 import EntityManager from "../core/entityManager";
-import AssetsManager from "@/utils/assetsManger";
+import Link from "@/utils/link";
 interface TileProps {
   pos: { x: number; y: number };
   tileIndex: number;
   chunkIndex: number;
-  layers: TileLayer[];
+  tileLayers: BaseTileLayer[];
+  structureLayers: BaseStructureLayer[];
 }
-export interface TileLayer {
-  color: HSLA;
+export type BaseTileLayer = {
+  // in: tile
+  layerIndex: number;
+  lutID: string;
+  lutType: LutType;
+  zIndex: number;
+};
+export interface BaseStructureLayer extends BaseTileLayer {
+  decorative: boolean;
+  structureIndex: number;
+}
+interface TileLayer extends BaseTileLayer {
+  //in tile
+  crop: Box2D;
+  color: Uint8ClampedArray;
+  viewID: string; // to check is view still there and render or not to screen, and to get textureIndex
+}
+interface StructureLayer extends BaseStructureLayer {
+  //in tile
+  crop: Box2D;
+  boxOffset: Box2D;
+  color: Uint8ClampedArray;
+  viewID: string; // to check is view still there and render or not to screen, and to get textureIndex
+}
+
+interface LayerProps {
+  item: StructureLUTItem | TileLUTItem;
   layerIndex: number;
   zIndex: number;
-  textureID: string;
-  tileID: number;
-  crop: Position2D;
-  tileSize: Size2D;
 }
-export interface TileTemplate {
-  index: number;
-  collider: 0 | 1;
-  layers: TileLayer[];
+interface TileLayerProps {
+  layer: TileLayer;
+  layerIndex: number;
+  zIndex: number;
+}
+
+interface DecorativeLayerProps {
+  viewID: string;
+  lutID: string;
+  layerIndex: number;
+  structureIndex: number;
 }
 
 export default class Tile extends Entity {
-  tileIndex: number;
+  collider: boolean;
+  index: number;
+  tileLayers: TileLayer[];
+  structureLayers: StructureLayer[];
   chunkIndex: number;
-  layers: TileLayer[];
-  changedFlag: boolean;
 
-  constructor({ pos, chunkIndex, tileIndex, layers }: TileProps) {
-    const config = Link.get<ProjectConfig>("projectConfig")();
-    super(
-      {
-        x: pos.x + config.tileSize.w * 0.5,
-        y: pos.y + config.tileSize.h * 0.5,
-      },
-      {
-        w: config.tileSize.w * 0.5,
-        h: config.tileSize.h * 0.5,
-      }
-    );
-    this.layers = layers;
-    this.tileIndex = tileIndex;
+  constructor({
+    pos,
+    chunkIndex,
+    tileIndex,
+    structureLayers,
+    tileLayers,
+  }: TileProps) {
+    //TODO: pass this, no need to access on each tile
+    const config = getConfig();
+    super(pos, config.tileSize);
+    this.index = tileIndex;
     this.chunkIndex = chunkIndex;
-    this.changedFlag = false;
+    this.tileLayers = Tile.convertBaseTileToLayer(tileLayers);
+    this.structureLayers = Tile.convertBaseStructToLayer(structureLayers);
+    this.collider = false;
   }
-  onEvent(): void {
-    const selector = Link.get<Selectors>("activeSelector")();
-    if (selector === "tile") this.tileEvents();
-    if (selector === "layer") this.layerEvent();
-    else if (selector === "brush") this.brushEvents();
-  }
+
   onUpdate() {}
-
-  onRender(): void {
-    if (this.layers.length === 0) return;
-    const isLayer = Link.get<boolean>("singleLayerMode")();
-    if (isLayer) this.drawIndexedLayer();
-    else this.drawLayers();
+  onRender(type: LutType): void {
+    if (type === "tile") this.renderTile();
+    else this.renderStruct();
   }
-
-  private drawLayers() {
-    this.layers.forEach((layer) => {
-      this.drawLayer(layer);
+  private renderTile() {
+    this.tileLayers.forEach((layer) => {
+      this.drawTileLayer(layer);
     });
   }
-  private drawIndexedLayer() {
-    const indexLayer = Link.get<number>("layer")();
-
-    const layer = this.layers.find((layer) => layer.layerIndex === indexLayer);
-    if (layer === undefined) return;
-    this.drawLayer(layer);
+  private renderStruct() {
+    this.structureLayers.forEach((layer) => {
+      this.drawStructLayer(layer);
+    });
   }
-  private drawLayer(layer: TileLayer) {
-    const textureID = AssetsManager.getTextureIndexFromID(layer.textureID);
-    if (!textureID) return;
-    const size = Draw.getTextureMeta();
-    const opacity = this.getOpacity(layer);
-    if (opacity <= 0) return;
-    const crop = new Float32Array([
-      layer.crop.x / size.width,
-      layer.crop.y / size.height,
-      (layer.crop.x + layer.tileSize.w) / size.width,
-      (layer.crop.y + layer.tileSize.h) / size.height,
-    ]);
+
+  private drawTileLayer(layer: TileLayer) {
+    const textureIndex = AssetsManager.getTextureIndexFromLUT(
+      layer.lutType,
+      layer.lutID
+    );
+    if (!textureIndex) return;
+    const crop = Draw.calculateCrop(layer.crop); // zmienic to przy refaktorze aurory
+    const alpha = this.getOpacity("tile", layer);
     Draw.Quad({
-      alpha: opacity,
+      alpha: alpha,
+      bloom: 0,
+      crop: crop,
+      isTexture: 1,
+      position: { x: this.position.x, y: this.position.y - layer.zIndex },
+      size: { w: this.size.x, h: this.size.y },
+      textureToUse: textureIndex,
+      tint: layer.color,
+    });
+  }
+  private drawStructLayer(layer: StructureLayer) {
+    if (layer.lutType === "structure" && layer.decorative) return;
+    const textureIndex = AssetsManager.getTextureIndexFromLUT(
+      layer.lutType,
+      layer.lutID
+    );
+    if (!textureIndex) return;
+    const crop = Draw.calculateCrop(layer.crop); // zmienic to przy refaktorze aurory
+    const alpha = this.getOpacity("structure", layer);
+    Draw.Quad({
+      alpha: alpha,
       bloom: 0,
       crop: crop,
       isTexture: 1,
       position: {
+        x: this.position.x + layer.boxOffset.x,
+        y: this.position.y + layer.boxOffset.y - layer.zIndex,
+      },
+      size: layer.boxOffset,
+      textureToUse: textureIndex,
+      tint: layer.color,
+    });
+  }
+  public drawColliders() {
+    Draw.Quad({
+      alpha: 100,
+      bloom: 0,
+      crop: new Float32Array([0, 0, 0, 0]),
+      isTexture: 0,
+      position: {
         x: this.position.x,
-        y: this.position.y - layer.zIndex,
+        y: this.position.y,
       },
       size: {
         w: this.size.x,
         h: this.size.y,
       },
-      textureToUse: textureID,
-      tint: new Uint8ClampedArray(layer.color),
+      textureToUse: 0,
+      tint: new Uint8ClampedArray([255, 255, 255]),
     });
   }
-  private tileEvents() {
-    if (InputManager.onMouseClick("left") && this.isMouseCollide()) {
-      console.log(this);
-    }
-  }
-  private brushEvents() {
-    const mouseCollider = this.isMouseCollide();
-
-    if (this.changedFlag === true && !mouseCollider) {
-      this.changedFlag = false;
-      return;
-    }
-    if (this.changedFlag) return;
-    if (!mouseCollider) return;
-
-    if (InputManager.onMouseDown("left")) this.mouseBrushLeft();
-    else if (InputManager.onMouseDown("right")) this.mouseBrushRight();
-  }
-  private layerEvent() {
-    const layerIndex = Link.get<number>("layer")();
-    let event: "left" | "right" | undefined = undefined;
-
-    if (InputManager.onMouseClick("left")) event = "left";
-    else if (InputManager.onMouseClick("right")) event = "right";
-
-    if (event === undefined) return;
-    if (!this.isMouseCollide()) return;
-
-    const layer = this.layers.find((layer) => layer.layerIndex === layerIndex);
-    if (!layer) return;
-
-    event === "left" ? layer.zIndex++ : layer.zIndex--;
-
-    EntityManager.saveOnChange(this.chunkIndex);
-  }
-  private mouseBrushLeft() {
-    const [getter] = GlobalStore.get<PassManifold>("passManifold");
-    const layerIndex = Link.get<number>("layer")();
-    const zIndex = Link.get<number>("z-index")();
-    const layer: TileLayer = {
-      color: [255, 255, 255, 255] as HSLA,
-      crop: { x: getter.gridPos.x, y: getter.gridPos.y },
-      textureID: getter.textureID,
-      tileID: getter.tileCropIndex,
-      layerIndex: layerIndex,
-      zIndex: zIndex,
-      tileSize: getter.tileSize,
+  public addDecorativeLayer({
+    lutID,
+    viewID,
+    layerIndex,
+    structureIndex,
+  }: DecorativeLayerProps) {
+    const layer: StructureLayer = {
+      color: new Uint8ClampedArray([255, 255, 255]),
+      crop: { h: 0, w: 0, x: 0, y: 0 },
+      boxOffset: { x: 0, y: 0, w: 0, h: 0 },
+      viewID,
+      lutID,
+      lutType: "structure",
+      decorative: true,
+      layerIndex,
+      zIndex: 0,
+      structureIndex: structureIndex,
     };
-    // TODO: zoptymalizowac to, jako ze layers to praktycznie zawsze posortowana lista numerow, jakis algo by wszedł
-    const index = this.layers.findIndex(
+    const index = this.structureLayers.findIndex(
       (layer) => layer.layerIndex === layerIndex
     );
-    if (index !== -1) this.layers[index] = layer;
+    if (index !== -1) this.structureLayers[index] = layer;
     else {
-      this.layers.push(layer);
-      this.layers.sort((a, b) => a.layerIndex - b.layerIndex);
+      this.structureLayers.push(layer);
+      this.structureLayers.sort((a, b) => a.layerIndex - b.layerIndex);
     }
-    //TODO: zamiast zapisywac co kazda zmiana kafla moze lepiej co X ms?
-    //np tagowac ze chunk wymaga zmiany i za X sekund to zrobic jesli nie ma przy nim aktywnosci zadnej wiekszej
-    EntityManager.saveOnChange(this.chunkIndex);
-    this.changedFlag = true;
   }
-  private mouseBrushRight() {
-    const layerIndex = Link.get<number>("layer")();
-    const index = this.layers.findIndex(
+  public addStructLayer({ item, layerIndex, zIndex }: LayerProps) {
+    EngineDebugger.assertCondition("boxOffset" in item);
+    const layer: StructureLayer = {
+      color: new Uint8ClampedArray([255, 255, 255]),
+      crop: item.crop,
+      boxOffset: item.boxOffset,
+      viewID: item.viewID,
+      lutID: item.id,
+      lutType: "structure",
+      decorative: false,
+      layerIndex,
+      zIndex,
+      structureIndex: item.anchorTile,
+    };
+
+    const index = this.structureLayers.findIndex(
+      (layer) => layer.layerIndex === layerIndex
+    );
+    if (index !== -1) this.structureLayers[index] = layer;
+    else {
+      this.structureLayers.push(layer);
+      this.structureLayers.sort((a, b) => a.layerIndex - b.layerIndex);
+    }
+  }
+  public addTileLayer({ item, layerIndex, zIndex }: LayerProps) {
+    EngineDebugger.assertCondition(!("boxOffset" in item));
+    const layer: TileLayer = {
+      color: new Uint8ClampedArray([255, 255, 255, 255]),
+      crop: item.crop,
+      layerIndex: layerIndex,
+      zIndex: zIndex,
+      lutID: item.id,
+      lutType: "tile",
+      viewID: item.viewID,
+    };
+    const index = this.tileLayers.findIndex(
+      (layer) => layer.layerIndex === layerIndex
+    );
+    if (index !== -1) this.tileLayers[index] = layer;
+    else {
+      this.tileLayers.push(layer);
+      this.tileLayers.sort((a, b) => a.layerIndex - b.layerIndex);
+    }
+  }
+  public removeTileLayer(layerIndex: number) {
+    const index = this.tileLayers.findIndex(
       (layer) => layer.layerIndex === layerIndex
     );
     if (index === -1) return;
-    this.layers.splice(index, 1);
-    EntityManager.saveOnChange(this.chunkIndex);
-    this.changedFlag = true;
+    this.tileLayers.splice(index, 1);
+  }
+  public removeStructLayer(layer: number) {
+    this.structureLayers.splice(layer, 1);
   }
 
-  private getOpacity(layer: TileLayer) {
-    const globalOpacity = EntityManager.getLayerVis(layer.layerIndex);
-    return (globalOpacity * layer.color[3] + 127) >> 8;
+  private getOpacity(type: LutType, layer: TileLayer) {
+    const globalOpacity = EntityManager.getLayerVis(type, layer.layerIndex);
+    //REWORK: nie mam jescze koloru w LUT a dokladniej alphy - zmien 255
+    return (globalOpacity * 255 + 127) >> 8;
+  }
+  private static convertBaseTileToLayer(layers: BaseTileLayer[]) {
+    return layers
+      .map((layer) => {
+        const data = AssetsManager.getItem(layer.lutType, layer.lutID);
+        if (!data) return;
+        return {
+          ...layer,
+          color: new Uint8ClampedArray([255, 255, 255]),
+          crop: data.item.crop,
+          viewID: data.view.id,
+        };
+      })
+      .filter(Boolean) as TileLayer[];
+  }
+  private static convertBaseStructToLayer(layers: BaseStructureLayer[]) {
+    return layers
+      .map((layer) => {
+        const data = AssetsManager.getItem(layer.lutType, layer.lutID);
+        if (!data) return;
+        return {
+          ...layer,
+          color: new Uint8ClampedArray([255, 255, 255]),
+          crop: data.item.crop,
+          boxOffset: "boxOffset" in data.item ? data.item.boxOffset : undefined,
+          viewID: data.view.id,
+        };
+      })
+      .filter(Boolean) as StructureLayer[];
   }
 }

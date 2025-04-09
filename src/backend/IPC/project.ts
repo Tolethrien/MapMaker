@@ -1,11 +1,11 @@
-import { ChunkTemplate } from "@/engine/core/entitySystem/entities/chunk";
+import { ExportedChunk } from "@/engine/core/entitySystem/core/entityManager";
 import { ipcMain } from "electron";
 import { mkdir, readFile, writeFile, copyFile as copy, rm } from "fs/promises";
 import path from "path";
 export type ReadChunk = { projectPath: string; index: number };
 export type WriteChunk = {
   projectPath: string;
-  chunk: ChunkTemplate;
+  chunk: ExportedChunk;
   allowOverride?: boolean;
 };
 export type WriteConfig = {
@@ -39,7 +39,7 @@ export function projectIPC() {
 async function readChunk(
   _: Electron.IpcMainInvokeEvent,
   { index, projectPath }: ReadChunk
-): Promise<AsyncStatus & { data: ChunkTemplate | undefined }> {
+): Promise<AsyncStatus & { data: ExportedChunk | undefined }> {
   const chunksPath = path.join(projectPath, "chunks", `chunk-${index}.json`);
   return await readJSON(chunksPath);
 }
@@ -127,27 +127,24 @@ async function addTextureFile(
 async function deleteTextureFile(
   _: Electron.IpcMainInvokeEvent,
   { fileID, projectPath }: DeleteTextureFile
-): Promise<AsyncStatus & { data: ProjectConfig | undefined }> {
-  //TODO: do zmiany
-  const configPath = path.join(projectPath, "config.json");
-  let config: ProjectConfig;
+): Promise<AsyncStatus & { data: TextureConfig | undefined }> {
+  const configPath = path.join(projectPath, "textures", "textureLUT.json");
+  let config: TextureConfig;
   try {
-    const { data } = await readJSON<ProjectConfig>(configPath);
+    const { data } = await readJSON<TextureConfig>(configPath);
     config = data!;
   } catch (error) {
     return { success: false, error: error, data: undefined };
   }
-  const index = config.textureUsed.findIndex(
-    (texture) => texture.id === fileID
-  );
+  const index = config.textures.findIndex((texture) => texture.id === fileID);
   if (index === -1)
     return {
       data: undefined,
       error: `err:deleteTexture - no texture with this ID: ${fileID}`,
       success: false,
     };
-  const filePath = config.textureUsed[index].path;
-  config.textureUsed.splice(index, 1);
+  const filePath = config.textures[index].absolutePath;
+  config.textures.splice(index, 1);
   try {
     await rm(filePath);
     await writeJSON(configPath, config);

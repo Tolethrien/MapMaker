@@ -1,93 +1,75 @@
-import EventBus from "@/utils/eventBus";
 import Draw from "../../aurora/urp/draw";
-import InputManager from "../../modules/inputManager";
+import { LutType } from "../../modules/assetsManager";
 import Entity from "../core/entity";
 import EntityManager from "../core/entityManager";
-import Tile, { TileTemplate } from "./tile";
+import Tile from "./tile";
 import Link from "@/utils/link";
-import { Selectors } from "@/preload/globalLinks";
+import { getConfig } from "@/utils/utils";
 interface Props {
   index: number;
   position: Position2D;
-}
-export interface ChunkTemplate {
-  position: Position2D;
-  index: number;
-  tiles: TileTemplate[];
 }
 
 export default class Chunk extends Entity {
   private static GRID_COLOR = new Uint8ClampedArray([255, 255, 255]);
   private static SELECTION_COLOR = new Uint8ClampedArray([0, 0, 0]);
   private static SELECTION_TEXT_COLOR = new Uint8ClampedArray([255, 255, 255]);
-  private tiles: Set<Tile>;
+  private tiles: Map<number, Tile>;
   public index: number;
   public gridPosition: Position2D;
   constructor({ index, position }: Props) {
-    const size = Link.get<ProjectConfig>("projectConfig")().chunkSizeInPixels;
+    const size = getConfig().chunkSizeInPixels;
     super(
       {
-        x: position.x + size.w * 0.5,
-        y: position.y + size.h * 0.5,
+        x: position.x,
+        y: position.y,
       },
-      { w: size.w * 0.5, h: size.h * 0.5 }
+      { w: size.w, h: size.h }
     );
     this.gridPosition = position;
-    this.tiles = new Set();
+    this.tiles = new Map();
     this.index = index;
-
-    EventBus.on("cameraMove", {
-      name: `chunk-${this.index} move check`,
-      callback: (event: Position2D) => {
-        if (this.isCameraCollide(event) && !this.isCameraOnChunk())
-          EntityManager.remap(this.index, this.position.get);
-      },
-    });
   }
 
   public get getTiles() {
     return this.tiles;
   }
+  public get getBox() {
+    return {
+      x: this.position.x,
+      y: this.position.y,
+      w: this.size.x,
+      h: this.size.y,
+    };
+  }
   public addTile(tile: Tile) {
-    this.tiles.add(tile);
+    this.tiles.set(tile.index, tile);
   }
-  onUpdate(): void {
-    const isGrid = Link.get<Selectors>("activeSelector")() === "grid";
-    if (isGrid) this.chunkSelector();
-    else this.tiles.forEach((tile) => tile.onUpdate());
-  }
-  onEvent(): void {
-    if (this.isMouseCollide()) this.tiles.forEach((tile) => tile.onEvent());
-  }
-  onRender(): void {
-    const showGrid = Link.get<boolean>("showGrid")();
+  onUpdate(): void {}
 
-    if (showGrid) this.drawGrid();
-    this.tiles.forEach((tile) => tile.onRender());
+  onRender(type: LutType): void {
+    if (type === "tile") {
+      const showGrid = Link.get<boolean>("showGrid")();
+      if (showGrid) this.drawGrid();
+      this.tiles.forEach((tile) => tile.onRender(type));
+    } else {
+      this.tiles.forEach((tile) => tile.onRender(type));
+    }
+
     if (EntityManager.getFocusedChunkIndex === undefined) return;
     if (this.isChunkSelected()) this.drawSelectedChunk();
     else this.drawUnselectedChunk();
-  }
-  private chunkSelector() {
-    if (!InputManager.onMouseClick("left")) return;
-    if (this.isChunkSelected()) {
-      EntityManager.setFocusedChunk(undefined);
-      return;
-    }
-    if (this.isMouseCollide()) EntityManager.setFocusedChunk(this.index);
   }
 
   private isChunkSelected() {
     return EntityManager.getFocusedChunkIndex === this.index;
   }
-  private isCameraOnChunk() {
-    return EntityManager.getCameraOnChunk === this.index;
-  }
+
   private drawSelectedChunk() {
     Draw.Text({
       alpha: 100,
       bloom: 0,
-      position: this.position.sub([80, 20]).get,
+      position: this.position.add([80, 20]).get,
       color: Chunk.SELECTION_TEXT_COLOR,
       fontFace: "roboto",
       fontSize: 40,
@@ -96,7 +78,7 @@ export default class Chunk extends Entity {
   }
   private drawGrid() {
     const size = Draw.getTextureMeta();
-    const config = Link.get<ProjectConfig>("projectConfig")();
+    const config = getConfig();
     const crop = new Float32Array([
       0,
       0,
@@ -122,7 +104,7 @@ export default class Chunk extends Entity {
   }
   private drawUnselectedChunk() {
     Draw.Quad({
-      alpha: 200,
+      alpha: 100,
       bloom: 0,
       crop: new Float32Array([0, 0, 1, 1]),
       isTexture: 0,
@@ -141,7 +123,7 @@ export default class Chunk extends Entity {
     Draw.Text({
       alpha: 255,
       bloom: 0,
-      position: this.position.sub([80, 20]).get,
+      position: this.position.add([80, 20]).get,
       color: Chunk.SELECTION_TEXT_COLOR,
       fontFace: "roboto",
       fontSize: 40,

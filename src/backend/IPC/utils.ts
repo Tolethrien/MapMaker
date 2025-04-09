@@ -10,6 +10,7 @@ export type GetPaths =
 export function utilsIPC() {
   ipcMain.handle("joinPath", joinPath);
   ipcMain.handle("getPathTo", getPathTo);
+  ipcMain.handle("getFileName", getFileName);
 }
 async function joinPath(_: Electron.IpcMainInvokeEvent, segments: string[]) {
   return path.join(...segments);
@@ -17,4 +18,7 @@ async function joinPath(_: Electron.IpcMainInvokeEvent, segments: string[]) {
 function getPathTo(_: Electron.IpcMainInvokeEvent, where: GetPaths): string {
   if (where === "current") return app.getAppPath();
   return app.getPath(where);
+}
+function getFileName(_: Electron.IpcMainInvokeEvent, filePath: string): string {
+  return path.basename(filePath);
 }

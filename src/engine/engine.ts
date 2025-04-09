@@ -8,61 +8,48 @@ import RenderStatsConnector from "@/editor/view/rightBar/modules/renderStats/con
 import Link from "@/utils/link";
 
 import { sendNotification } from "@/utils/utils";
-import AssetsManager from "@/utils/assetsManger";
-import EventBus from "@/utils/eventBus";
+import AssetsManager from "@/engine/core/modules/assetsManager";
+import GlobalStore from "./core/modules/globalStore";
+import EventManager from "./core/modules/eventManager";
 export default class Engine {
   private static isInit = false;
   private static loopID: number = 0;
   public static async initialize(config: ProjectConfig) {
-    if (this.isInit) {
-      EngineDebugger.showInfo(
-        "Engine already initialize, closing current instance...",
-        "Engine"
-      );
-      this.closeEngine();
-    }
+    if (this.isInit) this.closeEngine();
 
-    //TODO: jeden centralny punkt canvasu
-    //TODO: te wszystkie inity zrobic w eventBusie
     const canvas = document.getElementById("editorCanvas") as HTMLCanvasElement;
     Link.set<ProjectConfig>("projectConfig")(config);
+    GlobalStore.add("globalCanvas", canvas);
 
-    await Aurora.initialize(canvas); // needs to be before preload
-    Camera.initialize(config.chunkSizeInPixels.h, config.chunkSizeInPixels.w);
-
-    await AssetsManager.loadDataFromConfig();
-    AssetsManager.DEBUG();
+    await Aurora.initialize(); // needs to be before preload
     await Batcher.createBatcher({
       backgroundColor: [0, 0, 0, 255],
       bloom: { active: false, str: 0 },
       customCamera: true,
-      loadTextures: AssetsManager.getTexturesArray().map((item) => {
-        return { name: item.name, url: item.path };
-      }),
-      lighting: false,
-      maxQuadPerSceen: 100000,
+      loadTextures: [],
+      lighting: true,
+      maxQuadPerSceen: 10000,
     });
-    config.layersVisibility.forEach((layer) =>
-      EntityManager.updateLayerVis(layer[0], layer[1])
-    );
+
+    await AssetsManager.loadDataFromConfig();
+    Camera.initialize(canvas.width, canvas.height);
+    InputManager.init();
     Link.set("engineInit")(true);
+
     sendNotification({
       type: "info",
       value: `Engine Initialize with project: ${config.name}`,
     });
-    InputManager.init(canvas);
     this.isInit = true;
     this.loop();
   }
   public static closeEngine() {
-    if (!this.isInit) return;
     EngineDebugger.showInfo(
       "Engine already initialize, closing current instance...",
       "Engine"
     );
     cancelAnimationFrame(this.loopID);
     Batcher.closeBatcher();
-    EventBus.removeEvent("reTexture");
     AssetsManager.clearAssets();
     EntityManager.clearAll();
     Link.set("engineInit")(false);
@@ -72,14 +59,15 @@ export default class Engine {
 
   private static loop() {
     RenderStatsConnector.start();
-    Batcher.startBatch();
     // Batcher.setScreenShader("noice", 0.6);
-    EntityManager.frameCleanUp();
     InputManager.update();
     Camera.update();
     Batcher.setCameraBuffer(Camera.getProjectionViewMatrix.getMatrix);
-    EntityManager.updateAll();
-    EntityManager.renderAll();
+    // EntityManager.onEvent();
+    EventManager.update();
+    EntityManager.onUpdate();
+    Batcher.startBatch();
+    EntityManager.onRender();
     RenderStatsConnector.swapToGPU();
     Batcher.endBatch();
     RenderStatsConnector.stop();

@@ -11,7 +11,6 @@ interface Props {
   allowBeforeInit?: boolean;
 }
 export default function ModuleFrame(props: Props) {
-  //TODO: settings oraz close
   const engineInit = Link.get<boolean>("engineInit");
   const isDisableOnStart = () => {
     if (props.allowBeforeInit) return false;

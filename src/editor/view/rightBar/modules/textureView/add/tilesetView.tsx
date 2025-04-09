@@ -7,26 +7,24 @@ import IconButton from "@/editor/components/buttonAsIcon";
 import Input from "@/editor/components/input";
 import Modal from "@/editor/components/modal";
 import { getAPI } from "@/preload/getAPI";
-import AssetsManager from "@/utils/assetsManger";
+import AssetsManager from "@/engine/core/modules/assetsManager";
 import { sendNotification } from "@/utils/utils";
 import { batch, createSignal, onMount, Show } from "solid-js";
 import { createStore } from "solid-js/store";
-import TileCanvas, { Selector } from "./tileCanvas";
+import TileCanvas, { TileSelector } from "./tileCanvas";
 
 interface Props {
   onOpen: () => boolean;
   onClose: () => void;
 }
 const { openFilePicker } = getAPI("dialog");
-//TODO: add a info window that texture is bigger then grid and have some leftovers (eg. 5 px in 16x16 grid)
-//TODO: mouse wheel moves canvas AND create AABB
 export default function TileSetViewModal(props: Props) {
   let canvas!: HTMLCanvasElement;
   let controller!: TileCanvas;
   const [loading, setLoading] = createSignal(false);
   const [restoring, setRestoring] = createSignal(false);
   const [currentSelector, setCurrentSelector] =
-    createSignal<Selector>("included");
+    createSignal<TileSelector>("included");
 
   const [state, setState] = createStore({
     path: "C:\\Users\\Tolet\\Desktop\\textures\\postapo.png",
@@ -73,10 +71,9 @@ export default function TileSetViewModal(props: Props) {
   };
   const textureLoader = async () => {
     setLoading(true);
-    //TODO: why do i need success when i can just check is error undefined?
 
     const { error, success } = await AssetsManager.updateTileLUT(
-      controller.getLUT(),
+      controller.exportLUT(),
       {
         path: state.path,
         tileSize: state.tileSize,
@@ -98,7 +95,7 @@ export default function TileSetViewModal(props: Props) {
       props.onClose();
     });
   };
-  const setSelector = (selector: Selector) => {
+  const setSelector = (selector: TileSelector) => {
     setCurrentSelector(selector);
     controller.setSelector(selector);
   };
@@ -159,7 +156,7 @@ export default function TileSetViewModal(props: Props) {
                 type="range"
                 min="0"
                 max="255"
-                value="255"
+                value={TileCanvas.BASE_ALPHA}
                 class="selectorVerticalRange -rotate-90 w-14 h-[6px] absolute left-full -translate-x-10 translate-y-6"
                 onInput={(e) => controller.setGridAlpha(Number(e.target.value))}
               />

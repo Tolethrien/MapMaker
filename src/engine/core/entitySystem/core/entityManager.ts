@@ -1,30 +1,47 @@
-import Tile, { TileTemplate } from "../entities/tile";
+import Tile, { BaseStructureLayer, BaseTileLayer } from "../entities/tile";
 import EngineDebugger from "../../modules/debugger";
-import Chunk, { ChunkTemplate } from "../entities/chunk";
+import Chunk from "../entities/chunk";
 import Link from "@/utils/link";
 import HollowChunk from "../entities/chunkHollow";
 import { getAPI } from "@/preload/getAPI";
-import { sendNotification } from "@/utils/utils";
-import { Selectors } from "@/preload/globalLinks";
-//TODO: po refactorze znowu notyfikacje trzeba poustawiac w odpowiednim miejscu
-//TODO: czegos nie czyścisz jak wczytujesz projekt z juz wczytanego
+import { getConfig, sendNotification } from "@/utils/utils";
+import { LayersLevel, PassManifold, Selectors } from "@/preload/globalLinks";
+import InputManager from "../../modules/inputManager";
+import GlobalStore from "../../modules/globalStore";
+import AssetsManager, { LutType } from "@/engine/core/modules/assetsManager";
+import MathU from "@/math/math";
+import { saveChunkOnChange } from "@/utils/projectUtils";
+export interface exportedTile {
+  //in tile
+  collider: boolean;
+  tileLayers: BaseTileLayer[];
+  structureLayers: BaseStructureLayer[];
+}
+export interface ExportedChunk {
+  position: Position2D;
+  index: number;
+  tiles: exportedTile[];
+}
 const { readChunk, writeChunk } = getAPI("project");
+
 export default class EntityManager {
   private static loadedChunks: Map<number, Chunk> = new Map();
   private static hollowChunks: Map<number, HollowChunk> = new Map();
   private static chunksToRemove: Set<number> = new Set();
   private static hollowsToRemove: Set<number> = new Set();
   private static chunksToAdd: Set<number> = new Set();
-  private static cameraOnChunk: number = 0;
-  private static focusedChunk: number | undefined = undefined;
-  private static RINGS = 8;
-  private static LayerVisibility: Map<number, number> = new Map();
+  public static RINGS = 8;
+  private static LayerVisibility: {
+    tile: Map<number, number>;
+    structure: Map<number, number>;
+  } = { structure: new Map(), tile: new Map() };
+  private static lastChangedTile: Tile | undefined = undefined;
 
-  public static updateLayerVis(index: number, value: number) {
-    this.LayerVisibility.set(index, value);
+  public static updateLayerVis(LUT: LutType, index: number, value: number) {
+    this.LayerVisibility[LUT].set(index, value);
   }
-  public static getLayerVis(index: number) {
-    return this.LayerVisibility.get(index) ?? 255;
+  public static getLayerVis(LUT: LutType, index: number) {
+    return this.LayerVisibility[LUT].get(index) ?? 255;
   }
   public static getVisibilityList() {
     return this.LayerVisibility;
@@ -35,35 +52,21 @@ export default class EntityManager {
   public static getChunk(index: number) {
     return this.loadedChunks.get(index);
   }
-  public static get getCameraOnChunk() {
-    return this.cameraOnChunk;
+  public static getHollows() {
+    return this.hollowChunks;
   }
 
-  public static get getFocusedChunk() {
-    if (!this.focusedChunk) return;
-    return this.loadedChunks.get(this.focusedChunk);
+  public static onEvent() {
+    const [getter] = GlobalStore.get<PassManifold>("passManifold");
+    if (getter.type === "tile") {
+      this.onTileEvents(getter.LutID);
+    } else {
+      this.onStructEvents(getter.LutID);
+    }
   }
-  public static get getFocusedChunkIndex() {
-    return this.focusedChunk;
-  }
-  public static setFocusedChunk(index: number | undefined) {
-    this.focusedChunk = index;
-  }
-  public static updateAll() {
-    const selector = Link.get<Selectors>("activeSelector")();
+  public static onUpdate() {}
 
-    this.loadedChunks.forEach((chunk) => {
-      chunk.onEvent();
-      chunk.onUpdate();
-    });
-
-    if (selector === "grid")
-      this.hollowChunks.forEach((chunk) => {
-        chunk.onEvent();
-        chunk.onUpdate();
-      });
-  }
-  public static renderAll() {
+  public static onRender() {
     const selector = Link.get<Selectors>("activeSelector")();
 
     const sorted = Array.from(this.loadedChunks.values()).sort(
@@ -75,16 +78,114 @@ export default class EntityManager {
       }
     );
 
-    if (selector === "grid")
-      this.hollowChunks.forEach((chunk) => chunk.onRender());
-
-    sorted.forEach((chunk) => chunk.onRender());
+    // if (selector === "brush")
+    //   this.hollowChunks.forEach((chunk) => chunk.onRender());
+    sorted.forEach((chunk) => chunk.onRender("tile"));
+    sorted.forEach((chunk) => chunk.onRender("structure"));
   }
+  private static onTileEvents(lutID: string) {
+    if (InputManager.onMouseDown("left")) {
+      const { tile: layerIndex } = Link.get<LayersLevel>("layer")();
+      const tile = this.getTileToChange(layerIndex, lutID);
+      if (!tile) return;
+      const lutData = AssetsManager.getItem("tile", lutID);
+      EngineDebugger.assertValue(lutData, {
+        msg: "in place event should always be a lut item from AM",
+      });
+      const zIndex = Link.get<number>("z-index")();
+      tile.addTileLayer({ item: lutData.item, layerIndex, zIndex });
+      //TODO: zamiast zapisywac co kazda zmiana kafla moze lepiej co X ms?
+      //np tagowac ze chunk wymaga zmiany i za X sekund to zrobic jesli nie ma przy nim aktywnosci zadnej wiekszej (debounce)
+      saveChunkOnChange(tile.chunkIndex);
+    }
+  }
+  public static onStructEvents(lutID: string) {
+    if (InputManager.onMouseClick("left")) {
+      const lutItem = AssetsManager.getItem("structure", lutID);
+      EngineDebugger.assertValue(lutItem, {
+        msg: "in place event should always be a lut item from AM",
+      });
+      const { item } = lutItem;
+      const zIndex = Link.get<number>("z-index")();
+      const { tileSize, chunkSizeInTiles } = getConfig();
+      const { structure: layerIndex } = Link.get<LayersLevel>("layer")();
+
+      const mousePos = InputManager.getMousePosition();
+      const { tileCol: anchorCol, tileRow: anchorRow } = MathU.getTilePosInGrid(
+        item.anchorTile,
+        item.objectTileSize.w
+      );
+      //left top struct tile  in world
+      const structCol = Math.floor(mousePos.x / tileSize.w) - anchorCol;
+      const structRow = Math.floor(mousePos.y / tileSize.h) - anchorRow;
+      const anchorTile = this.getWorldTileFromStructTile(
+        item.anchorTile,
+        { col: structCol, row: structRow },
+        item.objectTileSize
+      );
+
+      EngineDebugger.assertValue(anchorTile);
+      if (anchorTile) {
+        anchorTile.addStructLayer({
+          item,
+          layerIndex,
+          zIndex,
+        });
+      }
+      // calculating indexes and chunks of all tiles
+      for (const structTileIndex of item.colliderTiles) {
+        const colliderTile = this.getWorldTileFromStructTile(
+          structTileIndex,
+          { col: structCol, row: structRow },
+          item.objectTileSize
+        );
+        if (colliderTile && colliderTile.index !== anchorTile.index)
+          colliderTile.addDecorativeLayer({
+            layerIndex,
+            lutID: item.id,
+            viewID: item.viewID,
+            structureIndex: structTileIndex,
+          });
+      }
+      saveChunkOnChange(anchorTile.chunkIndex);
+    }
+  }
+  private static getTile(chunk: number, tile: number) {
+    return this.loadedChunks.get(chunk)?.getTiles.get(tile);
+  }
+  public static getWorldTileFromStructTile(
+    structTileIndex: number,
+    struct: { col: number; row: number },
+    itemInTiles: Size2D
+  ) {
+    const { tileSize, chunkSizeInTiles } = getConfig();
+    const tileCol = structTileIndex % itemInTiles.w;
+    const tileRow = Math.floor(structTileIndex / itemInTiles.w);
+
+    const chunkIndex = MathU.getSpiralIndexFromPosition({
+      x: (struct.col + tileCol) * tileSize.w,
+      y: (struct.row + tileRow) * tileSize.h,
+    });
+    const chunk = this.loadedChunks.get(chunkIndex);
+    if (!chunk) return undefined;
+
+    const chunkTileColStart = Math.floor(chunk.position.x / tileSize.w);
+    const chunkTileRowStart = Math.floor(chunk.position.y / tileSize.h);
+
+    const tileIndex =
+      (struct.row + tileRow - chunkTileRowStart) * chunkSizeInTiles.w +
+      (struct.col + tileCol - chunkTileColStart);
+    const tile = chunk.getTiles.get(tileIndex);
+    if (!tile) return undefined;
+    return tile;
+  }
+
   public static clearAll() {
     this.loadedChunks.clear();
     this.hollowChunks.clear();
   }
-  public static async frameCleanUp() {
+  public static async frameCleanUp(newChunk: number) {
+    this.remapChunks(newChunk);
     if (this.chunksToRemove.size === 0 && this.chunksToAdd.size === 0) return;
     this.chunksToRemove.forEach((index) => this.loadedChunks.delete(index));
     this.hollowsToRemove.forEach((index) => this.hollowChunks.delete(index));
@@ -94,7 +195,7 @@ export default class EntityManager {
   }
   public static async loadChunks() {
     //TODO: change this to own threat and delegating jobs
-    const config = Link.get<ProjectConfig>("projectConfig")();
+    const config = getConfig();
     const hollows = new Set<number>();
     const chunkPromises = Array.from(this.chunksToAdd).map(async (index) => {
       const { data } = await readChunk({
@@ -105,7 +206,6 @@ export default class EntityManager {
       return data;
     });
     const results = await Promise.all(chunkPromises);
-
     results.forEach((res) => {
       if (typeof res === "number") {
         hollows.add(res);
@@ -117,37 +217,51 @@ export default class EntityManager {
     });
     EntityManager.generateHollows(hollows);
   }
-  public static populateChunk(chunkData: ChunkTemplate) {
+  public static populateChunk(chunkData: ExportedChunk) {
+    const { chunkSizeInTiles, tileSize } = getConfig();
     const chunk = new Chunk({
       index: chunkData.index,
       position: chunkData.position,
     });
+
     chunkData.tiles.forEach((tileData, index) => {
-      const tilePos = this.getTilePosition(chunkData.position, index);
+      const tilePos = MathU.getTileCoordinatesFromIndex({
+        index,
+        gridWidth: chunkSizeInTiles.w,
+        tileSize,
+        offset: chunk.position,
+      });
       const tile = new Tile({
         pos: tilePos,
         chunkIndex: chunkData.index,
         tileIndex: index,
-        layers: tileData.layers,
+        structureLayers: tileData.structureLayers,
+        tileLayers: tileData.tileLayers,
       });
       chunk.addTile(tile);
     });
     this.loadedChunks.set(chunkData.index, chunk);
   }
   public static async createEmptyChunk(chunkIndex: number) {
-    const config = Link.get<ProjectConfig>("projectConfig")();
-    const numberOfTiles = config.chunkSizeInTiles.w * config.chunkSizeInTiles.h;
-    const position = this.getSpiralPositionFromIndex(chunkIndex);
+    const { chunkSizeInTiles, tileSize, projectPath } = getConfig();
+    const numberOfTiles = chunkSizeInTiles.w * chunkSizeInTiles.h;
+    const position = MathU.getSpiralPositionFromIndex(chunkIndex);
     const chunk = new Chunk({ index: chunkIndex, position });
     Array(numberOfTiles)
       .fill(null)
       .forEach((_, tileIndex) => {
-        const tilePos = this.getTilePosition(position, tileIndex);
+        const tilePos = MathU.getTileCoordinatesFromIndex({
+          index: tileIndex,
+          gridWidth: chunkSizeInTiles.w,
+          tileSize: tileSize,
+          offset: chunk.position,
+        });
         const tile = new Tile({
           pos: tilePos,
           chunkIndex: chunkIndex,
           tileIndex: tileIndex,
-          layers: [],
+          structureLayers: [],
+          tileLayers: [],
         });
         chunk.addTile(tile);
       });
@@ -158,15 +272,15 @@ export default class EntityManager {
       chunk: {
         index: chunkIndex,
         position: { x: position.x, y: position.y },
-        tiles: Array.from(chunk.getTiles).map((tile) => {
+        tiles: Array.from(chunk.getTiles.values()).map((tile) => {
           return {
-            collider: 0,
-            index: tile.tileIndex,
-            layers: [],
+            collider: false,
+            structureLayers: [],
+            tileLayers: [],
           };
         }),
       },
-      projectPath: config.projectPath,
+      projectPath: projectPath,
     });
     if (!ChunkFileStatus.success) {
       sendNotification({
@@ -177,60 +291,18 @@ export default class EntityManager {
     }
     return { error: "", success: true };
   }
-  public static async saveOnChange(chunkIndex: number) {
-    const config = Link.get<ProjectConfig>("projectConfig")();
-    const chunk = this.getChunk(chunkIndex);
-    EngineDebugger.assertValue(chunk, {
-      msg: "Save on change got non existent index",
-    });
-    const tiles: TileTemplate[] = [];
-    chunk.getTiles.forEach((tile) =>
-      tiles.push({
-        collider: 0,
-        index: tile.tileIndex,
-        layers: tile.layers,
-      })
-    );
-    const saveData: ChunkTemplate = {
-      index: chunk.index,
-      position: chunk.gridPosition,
-      tiles: tiles,
-    };
-    const ChunkFileStatus = await writeChunk({
-      chunk: saveData,
-      projectPath: config.projectPath,
-    });
-    if (!ChunkFileStatus.success) return ChunkFileStatus;
-    return { error: "", success: true };
-  }
+
   public static generateHollows(hollows: Set<number>) {
     hollows.forEach((index) => {
       if (this.hollowChunks.has(index)) return;
-      const position = this.getSpiralPositionFromIndex(index);
+      const position = MathU.getSpiralPositionFromIndex(index);
       this.hollowChunks.set(index, new HollowChunk({ index, position }));
     });
   }
-  public static findChunksInRange(position: { x: number; y: number }) {
-    const config = Link.get<ProjectConfig>("projectConfig")();
-    const w = config.chunkSizeInPixels.w;
-    const h = config.chunkSizeInPixels.h;
-    const chunks: Set<number> = new Set();
 
-    for (let dy = -this.RINGS; dy <= this.RINGS; dy++) {
-      for (let dx = -this.RINGS; dx <= this.RINGS; dx++) {
-        const index = this.getSpiralIndexFromPosition({
-          x: position.x + dx * w,
-          y: position.y + dy * h,
-        });
-        chunks.add(index);
-      }
-    }
-    return chunks;
-  }
-
-  public static remap(cameraOnChunkIndex: number, chunkPosition: Position2D) {
-    this.cameraOnChunk = cameraOnChunkIndex;
-    const chunk = this.findChunksInRange(chunkPosition);
+  private static remapChunks(cameraOnChunkIndex: number) {
+    const chunkPosition = MathU.getSpiralPositionFromIndex(cameraOnChunkIndex);
+    const chunk = MathU.getChunksInRange(chunkPosition, this.RINGS);
     chunk.forEach(
       (chunkIndex) =>
         !this.loadedChunks.has(chunkIndex) &&
@@ -247,82 +319,23 @@ export default class EntityManager {
     );
   }
 
-  private static getSpiralIndexFromPosition(position: Position2D): number {
-    const config = Link.get<ProjectConfig>("projectConfig")();
-
-    const x = Math.floor(position.x / config.chunkSizeInPixels.w);
-    const y = Math.floor(position.y / config.chunkSizeInPixels.h);
-
-    if (x === 0 && y === 0) return 0;
-
-    const ring = Math.max(Math.abs(x), Math.abs(y));
-    const ringStart = (2 * (ring - 1) + 1) ** 2;
-
-    if (y === -ring) return ringStart + (6 * ring - 1) + Math.abs(x + ring);
-    if (x === ring) return ringStart - 1 + Math.abs(y + ring);
-    if (x === -ring) return ringStart + (4 * ring - 1) + Math.abs(y - ring);
-    if (y === ring) return ringStart + (2 * ring - 1) + Math.abs(x - ring);
-    throw EngineDebugger.programBreak(
-      `Spiral Index in entity manager not found, this should be impossible`
-    );
+  public static getTileToRemove() {
+    const mouseOn = InputManager.getMouseHover;
+    const tile = this.getTile(mouseOn.chunk, mouseOn.tile);
+    if (!tile) return;
+    this.lastChangedTile = tile;
+    return tile;
   }
-  private static getSpiralPositionFromIndex(index: number): Position2D {
-    if (index === 0) return { x: 0, y: 0 };
-    const config = Link.get<ProjectConfig>("projectConfig")();
-    const x = config.chunkSizeInPixels.w;
-    const y = config.chunkSizeInPixels.h;
-
-    const ring = Math.ceil((Math.sqrt(index + 1) - 1) / 2);
-    const startIndex = (2 * ring - 1) ** 2;
-    const offset = index - startIndex;
-
-    const side = Math.floor(offset / (ring * 2));
-    const position = offset % (ring * 2);
-
-    switch (side) {
-      case 0:
-        return { x: ring * x, y: (-ring + 1 + position) * y };
-      case 1:
-        return { x: (ring - 1 - position) * x, y: ring * y };
-      case 2:
-        return { x: -ring * x, y: (ring - 1 - position) * y };
-      case 3:
-        return { x: (-ring + 1 + position) * x, y: -ring * y };
-    }
-    throw EngineDebugger.programBreak(
-      `Position from Spiral Index in entity manager not found, this should be impossible`
-    );
+  public static getTileToChange(layerIndex: number, lutID: string) {
+    const mouseOn = InputManager.getMouseHover;
+    const tile = this.getTile(mouseOn.chunk, mouseOn.tile);
+    if (!tile) return;
+    if (
+      mouseOn.tile === this.lastChangedTile?.index &&
+      this.lastChangedTile?.tileLayers[layerIndex]?.lutID === lutID
+    )
+      return;
+    this.lastChangedTile = tile;
+    return tile;
   }
-  private static getTilePosition(chunkPos: Position2D, tileIndex: number) {
-    const config = Link.get<ProjectConfig>("projectConfig")();
-
-    const tilesPerRow = config.chunkSizeInTiles.w;
-    const tileXIndex = tileIndex % tilesPerRow;
-    const tileYIndex = Math.floor(tileIndex / tilesPerRow);
-    const x = chunkPos.x + tileXIndex * config.tileSize.w;
-    const y = chunkPos.y + tileYIndex * config.tileSize.h;
-
-    return { x, y };
-  }
-  // public static getLastRingIndexes() {
-  //   const lastIndex = Array.from(this.loadedChunks.keys()).reduce(
-  //     (maxIndex, currIndex) => (currIndex > maxIndex ? currIndex : maxIndex)
-  //   );
-  //   const chunkPosition = this.loadedChunks.get(lastIndex)!.transform.position;
-
-  //   const config = Link.get<ProjectConfig>("projectConfig")();
-
-  //   const x = Math.floor(chunkPosition.x / config.chunkSizeInPixels.w);
-  //   const y = Math.floor(chunkPosition.y / config.chunkSizeInPixels.h);
-
-  //   if (x === 0 && y === 0) return [1, 2, 3, 4, 5, 6, 7, 8];
-
-  //   const ring = Math.max(Math.abs(x), Math.abs(y));
-  //   const ringStartIndex = (2 * (ring - 1) + 1) ** 2;
-  //   const numberOfIndexes = lastIndex - ringStartIndex;
-  //   return Array.from(
-  //     { length: numberOfIndexes },
-  //     (_, index) => ringStartIndex + index
-  //   );
-  // }
 }

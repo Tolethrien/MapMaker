@@ -1,16 +1,19 @@
-import EntityManager from "@/engine/core/entitySystem/core/entityManager";
-import { ChunkTemplate } from "@/engine/core/entitySystem/entities/chunk";
+import EntityManager, {
+  ExportedChunk,
+  exportedTile,
+} from "@/engine/core/entitySystem/core/entityManager";
 import Engine from "@/engine/engine";
 import { getAPI } from "@/preload/getAPI";
-import Link from "@/utils/link";
+import MathU from "@/math/math";
+import { getConfig } from "./utils";
+import EngineDebugger from "@/engine/core/modules/debugger";
 
 const {
   createProjectBoilerplate,
   writeConfig,
   readConfig,
   readChunk,
-  addTextureFile,
-  deleteTextureFile,
+  writeChunk,
 } = getAPI("project");
 const { joinPath } = getAPI("utils");
 export interface NewProjectProps {
@@ -36,8 +39,6 @@ export async function createNewProject(
       h: props.chunkSize.h * props.tileSize.h,
     },
     projectPath: projectPath,
-    textureUsed: [],
-    layersVisibility: [],
   };
   const boilerplate = await createProjectBoilerplate(projectPath);
   if (!boilerplate.success) return boilerplate;
@@ -51,7 +52,10 @@ export async function createNewProject(
   await Engine.initialize(projectConfig);
   const createChunkStatus = await EntityManager.createEmptyChunk(0);
   if (!createChunkStatus.success) return createChunkStatus;
-  const chunkIndexes = EntityManager.findChunksInRange({ x: 0, y: 0 });
+  const chunkIndexes = MathU.getChunksInRange(
+    { x: 0, y: 0 },
+    EntityManager.RINGS
+  );
   chunkIndexes.delete(0);
   EntityManager.generateHollows(chunkIndexes);
 
@@ -65,8 +69,11 @@ export async function openProject(folderPath: string): Promise<AsyncStatus> {
   await Engine.initialize(config!);
   const hollows = new Set<number>();
 
-  const chunks: ChunkTemplate[] = [];
-  const chunkIndexes = EntityManager.findChunksInRange({ x: 0, y: 0 });
+  const chunks: ExportedChunk[] = [];
+  const chunkIndexes = MathU.getChunksInRange(
+    { x: 0, y: 0 },
+    EntityManager.RINGS
+  );
   for (const index of chunkIndexes) {
     const { data, success } = await readChunk({
       index,
@@ -78,7 +85,6 @@ export async function openProject(folderPath: string): Promise<AsyncStatus> {
     }
     chunks.push(data!);
   }
-
   chunks.forEach((chunk) => EntityManager.populateChunk(chunk));
   EntityManager.generateHollows(hollows);
   return { error: "", success: true };
@@ -87,14 +93,29 @@ export async function openProject(folderPath: string): Promise<AsyncStatus> {
 export function closeProject() {
   Engine.closeEngine();
 }
-
-export async function writeVisibilityConfig() {
-  const config = Link.get<ProjectConfig>("projectConfig")();
-  config.layersVisibility = Array.from(EntityManager.getVisibilityList());
-  const { error, success } = await writeConfig({
-    config: config,
+export async function saveChunkOnChange(chunkIndex: number) {
+  const config = getConfig();
+  const chunk = EntityManager.getChunk(chunkIndex);
+  EngineDebugger.assertValue(chunk, {
+    msg: "Save on change got non existent index",
+  });
+  const tiles: exportedTile[] = [];
+  chunk.getTiles.forEach((tile) =>
+    tiles.push({
+      collider: tile.collider,
+      tileLayers: tile.tileLayers,
+      structureLayers: tile.structureLayers,
+    })
+  );
+  const saveData: ExportedChunk = {
+    index: chunk.index,
+    position: chunk.gridPosition,
+    tiles: tiles,
+  };
+  const ChunkFileStatus = await writeChunk({
+    chunk: saveData,
     projectPath: config.projectPath,
   });
-  if (!success) return { error, success };
+  if (!ChunkFileStatus.success) return ChunkFileStatus;
   return { error: "", success: true };
 }

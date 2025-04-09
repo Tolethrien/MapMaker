@@ -72,7 +72,6 @@ export default function NewProject() {
       context.setModalOpen(false);
     });
   };
-  //TODO: spinner blokuje sie na czas inicjowania silnika
   return (
     <div class="px-12 py-8 bg-app-main-2 text-app-acc-wheat  flex flex-col gap-4">
       <button

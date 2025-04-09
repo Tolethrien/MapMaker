@@ -106,6 +106,15 @@ export default class Draw {
   public static getTextureMeta() {
     return AuroraTexture.getTexture("TextureBatchGame").meta;
   }
+  public static calculateCrop(crop: Box2D) {
+    const size = AuroraTexture.getTexture("TextureBatchGame").meta;
+    return new Float32Array([
+      crop.x / size.width,
+      crop.y / size.height,
+      crop.w / size.width,
+      crop.h / size.height,
+    ]);
+  }
   public static Text({
     alpha,
     bloom,

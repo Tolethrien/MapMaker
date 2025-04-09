@@ -1,5 +1,6 @@
 import Vec2D from "@/math/vec2D";
 import AuroraTexture from "./auroraTexture";
+import GlobalStore from "../modules/globalStore";
 
 export interface sharedDataSchema {
   textureEnum: { [index: string]: number };
@@ -14,10 +15,8 @@ export default class Aurora {
   public static context: GPUCanvasContext;
   public static canvas: HTMLCanvasElement;
 
-  public static async initialize(
-    canvas: HTMLCanvasElement,
-    options?: CoreOptions
-  ) {
+  public static async initialize(options?: CoreOptions) {
+    const [canvas] = GlobalStore.get<HTMLCanvasElement>("globalCanvas");
     const context = canvas.getContext("webgpu")!;
     if (!navigator.gpu) {
       throw new Error("WebGPU not supported on this browser.");

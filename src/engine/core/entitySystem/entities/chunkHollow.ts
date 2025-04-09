@@ -1,44 +1,36 @@
-import Link from "@/utils/link";
 import Entity from "../core/entity";
 import Draw from "../../aurora/urp/draw";
-import InputManager from "../../modules/inputManager";
-import EventBus from "@/utils/eventBus";
-import EntityManager from "../core/entityManager";
-import { randomColor } from "@/utils/utils";
+import { getConfig, randomColor } from "@/utils/utils";
 interface Props {
   index: number;
   position: Position2D;
 }
 export default class HollowChunk extends Entity {
-  private chunkIndex: number;
+  public index: number;
   private hollowColor: HSLA;
   public gridPosition: Position2D;
 
   constructor({ index, position }: Props) {
-    const size = Link.get<ProjectConfig>("projectConfig")().chunkSizeInPixels;
+    const size = getConfig().chunkSizeInPixels;
     super(
       {
-        x: position.x + size.w * 0.5,
-        y: position.y + size.h * 0.5,
+        x: position.x,
+        y: position.y,
       },
-      { w: size.w * 0.5, h: size.h * 0.5 }
+      { w: size.w, h: size.h }
     );
     this.gridPosition = position;
 
-    this.chunkIndex = index;
+    this.index = index;
     this.hollowColor = randomColor();
-    EventBus.on("cameraMove", {
-      name: `chunk-${this.chunkIndex} move check`,
-      callback: (event: Position2D) => {
-        if (this.isCameraCollide(event) && !this.isCameraOnChunk())
-          EntityManager.remap(this.chunkIndex, this.position.get);
-      },
-    });
   }
-  onEvent(): void {
-    if (InputManager.onMouseClick("left") && this.isMouseCollide()) {
-      EntityManager.createEmptyChunk(this.chunkIndex);
-    }
+  public get getBox() {
+    return {
+      x: this.position.x,
+      y: this.position.y,
+      w: this.size.x,
+      h: this.size.y,
+    };
   }
   onUpdate() {}
 
@@ -62,14 +54,11 @@ export default class HollowChunk extends Entity {
     Draw.Text({
       alpha: 255,
       bloom: 0,
-      position: this.position.sub([80, 20]).get,
+      position: this.position.add([80, 20]).get,
       color: new Uint8ClampedArray([255, 255, 255]),
       fontFace: "roboto",
       fontSize: 40,
-      text: `chunk: ${this.chunkIndex}`,
+      text: `chunk: ${this.index}`,
     });
-  }
-  private isCameraOnChunk() {
-    return EntityManager.getCameraOnChunk === this.chunkIndex;
   }
 }

@@ -5,7 +5,7 @@ import TrashSVG from "@/assets/icons/trash";
 import IconButton from "@/editor/components/buttonAsIcon";
 import Input from "@/editor/components/input";
 import Modal from "@/editor/components/modal";
-import AssetsManager from "@/utils/assetsManger";
+import AssetsManager from "@/engine/core/modules/assetsManager";
 import { sendNotification } from "@/utils/utils";
 import {
   batch,
@@ -16,26 +16,26 @@ import {
   Show,
 } from "solid-js";
 import { createStore } from "solid-js/store";
-import ObjectCanvas, { ObjectSelector } from "./objectCanvas";
 import { getAPI } from "@/preload/getAPI";
 import AddSVG from "@/assets/icons/add";
 import Button from "@/editor/components/button";
-import { Structure } from "./objectStructure";
+import StructCanvas, { ObjectSelector, Structure } from "./structCanvas";
 
 interface Props {
   onOpen: () => boolean;
   onClose: () => void;
 }
 const { openFilePicker } = getAPI("dialog");
-//TODO: add warning of clarence on change texture or dims
-export default function ObjectSetViewModal(props: Props) {
+export default function StructSetViewModal(props: Props) {
   let canvas!: HTMLCanvasElement;
   let selectRef!: HTMLSelectElement;
-  let controller!: ObjectCanvas;
+  let controller!: StructCanvas;
   const [textures, setTextures] = createSignal(
     AssetsManager.getTexturesArray()
   );
-  const [objects, setObjects] = createSignal<Structure[]>([]);
+  const [objects, setObjects] = createSignal<Structure[]>([], {
+    equals: false,
+  });
   const [loading, setLoading] = createSignal(false);
   const [currentSelector, setCurrentSelector] =
     createSignal<ObjectSelector>("path");
@@ -46,11 +46,12 @@ export default function ObjectSetViewModal(props: Props) {
   });
   onMount(async () => {
     if (canvas) {
-      controller = new ObjectCanvas(canvas);
+      controller = new StructCanvas(canvas);
       controller.onLUTChange(() => {
         //stupid hack to force redraw without forcing all the object's to change signals(faster way)
+        //TODO: zamienic na store czy cos?
         setObjects([]);
-        setObjects(controller.getLUT());
+        setObjects(controller.getLut());
       });
       await controller.generateImage(state.path);
       controller.changeDims(state.tileSize);
@@ -93,13 +94,12 @@ export default function ObjectSetViewModal(props: Props) {
   };
   const textureLoader = async () => {
     setLoading(true);
-    // //TODO: why do i need success when i can just check is error undefined?
     const isNewTexture = selectRef.selectedIndex === 0;
     const path = isNewTexture
       ? state.path
       : textures()[selectRef.selectedIndex - 1].path;
-    const { error, success } = await AssetsManager.updateObjectLUT(
-      controller.getLUT(),
+    const { error, success } = await AssetsManager.updateStructLUT(
+      controller.exportLUT(),
       {
         path: path,
         tileSize: state.tileSize,
@@ -136,41 +136,39 @@ export default function ObjectSetViewModal(props: Props) {
         >
           <CloseSVG style="h-3 w-3 my-2 mx-3" />
         </button>
-        <p class="text-3xl font-medium pb-4 pt-2">Object Sets</p>
+        <p class="text-3xl font-medium pb-4 pt-2">Structure Sets</p>
         <div class="flex gap-4 justify-center">
           <div class="bg-app-main-3 flex flex-col shadow-inner h-[550px] self-center border-1 border-app-acc-gray">
             <p class="border-b-2 border-app-acc-gray text-center font-medium px-2 py-3">
-              Object List
+              Structures
             </p>
             <div class="overflow-y-auto h-full py-2 min-w-72">
               <For each={objects().toReversed()}>
-                {(item) => {
-                  //TODO: add highlight on hover/click
-                  const points = item.pointsPath;
+                {({ pathPoints, id, colliderTiles, anchorTile }) => {
                   return (
                     <div
                       class="relative bg-app-main-2 shadow-xl px-2 w-72 border-2 border-app-acc-gray text-sm"
-                      data-id={item.getID}
+                      data-id={id}
                     >
                       <p class="text-sm">Path</p>
                       <p>
-                        X:{points.A.x} Y:{points.A.y}
+                        X:{pathPoints.x} Y:{pathPoints.y}
                       </p>
                       <p>
-                        W:{points.B.x} H:{points.B.y}
+                        W:{pathPoints.w} H:{pathPoints.h}
                       </p>
                       <IconButton
-                        onClick={() => controller.deleteStructure(item.getID)}
+                        onClick={() => controller.deleteStructureByID(id)}
                         style="absolute top-1 right-1"
                         scale={false}
                       >
                         <TrashSVG style="w-5 h-5" />
                       </IconButton>
                       <div class="flex gap-4 absolute bottom-2 right-2">
-                        <Show when={item.colliderTiles.size > 0}>
+                        <Show when={colliderTiles.size > 0}>
                           <TrashSVG style="w-3 h-3" />
                         </Show>
-                        <Show when={item.anchorTile !== undefined}>
+                        <Show when={anchorTile !== undefined}>
                           <TrashSVG style="w-3 h-3" />
                         </Show>
                       </div>
