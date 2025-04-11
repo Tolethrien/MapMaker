@@ -4,18 +4,20 @@ import OpenArrowSVG from "@/assets/icons/openArrow";
 import IconButton from "@/editor/components/buttonAsIcon";
 import ZIndexSVG from "@/assets/icons/zIndex";
 import EntityManager from "@/engine/core/entitySystem/core/entityManager";
-import { createSignal } from "solid-js";
+import { createSignal, Show } from "solid-js";
 import BrushSVG from "@/assets/icons/brush";
 import TileSVG from "@/assets/icons/tile";
 import StructSVG from "@/assets/icons/struct";
 import EraserSVG from "@/assets/icons/eraser";
 import { LutType } from "@/engine/core/modules/assetsManager";
+import Button from "@/editor/components/button";
 
 const SVG_ACTIVE_STYLE = "w-8 h-8 stroke-app-acc-red";
 const SVG_INACTIVE_STYLE = "w-8 h-8 stroke-app-acc-ice";
 export default function Selector() {
   const [selector, setSelector] = Link.getLink<Selectors>("activeSelector");
   const [activeLut, setActiveLut] = Link.getLink<LutType>("activeLUT");
+  const [gridMenu, setGridMenu] = Link.getLink<boolean>("gridMenu");
   const [zIndex, setZIndex] = Link.getLink<number>("z-index");
   const [layer, setLayer] = Link.getLink<LayersLevel>("layer");
   const engineInit = Link.get<number>("engineInit");
@@ -36,8 +38,8 @@ export default function Selector() {
 
   return (
     <div
-      class={`px-4 absolute bottom-4 left-1/2 -translate-x-1/2 bg-app-main-2 flex rounded-xl items-start shadow-lg border-1 border-app-acc-gray ${
-        !engineInit() && "pointer-events-none brightness-75"
+      class={`px-4 absolute bottom-4 left-1/2 -translate-x-1/2 bg-app-main-2 bg-opacity-80 backdrop-blur-lg flex rounded-xl items-start shadow-lg border-1 border-app-acc-gray ${
+        !engineInit() && "isInactive"
       }`}
     >
       <div class="border-r-2 border-app-acc-gray pr-2 py-1">
@@ -200,6 +202,15 @@ export default function Selector() {
           </tbody>
         </table>
       </div>
+      <Show when={gridMenu()}>
+        <div class="absolute left-0 top-0 w-full h-full z-50 backdrop-blur-sm flex items-center justify-center backdrop-brightness-50 rounded-xl">
+          <Button
+            onClick={() => setGridMenu(false)}
+            name="close chunk menu"
+            style="px-4 py-2"
+          />
+        </div>
+      </Show>
     </div>
   );
 }

@@ -50,8 +50,8 @@ export default class Camera {
       this.currentCameraOnChunk = chunk.index;
       return;
     }
-    const selector = Link.get<Selectors>("activeSelector")();
-    if (selector !== "grid") return;
+    const gridMenu = Link.get<boolean>("gridMenu")();
+    if (!gridMenu) return;
     for (const hollow of hollows) {
       if (!MathU.pointCollide(camera, hollow.getBox)) continue;
       this.currentCameraOnChunk = hollow.index;

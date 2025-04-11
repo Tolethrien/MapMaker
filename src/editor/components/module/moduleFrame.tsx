@@ -27,9 +27,7 @@ export default function ModuleFrame(props: Props) {
           <CloseSVG style="w-4 h-4" />
         </IconButton>
       </div>
-      <div
-        class={`${isDisableOnStart() && "brightness-50 pointer-events-none"}`}
-      >
+      <div class={`${isDisableOnStart() && "isInactive"}`}>
         <Show when={props.pinnedComponent}>
           <div class="border-b-1 border-app-acc-purp">
             {props.pinnedComponent}

@@ -331,19 +331,19 @@ export default class Batcher {
 
     const atlases: { name: string; bitmap: ImageBitmap }[] = [];
     //brak fontowania - od tego miejsca
-    // const fontFile = await fetch(roboto).then((result) => result.arrayBuffer());
-    // const ttf = parseTTF(fontFile);
-    // const lookups = createGlyphLUT(ttf);
-    // const fontAtlas = await createGlyphAtlas(lookups, fontFile, {
-    //   useSDF: true,
-    // });
-    // Fonter.addFont({
-    //   fontName: "roboto",
-    //   LUT: lookups,
-    //   textureIndex: atlases.length,
-    //   atlasSize: Vec2D.create([fontAtlas.width, fontAtlas.height]),
-    // });
-    // atlases.push({ name: "roboto", bitmap: fontAtlas });
+    const fontFile = await fetch(roboto).then((result) => result.arrayBuffer());
+    const ttf = parseTTF(fontFile);
+    const lookups = createGlyphLUT(ttf);
+    const fontAtlas = await createGlyphAtlas(lookups, fontFile, {
+      useSDF: true,
+    });
+    Fonter.addFont({
+      fontName: "roboto",
+      LUT: lookups,
+      textureIndex: atlases.length,
+      atlasSize: Vec2D.create([fontAtlas.width, fontAtlas.height]),
+    });
+    atlases.push({ name: "roboto", bitmap: fontAtlas });
     //do tego
     if (fonts) {
       if (fonts.length == 0)

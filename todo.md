@@ -46,13 +46,12 @@ ui
 
 ## co nie dziala
 
-- usuwanie z mapy
 - single layer view
 - nazywanie view
-- mouseEventy
 
 # changes
 
+- refactor chunk i tile bo teraz to renderowanie i robienie colliderow jest dziwne i za duzo tego, domyslnie bym chcial by chunk i tile tylko trymały ane a to sie obliczalo wszystko w EM
 - placeObject musi nadpisywac w pliku wszystkie chunki na ktorych cos polozyl a nie tylko jeden jak tile
 - EM odpowiada za renderowanie przezroczystego obiektu na tilu na ktorym jest myszka
 - odśmiecic rozne formaty, np uzywasz i vectorow i box2d mimo iz moglby byc vec4 i miec contain w sobie itp...
@@ -64,6 +63,7 @@ ui
 
 # TODO
 
+- zrobic mozliwosc usuwania structu po kliku w obiekt. Obecnie by usunac rzeba kliknac w anchor
 - zmienic nazwe tile (tile/struct) booo masz tile i potem tile layer i to sie miesza potem w nazwach
 - objectList mialo wyswietlac zdjecie obiektu
 - tryb rysownia colliderow
@@ -89,6 +89,9 @@ ui
 
 # DONE
 
+x usuwanie nie dziala na innym niz poziom 0 w struct, a w tile usuwa wszystkie bo nie filtruje
+x mouseEventy
+x usuwanie z mapy
 x tile addLayers powinno sortowac layery a nie dodawac na konkretny index, jesli to zrobisz usun w statycznej ze jak jest null to return bo nie bedzie juz null
 x zmien ikone z-indexSVG (selector) bo gownianie wyglada
 x w structure trzymaj tylko included tiles jako set a potem jak sprawdzasz collider to set ma opcje czy set jest czescia innego setu, jak tak to git, rysowanie tez mozesz matematycznie z flor wyciagac jak to robisz w mouseEvencie

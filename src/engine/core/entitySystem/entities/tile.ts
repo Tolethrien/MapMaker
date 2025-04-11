@@ -10,12 +10,14 @@ import EngineDebugger from "../../modules/debugger";
 import { getConfig } from "@/utils/utils";
 import EntityManager from "../core/entityManager";
 import Link from "@/utils/link";
+import { LayersLevel, MapMods, MapView } from "@/preload/globalLinks";
 interface TileProps {
   pos: { x: number; y: number };
   tileIndex: number;
   chunkIndex: number;
   tileLayers: BaseTileLayer[];
   structureLayers: BaseStructureLayer[];
+  collider: boolean;
 }
 export type BaseTileLayer = {
   // in: tile
@@ -47,11 +49,6 @@ interface LayerProps {
   layerIndex: number;
   zIndex: number;
 }
-interface TileLayerProps {
-  layer: TileLayer;
-  layerIndex: number;
-  zIndex: number;
-}
 
 interface DecorativeLayerProps {
   viewID: string;
@@ -66,6 +63,7 @@ export default class Tile extends Entity {
   tileLayers: TileLayer[];
   structureLayers: StructureLayer[];
   chunkIndex: number;
+  colliderSet: Set<number>;
 
   constructor({
     pos,
@@ -73,34 +71,42 @@ export default class Tile extends Entity {
     tileIndex,
     structureLayers,
     tileLayers,
+    collider,
   }: TileProps) {
     //TODO: pass this, no need to access on each tile
     const config = getConfig();
     super(pos, config.tileSize);
     this.index = tileIndex;
     this.chunkIndex = chunkIndex;
-    this.tileLayers = Tile.convertBaseTileToLayer(tileLayers);
-    this.structureLayers = Tile.convertBaseStructToLayer(structureLayers);
-    this.collider = false;
+    this.collider = collider;
+    this.colliderSet = new Set();
+    this.tileLayers = this.convertBaseTileToLayer(tileLayers);
+    this.structureLayers = this.convertBaseStructToLayer(structureLayers);
+    if (this.colliderSet.size > 0) this.collider = true;
   }
 
   onUpdate() {}
   onRender(type: LutType): void {
-    if (type === "tile") this.renderTile();
-    else this.renderStruct();
+    const mapView = Link.get<MapView>("mapView")();
+    const currentLayerIndex = Link.get<LayersLevel>("layer")();
+    if (type === "tile") this.renderTile(mapView, currentLayerIndex.tile);
+    else this.renderStruct(mapView, currentLayerIndex.structure);
   }
-  private renderTile() {
+  private renderTile(view: MapView, layerIndex: number) {
+    if (view === "singleStruct") return;
     this.tileLayers.forEach((layer) => {
-      this.drawTileLayer(layer);
+      this.drawTileLayer(layer, view, layerIndex);
     });
   }
-  private renderStruct() {
+  private renderStruct(view: MapView, layerIndex: number) {
+    if (view == "singleTile") return;
     this.structureLayers.forEach((layer) => {
-      this.drawStructLayer(layer);
+      this.drawStructLayer(layer, view, layerIndex);
     });
   }
 
-  private drawTileLayer(layer: TileLayer) {
+  private drawTileLayer(layer: TileLayer, view: MapView, layerIndex: number) {
+    if (view === "singleTile" && layerIndex !== layer.layerIndex) return;
     const textureIndex = AssetsManager.getTextureIndexFromLUT(
       layer.lutType,
       layer.lutID
@@ -119,8 +125,13 @@ export default class Tile extends Entity {
       tint: layer.color,
     });
   }
-  private drawStructLayer(layer: StructureLayer) {
+  private drawStructLayer(
+    layer: StructureLayer,
+    view: MapView,
+    layerIndex: number
+  ) {
     if (layer.lutType === "structure" && layer.decorative) return;
+    if (view === "singleStruct" && layerIndex !== layer.layerIndex) return;
     const textureIndex = AssetsManager.getTextureIndexFromLUT(
       layer.lutType,
       layer.lutID
@@ -142,9 +153,10 @@ export default class Tile extends Entity {
       tint: layer.color,
     });
   }
-  public drawColliders() {
+  public drawCollider() {
+    if (!this.collider) return;
     Draw.Quad({
-      alpha: 100,
+      alpha: 150,
       bloom: 0,
       crop: new Float32Array([0, 0, 0, 0]),
       isTexture: 0,
@@ -186,6 +198,8 @@ export default class Tile extends Entity {
       this.structureLayers.push(layer);
       this.structureLayers.sort((a, b) => a.layerIndex - b.layerIndex);
     }
+    this.colliderSet.add(layerIndex);
+    this.collider = true;
   }
   public addStructLayer({ item, layerIndex, zIndex }: LayerProps) {
     EngineDebugger.assertCondition("boxOffset" in item);
@@ -210,6 +224,12 @@ export default class Tile extends Entity {
       this.structureLayers.push(layer);
       this.structureLayers.sort((a, b) => a.layerIndex - b.layerIndex);
     }
+    const isCollide = item.colliderTiles.find(
+      (tile) => tile === item.anchorTile
+    );
+    if (isCollide === undefined) return;
+    this.colliderSet.add(layerIndex);
+    this.collider = true;
   }
   public addTileLayer({ item, layerIndex, zIndex }: LayerProps) {
     EngineDebugger.assertCondition(!("boxOffset" in item));
@@ -230,6 +250,9 @@ export default class Tile extends Entity {
       this.tileLayers.push(layer);
       this.tileLayers.sort((a, b) => a.layerIndex - b.layerIndex);
     }
+    if (!item.collider) return;
+    this.colliderSet.add(layerIndex);
+    this.collider = true;
   }
   public removeTileLayer(layerIndex: number) {
     const index = this.tileLayers.findIndex(
@@ -237,9 +260,19 @@ export default class Tile extends Entity {
     );
     if (index === -1) return;
     this.tileLayers.splice(index, 1);
+    if (!this.collider) return;
+    this.colliderSet.delete(layerIndex);
+    if (this.colliderSet.size === 0) this.collider = false;
   }
-  public removeStructLayer(layer: number) {
-    this.structureLayers.splice(layer, 1);
+  public removeStructLayer(layerIndex: number) {
+    const index = this.structureLayers.findIndex(
+      (layer) => layer.layerIndex === layerIndex
+    );
+    if (index === -1) return;
+    this.structureLayers.splice(index, 1);
+    if (!this.collider) return;
+    this.colliderSet.delete(layerIndex);
+    if (this.colliderSet.size === 0) this.collider = false;
   }
 
   private getOpacity(type: LutType, layer: TileLayer) {
@@ -247,11 +280,12 @@ export default class Tile extends Entity {
     //REWORK: nie mam jescze koloru w LUT a dokladniej alphy - zmien 255
     return (globalOpacity * 255 + 127) >> 8;
   }
-  private static convertBaseTileToLayer(layers: BaseTileLayer[]) {
+  private convertBaseTileToLayer(layers: BaseTileLayer[]) {
     return layers
       .map((layer) => {
-        const data = AssetsManager.getItem(layer.lutType, layer.lutID);
+        const data = AssetsManager.getItem("tile", layer.lutID);
         if (!data) return;
+        if (data.item.collider) this.colliderSet.add(layer.layerIndex);
         return {
           ...layer,
           color: new Uint8ClampedArray([255, 255, 255]),
@@ -261,11 +295,13 @@ export default class Tile extends Entity {
       })
       .filter(Boolean) as TileLayer[];
   }
-  private static convertBaseStructToLayer(layers: BaseStructureLayer[]) {
+  private convertBaseStructToLayer(layers: BaseStructureLayer[]) {
     return layers
       .map((layer) => {
-        const data = AssetsManager.getItem(layer.lutType, layer.lutID);
+        const data = AssetsManager.getItem("structure", layer.lutID);
         if (!data) return;
+        if (data.item.colliderTiles.includes(layer.structureIndex))
+          this.colliderSet.add(layer.layerIndex);
         return {
           ...layer,
           color: new Uint8ClampedArray([255, 255, 255]),

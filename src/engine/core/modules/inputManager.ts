@@ -6,6 +6,7 @@ import { getConfig } from "@/utils/utils";
 import EntityManager from "../entitySystem/core/entityManager";
 import MathU from "@/math/math";
 import GlobalStore from "./globalStore";
+import { Selectors } from "@/preload/globalLinks";
 
 export type MouseManifold = typeof MOUSE_STATE;
 const MOUSE_STATE = {
@@ -98,9 +99,12 @@ export default class InputManager {
     return this.mousePosition;
   }
   public static bakedKeyboardEvents() {
-    if (this.onKeyHold("Alt") && this.onKeyClick("1")) changeSelector("grid");
-    if (this.onKeyHold("Alt") && this.onKeyClick("2")) changeSelector("tile");
-    if (this.onKeyHold("Alt") && this.onKeyClick("3")) changeSelector("layer");
+    if (this.onKeyHold("Alt") && this.onKeyClick("1"))
+      this.changeSelector("brush");
+    if (this.onKeyHold("Alt") && this.onKeyClick("2"))
+      this.changeSelector("eraser");
+    if (this.onKeyHold("Alt") && this.onKeyClick("3"))
+      this.changeSelector("lifter");
     if (this.onKeyClick("c")) this.controlZIndex("up");
     if (this.onKeyClick("z")) this.controlZIndex("down");
   }
@@ -111,16 +115,31 @@ export default class InputManager {
     if (index === "down") getter() > 0 && setter((prev) => prev - 1);
   }
   private static mouseWorldHover(mouse: Position2D) {
-    const { chunkSizeInTiles, tileSize } = getConfig();
+    const gridMenu = Link.get<boolean>("gridMenu")();
     const chunks = EntityManager.getAllChunks().values();
-    for (const chunk of chunks) {
-      if (!MathU.pointCollide(mouse, chunk.getBox)) continue;
-      const tile =
-        Math.floor((mouse.y - chunk.position.y) / tileSize.h) *
-          chunkSizeInTiles.h +
-        Math.floor((mouse.x - chunk.position.x) / tileSize.w);
-      this.currentMouseHover = { chunk: chunk.index, tile };
-      return;
+    if (gridMenu) {
+      const hollows = EntityManager.getHollows().values();
+      for (const chunk of chunks) {
+        if (!MathU.pointCollide(mouse, chunk.getBox)) continue;
+        this.currentMouseHover = { chunk: chunk.index, tile: -1 };
+        return;
+      }
+      for (const hollow of hollows) {
+        if (!MathU.pointCollide(mouse, hollow.getBox)) continue;
+        this.currentMouseHover = { chunk: hollow.index, tile: -1 };
+        return;
+      }
+    } else {
+      const { chunkSizeInTiles, tileSize } = getConfig();
+      for (const chunk of chunks) {
+        if (!MathU.pointCollide(mouse, chunk.getBox)) continue;
+        const tile =
+          Math.floor((mouse.y - chunk.position.y) / tileSize.h) *
+            chunkSizeInTiles.h +
+          Math.floor((mouse.x - chunk.position.x) / tileSize.w);
+        this.currentMouseHover = { chunk: chunk.index, tile };
+        return;
+      }
     }
     this.currentMouseHover = { chunk: -1, tile: -1 };
   }
@@ -170,5 +189,9 @@ export default class InputManager {
   private static mouseMoveEvent(e: MouseEvent) {
     const { x, y } = this.mouseToWorld({ x: e.offsetX, y: e.offsetY });
     this.mousePosition = { x: x, y: y };
+  }
+  private static changeSelector(select: Selectors) {
+    const set = Link.set<Selectors>("activeSelector");
+    set(select);
   }
 }

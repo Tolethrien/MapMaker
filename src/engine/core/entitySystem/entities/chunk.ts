@@ -1,3 +1,4 @@
+import { MapMods } from "@/preload/globalLinks";
 import Draw from "../../aurora/urp/draw";
 import { LutType } from "../../modules/assetsManager";
 import Entity from "../core/entity";
@@ -47,23 +48,24 @@ export default class Chunk extends Entity {
   }
   onUpdate(): void {}
 
-  onRender(type: LutType): void {
+  onRender(type: LutType | "mods"): void {
     if (type === "tile") {
-      const showGrid = Link.get<boolean>("showGrid")();
-      if (showGrid) this.drawGrid();
+      const mapMods = Link.get<MapMods>("mapMods")();
+      if (mapMods.grid) this.drawGrid();
       this.tiles.forEach((tile) => tile.onRender(type));
-    } else {
+    } else if (type === "structure") {
       this.tiles.forEach((tile) => tile.onRender(type));
     }
+    if (type === "mods") this.tiles.forEach((tile) => tile.drawCollider());
 
-    if (EntityManager.getFocusedChunkIndex === undefined) return;
-    if (this.isChunkSelected()) this.drawSelectedChunk();
-    else this.drawUnselectedChunk();
+    // if (EntityManager.getFocusedChunkIndex === undefined) return;
+    // if (this.isChunkSelected()) this.drawSelectedChunk();
+    // else this.drawUnselectedChunk();
   }
 
-  private isChunkSelected() {
-    return EntityManager.getFocusedChunkIndex === this.index;
-  }
+  // private isChunkSelected() {
+  //   return EntityManager.getFocusedChunkIndex === this.index;
+  // }
 
   private drawSelectedChunk() {
     Draw.Text({

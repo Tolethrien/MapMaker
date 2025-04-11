@@ -1,6 +1,8 @@
 import { createSignal, onMount } from "solid-js";
 import Selector from "./components/selectorBar/selector";
 import AssetsManager from "@/engine/core/modules/assetsManager";
+import MathU from "@/math/math";
+import SideBar from "./components/sideBar/sidebar";
 export default function Canvas() {
   let ref!: HTMLCanvasElement;
   const [size, setSize] = createSignal({ w: 600, h: 600 });
@@ -25,6 +27,7 @@ export default function Canvas() {
           width={size().w}
           height={size().h}
         />
+        <SideBar />
         <Selector />
       </div>
     </div>

@@ -6,17 +6,26 @@ import AssetsManager, { LutType } from "./assetsManager";
 import EntityManager from "../entitySystem/core/entityManager";
 import EngineDebugger from "./debugger";
 import { saveChunkOnChange } from "@/utils/projectUtils";
-import { getConfig } from "@/utils/utils";
-import MathU from "@/math/math";
+import { getConfig, sendNotification } from "@/utils/utils";
 
 export default class EventManager {
   public static update() {
+    const gridMenu = Link.get<boolean>("gridMenu")();
     const selector = Link.get<Selectors>("activeSelector")();
-    if (selector === "brush") this.brushEvents();
+
+    if (gridMenu) this.gridEvents();
+    else if (selector === "brush") this.brushEvents();
     else if (selector === "eraser") this.eraserEvents();
-    else this.lifterEvents();
+    else if (selector === "lifter") this.lifterEvents();
   }
   //MAIN EVENTS
+  private static async gridEvents() {
+    if (InputManager.onMouseClick("left")) {
+      const chunk = InputManager.getMouseHover.chunk;
+      const { error, success } = await EntityManager.createEmptyChunk(chunk);
+      if (!success) EngineDebugger.showError(error, "eventManager");
+    }
+  }
   private static brushEvents() {
     if (InputManager.onMouseDown("left")) this.brushSingleDrawEvent();
     else if (InputManager.onMouseDown("right")) this.brushShapeDrawEvent();
@@ -26,8 +35,11 @@ export default class EventManager {
     else if (InputManager.onMouseDown("right")) this.shapeEraseEvent();
   }
   private static lifterEvents() {
-    if (InputManager.onMouseClick("left")) this.liftUpEvent();
-    else if (InputManager.onMouseClick("right")) this.liftDownEvent();
+    const layers = Link.get<LayersLevel>("layer")();
+    const active = Link.get<LutType>("activeLUT")();
+    if (InputManager.onMouseClick("left")) this.liftUpEvent(active, layers);
+    else if (InputManager.onMouseClick("right"))
+      this.liftDownEvent(active, layers);
   }
 
   //DISPATCHER OF EVENTS
@@ -55,12 +67,43 @@ export default class EventManager {
       () => this.removeBatchStructs()
     );
   }
-  private static liftUpEvent() {
+  private static liftUpEvent(lutType: LutType, layers: LayersLevel) {
     //JAK TO ZROBIC DLA TILE I STRUCT?!
-    console.log("lift up");
+    //TODO: zrobic tu jakis cache typu debounce bo zazwyczaj bedziesz chcial podniesc/opuscic o wiecej niz 1 naraz wic nie ma co kazdy klik szukac tego smaego layeru
+    const tile = EntityManager.getTileFromMouse();
+    if (!tile) return;
+    if (lutType === "tile") {
+      const layer = tile.tileLayers.find(
+        (layer) => layer.layerIndex === layers.tile
+      );
+      if (!layer) return;
+      layer.zIndex++;
+    } else {
+      const layer = tile.structureLayers.find(
+        (layer) => layer.layerIndex === layers.structure
+      );
+      if (!layer) return;
+      layer.zIndex++;
+    }
+    saveChunkOnChange(tile.chunkIndex);
   }
-  private static liftDownEvent() {
-    console.log("lift down");
+  private static liftDownEvent(lutType: LutType, layers: LayersLevel) {
+    const tile = EntityManager.getTileFromMouse();
+    if (!tile) return;
+    if (lutType === "tile") {
+      const layer = tile.tileLayers.find(
+        (layer) => layer.layerIndex === layers.tile
+      );
+      if (!layer) return;
+      layer.zIndex--;
+    } else {
+      const layer = tile.structureLayers.find(
+        (layer) => layer.layerIndex === layers.structure
+      );
+      if (!layer) return;
+      layer.zIndex--;
+    }
+    saveChunkOnChange(tile.chunkIndex);
   }
   // ACTUAL EVENTS xD
   private static addSingleTile() {
@@ -87,102 +130,85 @@ export default class EventManager {
     });
     const { item } = lutItem;
     const zIndex = Link.get<number>("z-index")();
-    const { tileSize } = getConfig();
+    const config = getConfig();
     const { structure: layerIndex } = Link.get<LayersLevel>("layer")();
-
-    const mousePos = InputManager.getMousePosition();
-    const { tileCol: anchorCol, tileRow: anchorRow } = MathU.getTilePosInGrid(
+    const tile = EntityManager.getTileFromMouse();
+    if (!tile) return;
+    const anchorTile = EntityManager.getOffsetStructTile(
+      tile,
+      item,
       item.anchorTile,
-      item.objectTileSize.w
+      config
     );
-    //left top struct tile  in world
-    const structCol = Math.floor(mousePos.x / tileSize.w) - anchorCol;
-    const structRow = Math.floor(mousePos.y / tileSize.h) - anchorRow;
-    const anchorTile = EntityManager.getWorldTileFromStructTile(
-      item.anchorTile,
-      { col: structCol, row: structRow },
-      item.objectTileSize
-    );
-
-    EngineDebugger.assertValue(anchorTile);
-    if (anchorTile) {
-      anchorTile.addStructLayer({
+    if (!anchorTile) return;
+    anchorTile.addStructLayer({
+      item,
+      layerIndex,
+      zIndex,
+    });
+    for (const collider of item.colliderTiles) {
+      if (collider === item.anchorTile) continue;
+      const collierTile = EntityManager.getOffsetStructTile(
+        tile,
         item,
+        collider,
+        config
+      );
+      collierTile?.addDecorativeLayer({
         layerIndex,
-        zIndex,
+        lutID: item.id,
+        structureIndex: collider,
+        viewID: item.viewID,
       });
     }
-    // calculating indexes and chunks of all tiles
-    for (const structTileIndex of item.colliderTiles) {
-      const colliderTile = EntityManager.getWorldTileFromStructTile(
-        structTileIndex,
-        { col: structCol, row: structRow },
-        item.objectTileSize
-      );
-      if (colliderTile && colliderTile.index !== anchorTile.index)
-        colliderTile.addDecorativeLayer({
-          layerIndex,
-          lutID: item.id,
-          viewID: item.viewID,
-          structureIndex: structTileIndex,
-        });
-    }
+
     saveChunkOnChange(anchorTile.chunkIndex);
   }
   private static addButchTiles() {}
   private static addBatchStructs() {}
   private static removeTile() {
     const { tile: layerIndex } = Link.get<LayersLevel>("layer")();
-    const tile = EntityManager.getTileToRemove();
+    const tile = EntityManager.getTileFromMouse();
     if (!tile) return;
     tile.removeTileLayer(layerIndex);
     //TODO: zamiast zapisywac co kazda zmiana kafla moze lepiej co X ms?
     //np tagowac ze chunk wymaga zmiany i za X sekund to zrobic jesli nie ma przy nim aktywnosci zadnej wiekszej (debounce)
     saveChunkOnChange(tile.chunkIndex);
   }
+
   private static removeStruct() {
-    const { tile: layerIndex } = Link.get<LayersLevel>("layer")();
-    const tile = EntityManager.getTileToRemove();
+    const config = getConfig();
+
+    const { structure: layerIndex } = Link.get<LayersLevel>("layer")();
+    const tile = EntityManager.getTileFromMouse();
     if (!tile) return;
     const layer = tile.structureLayers.find(
       (layer) => layer.layerIndex === layerIndex
     );
     if (!layer) return;
+    console.log(layer);
     const itemData = AssetsManager.getItem("structure", layer.lutID);
     if (!itemData) return;
     const item = itemData.item;
-    const { tileSize } = getConfig();
-    const mousePos = InputManager.getMousePosition();
-    const { tileCol: anchorCol, tileRow: anchorRow } = MathU.getTilePosInGrid(
-      item.anchorTile,
-      item.objectTileSize.w
+    const anchorTile = EntityManager.getOffsetStructTile(
+      tile,
+      item,
+      layer.structureIndex,
+      config
     );
-    //left top struct tile  in world
-    const structCol = Math.floor(mousePos.x / tileSize.w) - anchorCol;
-    const structRow = Math.floor(mousePos.y / tileSize.h) - anchorRow;
-    const anchorTile = EntityManager.getWorldTileFromStructTile(
-      item.anchorTile,
-      { col: structCol, row: structRow },
-      item.objectTileSize
-    );
-    console.log(tile);
-    // tile.removeStructLayer(layer.layerIndex);
-    // saveChunkOnChange(tile.chunkIndex);
+    anchorTile?.removeStructLayer(layerIndex);
+    for (const collider of item.colliderTiles) {
+      if (collider === item.anchorTile) continue;
 
-    // for (const structTileIndex of item.colliderTiles) {
-    //   const colliderTile = EntityManager.getWorldTileFromStructTile(
-    //     structTileIndex,
-    //     { col: structCol, row: structRow },
-    //     item.objectTileSize
-    //   );
-    //   if (colliderTile && colliderTile.index !== anchorTile.index)
-    //     colliderTile.addDecorativeLayer({
-    //       layerIndex,
-    //       lutID: item.id,
-    //       viewID: item.viewID,
-    //       structureIndex: structTileIndex,
-    //     });
-    // }
+      const collTile = EntityManager.getOffsetStructTile(
+        tile,
+        item,
+        collider,
+        config
+      );
+      collTile?.removeStructLayer(layerIndex);
+    }
+    saveChunkOnChange(tile.chunkIndex);
   }
   private static removeBatchTiles() {}
   private static removeBatchStructs() {}

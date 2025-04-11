@@ -5,10 +5,18 @@ import Link from "@/utils/link";
 import HollowChunk from "../entities/chunkHollow";
 import { getAPI } from "@/preload/getAPI";
 import { getConfig, sendNotification } from "@/utils/utils";
-import { LayersLevel, PassManifold, Selectors } from "@/preload/globalLinks";
+import {
+  LayersLevel,
+  MapMods,
+  PassManifold,
+  Selectors,
+} from "@/preload/globalLinks";
 import InputManager from "../../modules/inputManager";
 import GlobalStore from "../../modules/globalStore";
-import AssetsManager, { LutType } from "@/engine/core/modules/assetsManager";
+import AssetsManager, {
+  LutType,
+  StructureLUTItem,
+} from "@/engine/core/modules/assetsManager";
 import MathU from "@/math/math";
 import { saveChunkOnChange } from "@/utils/projectUtils";
 export interface exportedTile {
@@ -67,8 +75,7 @@ export default class EntityManager {
   public static onUpdate() {}
 
   public static onRender() {
-    const selector = Link.get<Selectors>("activeSelector")();
-
+    const gridMenu = Link.get<boolean>("gridMenu")();
     const sorted = Array.from(this.loadedChunks.values()).sort(
       ({ position: chunkA }, { position: chunkB }) => {
         if (chunkA.y === chunkB.y) {
@@ -78,10 +85,12 @@ export default class EntityManager {
       }
     );
 
-    // if (selector === "brush")
-    //   this.hollowChunks.forEach((chunk) => chunk.onRender());
     sorted.forEach((chunk) => chunk.onRender("tile"));
     sorted.forEach((chunk) => chunk.onRender("structure"));
+    const mapMods = Link.get<MapMods>("mapMods")(); //TODO: dodac wiecej modow!!!!
+    if (mapMods.collider) sorted.forEach((chunk) => chunk.onRender("mods"));
+
+    if (gridMenu) this.hollowChunks.forEach((hollow) => hollow.onRender());
   }
   private static onTileEvents(lutID: string) {
     if (InputManager.onMouseDown("left")) {
@@ -99,87 +108,57 @@ export default class EntityManager {
       saveChunkOnChange(tile.chunkIndex);
     }
   }
-  public static onStructEvents(lutID: string) {
-    if (InputManager.onMouseClick("left")) {
-      const lutItem = AssetsManager.getItem("structure", lutID);
-      EngineDebugger.assertValue(lutItem, {
-        msg: "in place event should always be a lut item from AM",
-      });
-      const { item } = lutItem;
-      const zIndex = Link.get<number>("z-index")();
-      const { tileSize, chunkSizeInTiles } = getConfig();
-      const { structure: layerIndex } = Link.get<LayersLevel>("layer")();
-
-      const mousePos = InputManager.getMousePosition();
-      const { tileCol: anchorCol, tileRow: anchorRow } = MathU.getTilePosInGrid(
-        item.anchorTile,
-        item.objectTileSize.w
-      );
-      //left top struct tile  in world
-      const structCol = Math.floor(mousePos.x / tileSize.w) - anchorCol;
-      const structRow = Math.floor(mousePos.y / tileSize.h) - anchorRow;
-      const anchorTile = this.getWorldTileFromStructTile(
-        item.anchorTile,
-        { col: structCol, row: structRow },
-        item.objectTileSize
-      );
-
-      EngineDebugger.assertValue(anchorTile);
-      if (anchorTile) {
-        anchorTile.addStructLayer({
-          item,
-          layerIndex,
-          zIndex,
-        });
-      }
-      // calculating indexes and chunks of all tiles
-      for (const structTileIndex of item.colliderTiles) {
-        const colliderTile = this.getWorldTileFromStructTile(
-          structTileIndex,
-          { col: structCol, row: structRow },
-          item.objectTileSize
-        );
-        if (colliderTile && colliderTile.index !== anchorTile.index)
-          colliderTile.addDecorativeLayer({
-            layerIndex,
-            lutID: item.id,
-            viewID: item.viewID,
-            structureIndex: structTileIndex,
-          });
-      }
-      saveChunkOnChange(anchorTile.chunkIndex);
-    }
-  }
+  public static onStructEvents(lutID: string) {}
   private static getTile(chunk: number, tile: number) {
     return this.loadedChunks.get(chunk)?.getTiles.get(tile);
   }
-  public static getWorldTileFromStructTile(
-    structTileIndex: number,
-    struct: { col: number; row: number },
-    itemInTiles: Size2D
+
+  public static getOffsetStructTile(
+    tile: Tile,
+    item: StructureLUTItem,
+    offsetIndex: number,
+    config: ProjectConfig
   ) {
-    const { tileSize, chunkSizeInTiles } = getConfig();
-    const tileCol = structTileIndex % itemInTiles.w;
-    const tileRow = Math.floor(structTileIndex / itemInTiles.w);
+    const offset = this.getTileOffset(
+      offsetIndex,
+      item.anchorTile,
+      config.tileSize,
+      item.objectTileSize.w
+    );
+    const offsetVec = tile.position.add([offset.x, offset.y]);
 
-    const chunkIndex = MathU.getSpiralIndexFromPosition({
-      x: (struct.col + tileCol) * tileSize.w,
-      y: (struct.row + tileRow) * tileSize.h,
+    const chunkIndex = MathU.getSpiralIndexFromPosition(offsetVec.get);
+    const chunk = EntityManager.getChunk(chunkIndex);
+    if (!chunk) return;
+    const chunkPos = chunk.position;
+    const offsetTilePos = {
+      x: offsetVec.get.x - chunkPos.x,
+      y: offsetVec.get.y - chunkPos.y,
+    };
+    const index = MathU.getTileIndexFromPoint({
+      point: offsetTilePos,
+      gridWidth: config.chunkSizeInTiles.w,
+      tileSize: config.tileSize,
     });
-    const chunk = this.loadedChunks.get(chunkIndex);
-    if (!chunk) return undefined;
-
-    const chunkTileColStart = Math.floor(chunk.position.x / tileSize.w);
-    const chunkTileRowStart = Math.floor(chunk.position.y / tileSize.h);
-
-    const tileIndex =
-      (struct.row + tileRow - chunkTileRowStart) * chunkSizeInTiles.w +
-      (struct.col + tileCol - chunkTileColStart);
-    const tile = chunk.getTiles.get(tileIndex);
-    if (!tile) return undefined;
-    return tile;
+    return chunk.getTiles.get(index);
   }
 
+  private static getTileOffset(
+    tileIndex: number,
+    offsetTile: number,
+    tileSize: Size2D,
+    gridWidth: number
+  ) {
+    const tileCol = tileIndex % gridWidth;
+    const tileRow = Math.floor(tileIndex / gridWidth);
+    const anchorCol = offsetTile % gridWidth;
+    const anchorRow = Math.floor(offsetTile / gridWidth);
+
+    return {
+      x: (tileCol - anchorCol) * tileSize.w,
+      y: (tileRow - anchorRow) * tileSize.h,
+    };
+  }
   public static clearAll() {
     this.loadedChunks.clear();
     this.hollowChunks.clear();
@@ -237,6 +216,7 @@ export default class EntityManager {
         tileIndex: index,
         structureLayers: tileData.structureLayers,
         tileLayers: tileData.tileLayers,
+        collider: tileData.collider,
       });
       chunk.addTile(tile);
     });
@@ -262,6 +242,7 @@ export default class EntityManager {
           tileIndex: tileIndex,
           structureLayers: [],
           tileLayers: [],
+          collider: false,
         });
         chunk.addTile(tile);
       });
@@ -319,7 +300,7 @@ export default class EntityManager {
     );
   }
 
-  public static getTileToRemove() {
+  public static getTileFromMouse() {
     const mouseOn = InputManager.getMouseHover;
     const tile = this.getTile(mouseOn.chunk, mouseOn.tile);
     if (!tile) return;

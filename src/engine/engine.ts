@@ -63,7 +63,6 @@ export default class Engine {
     InputManager.update();
     Camera.update();
     Batcher.setCameraBuffer(Camera.getProjectionViewMatrix.getMatrix);
-    // EntityManager.onEvent();
     EventManager.update();
     EntityManager.onUpdate();
     Batcher.startBatch();

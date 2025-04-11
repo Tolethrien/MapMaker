@@ -1,6 +1,5 @@
 import Link from "./link";
-import { Note, Selectors } from "@/preload/globalLinks";
-import EntityManager from "@/engine/core/entitySystem/core/entityManager";
+import { Note } from "@/preload/globalLinks";
 
 export const randomColor = (): HSLA => [
   Math.round(Math.random() * 256),
@@ -51,5 +50,4 @@ export const clamp = (value: number, min: number, max: number) => {
 export const sendNotification = (note: Note) => {
   Link.set<Note[]>("notify")((prev) => [...prev, note]);
 };
-
 export const getConfig = () => Link.get<ProjectConfig>("projectConfig")();

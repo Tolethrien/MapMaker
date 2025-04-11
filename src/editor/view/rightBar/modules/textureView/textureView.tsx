@@ -1,4 +1,4 @@
-import { batch, createSignal, For, Show } from "solid-js";
+import { batch, createSignal, For, Show, useContext } from "solid-js";
 import TextureCanvas from "./textureCanvas";
 import ModuleFrame from "@/editor/components/module/moduleFrame";
 import IconButton from "@/editor/components/buttonAsIcon";
@@ -13,12 +13,16 @@ import StructSetViewModal from "./add/structSetView";
 import EventBus from "@/utils/eventBus";
 import CanvasController from "./canvasController";
 import { sendNotification } from "@/utils/utils";
+import { globalContext } from "@/editor/providers/global";
+import Link from "@/utils/link";
 
 const BUTTON_ACTIVE =
   "px-5 py-2 bg-app-acc-purp w-fit rounded-t-md shadow-inner text-app-acc-wheat";
 const BUTTON_INACTIVE =
   "px-5 py-2 bg-app-main-3 w-fit rounded-t-md shadow-inner text-app-acc-wheat-dark hover:bg-app-acc-purp hover:text-app-acc-wheat";
 export default function TextureView() {
+  const gridMenu = Link.get<boolean>("gridMenu");
+
   const [viewList, setViewList] = createSignal<View[]>([]);
   const [currentView, setCurrentView] = createSignal<View | undefined>(
     undefined
@@ -189,7 +193,11 @@ export default function TextureView() {
             </div>
           }
         >
-          <div class="w-full object-none overflow-scroll h-52">
+          <div
+            class={`w-full object-none overflow-scroll h-52 ${
+              gridMenu() && "isInactive"
+            }`}
+          >
             <TextureCanvas view={currentView} />
           </div>
         </Show>

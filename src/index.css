@@ -36,6 +36,10 @@ textarea {
       background-color: #fffed2;
     }
   }
+  .isInactive {
+    pointer-events: none;
+    filter: brightness(50%);
+  }
   .no-horizontal-scroll {
     &::-webkit-scrollbar {
       height: 0px;

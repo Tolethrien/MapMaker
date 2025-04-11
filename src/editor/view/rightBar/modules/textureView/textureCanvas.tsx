@@ -18,7 +18,7 @@ export default function TextureCanvas(props: Props) {
   createEffect(() => {
     if (props.view() && props.view()!.id !== CanvasController.getViewID()) {
       CanvasController.setView(props.view()!);
-      // Link.set<LutType>("activeLUT")(props.view()!.type);
+      Link.set<LutType>("activeLUT")(props.view()!.type);
     }
   });
   return (

@@ -17,6 +17,7 @@ interface Props {
   disabled?: Accessor<boolean>;
   loading?: Accessor<boolean>;
   active?: Accessor<boolean>;
+  title?: string;
   style?: string;
   spinnerStyle?: string;
   children: JSX.Element;
@@ -28,6 +29,7 @@ export default function IconButton(props: Props) {
   const isScalable = props.scale ?? true;
   return (
     <button
+      title={props.title}
       onClick={(e) => props.onClick(e)}
       onBlur={(e) => (props.onBlur ? props.onBlur(e) : {})}
       disabled={isDisable() || isLoading()}
