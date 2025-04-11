@@ -19,34 +19,12 @@
 - cache renderu - po 1 wyrendrowaniu np ziemi, chunk moglby trzymac wyrenderowany caly chunk jako jedna grafike i wyswietlac to, to samo obiekty, a przerenderowywane by bylo tylko podczas zmiany
 - czy nie lepiej przejsc na jakis ECS system, miec wszystkie tile w jednej liscie i po prostu latwiej bedzie miec wszystkie inputy bo masz grid zwykly tilow
 
-# refactor
-
-ui
-
-- views (one layer, collider )
-- brush selectors
-- paski visibility
-- paski layerow
-- actions (dodaj chunk,klik w tile by zobaczyc liste itp)
-
-## sterowanie
-
-- w trybie draw lewy myszy brushuje, prawy myszy robi krztałty
-- w trybie gumki to co wyzej ale usuwanie
-- chciałbym miec mozliwosc widziec 1 layer
-- menu dodawania chunkow
-- mozliwosc podnoszenia/opuszczania z po polozeniu juz kafla
-- mozliwosc przesuniecia calego layers na inne miejsce(chcesz przesunac beczke i cale ozdoby na niej)
-- przezroczystosc na kazdym layerze
-- rysowanie normalne lub randomem
-
 ## czy ja dalej chce?
 
 - focus chunk
 
 ## co nie dziala
 
-- single layer view
 - nazywanie view
 
 # changes
@@ -89,6 +67,7 @@ ui
 
 # DONE
 
+x single layer view
 x usuwanie nie dziala na innym niz poziom 0 w struct, a w tile usuwa wszystkie bo nie filtruje
 x mouseEventy
 x usuwanie z mapy

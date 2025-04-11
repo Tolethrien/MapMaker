@@ -37,19 +37,23 @@ The project is in a prototype phase, Check out the current state of the applicat
 - [x] **Adding/removing textures**
 - [x] **Drawing with texture crop**
 - [x] **Keyboard/mouse inputs**
+- [x] **Object Creator**
 
-![Current State of App on Windows: Tile](/public/tile.png)
+![Current State of App on Windows: noGrid](/public/noGrid.png)
 
-![Current State of App on Windows: Grid](/public/grid.png)
+![Current State of App on Windows: collView](/public/collView.png)
 
-![Current State of App on Windows: Layer](/public/layer.png)
+![Current State of App on Windows: singleLayer](/public/singleLayer.png)
+
+![Current State of App on Windows: spiralChunk](/public/spiralChunk.png)
+
+![Current State of App on Windows: objectCrator](/public/objectCreator.png)
 
 ## TODO:
 
 - [ ] **User experience features like shortcuts, undo/redo, AABB targeting etc...**
 - [ ] **Minimap module**
 - [ ] **Export to binary**
-- [ ] **Object Creator**
 - [ ] **App Settings**
 - [ ] **Rework of Aurora**
 
